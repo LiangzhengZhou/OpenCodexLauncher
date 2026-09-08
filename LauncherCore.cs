@@ -992,7 +992,7 @@ namespace OpenCodexLauncherV2
         }
         public static List<int> Candidates(string configPath)
         {
-            var result = new List<int>();
+            var documents = new List<string>();
             try
             {
                 var home = Path.GetDirectoryName(configPath);
@@ -1000,13 +1000,24 @@ namespace OpenCodexLauncherV2
                 {
                     if (!File.Exists(file)) continue;
                     try {
-                        var root = JsonData.Read(file);
-                        var p = Port(JsonData.Value(root, "port")); if (p > 0 && !result.Contains(p)) result.Add(p);
+                        documents.Add(TextFile.Read(file));
                     } catch (ArgumentException) { } catch (InvalidDataException) { } catch (IOException) { } catch (UnauthorizedAccessException) { }
                 }
-                var configured = Port(JsonData.Value(JsonData.Read(configPath), "port")); if (configured > 0 && !result.Contains(configured)) result.Add(configured);
+                if (File.Exists(configPath)) documents.Add(TextFile.Read(configPath));
             }
             catch { }
+            return CandidatesFromDocuments(documents);
+        }
+        // Both runtime actions and read-only diagnostics use runtime-port, runtime,
+        // configured port order with the same validation and fallback.
+        public static List<int> CandidatesFromDocuments(IEnumerable<string> documents)
+        {
+            var result = new List<int>();
+            foreach (var text in documents)
+            {
+                try { var p = Port(JsonData.Value(JsonData.Parse(text), "port")); if (p > 0 && !result.Contains(p)) result.Add(p); }
+                catch { }
+            }
             if (result.Count == 0) result.Add(10100);
             return result;
         }

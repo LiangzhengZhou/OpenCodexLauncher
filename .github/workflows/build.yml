@@ -33,13 +33,13 @@ jobs:
         shell: pwsh
         run: |
           ./create-release.ps1 -OutputDirectory ./release-output -Executable ./artifacts/native/OpenCodexLauncher.exe
-          Expand-Archive ./release-output/OpenCodexLauncher-2.6.2-source.zip ./artifacts/extracted-source
-          Expand-Archive ./release-output/OpenCodexLauncher-2.6.2-windows-x64.zip ./artifacts/extracted-binary
+          Expand-Archive ./release-output/OpenCodexLauncher-2.6.3-source.zip ./artifacts/extracted-source
+          Expand-Archive ./release-output/OpenCodexLauncher-2.6.3-windows-x64.zip ./artifacts/extracted-binary
           ./release-check.ps1 -Directory ./artifacts/extracted-source -Kind source
           ./release-check.ps1 -Directory ./artifacts/extracted-binary -Kind binary
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenCodexLauncher-2.6.2
+          name: OpenCodexLauncher-2.6.3
           path: |
             release-output/*.zip
             release-output/SHA256SUMS.txt

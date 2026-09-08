@@ -23,6 +23,7 @@ $refs = @(
   (Join-Path $framework 'System.Data.dll'),
   (Join-Path $framework 'System.Drawing.dll'),
   (Join-Path $framework 'System.Net.Http.dll'),
+  (Join-Path $framework 'System.Management.dll'),
   (Join-Path $framework 'System.Security.dll'),
   (Join-Path $framework 'System.Web.Extensions.dll'),
   (Join-Path $framework 'WPF\WindowsBase.dll'),

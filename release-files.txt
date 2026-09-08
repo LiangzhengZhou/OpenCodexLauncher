@@ -40,3 +40,6 @@ App.config
 LauncherUpdater.cs
 LauncherUpdateWindow.cs
 tests/UpdaterChecks.cs
+DesktopDiagnostics.cs
+DesktopDiagnosticWindow.cs
+tests/DesktopDiagnosticChecks.cs

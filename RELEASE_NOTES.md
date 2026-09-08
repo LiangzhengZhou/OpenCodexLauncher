@@ -1,27 +1,23 @@
-# 2.6.2 release notes / 发布说明
+# 2.6.3 release notes / 发布说明
 
-2026-09-08. Windows 10/11 x64, .NET Framework 4.8. OpenCodexLauncher.exe version 2.6.2.0; keep its .config file beside it. MIT license.
+2026-09-08. Windows 10/11 x64, .NET Framework 4.8. OpenCodexLauncher.exe version 2.6.3.0; keep its .config file beside it. MIT license.
 
-## Codex Desktop configuration association / Desktop 配置关联
+## One-click Desktop diagnostics / 一键诊断 Desktop
 
-Manual setup uses an independent Codex home. Sync can update that home's catalog while a separately launched Codex Desktop reads another home. Version 2.6.2 adds **Codex routing → Associate Desktop config…**, with the selected target displayed in both languages. Choose the existing config.toml opened from Desktop settings and confirm it. Existing OpenCodex providers, keys and model selections stay in place.
+Click **Diagnose Desktop** on Overview, Models or Codex routing, then **Copy report** or **Save diagnostic log…**. Send that text to the maintainer instead of searching for and sharing configuration files. Checks compare configuration-home candidates, root catalog and proxy references, selected full routes, process candidates and loopback health responses.
 
-手动初始化的独立 Codex 目录可能与 Desktop 读取的目录不同。2.6.2 新增“Codex 路由 → 关联 Desktop 配置…”，明确显示同步目标。请选择从 Desktop 设置打开的现有 config.toml 并确认；保留已有供应商、密钥和模型选择。
+在“概览”“模型管理”或“Codex 路由”点击 **一键诊断 Desktop**，再点击 **复制报告** 或 **保存诊断日志…**，把文本发回即可收集排查证据。自动比较配置目录候选、根级目录/代理引用、已选完整模型路由、进程候选和本机健康状态，无需手动查找和发送配置文件。
 
-Association alone does not edit the selected config, copy accounts or run/restart services. Subsequent syncs back up and modify the selected config and catalog. Missing associated files cause an error without silent replacement. Restore the selected file and reload if necessary.
+Diagnostics preserve configuration and running services, send no inference requests, and never upload results automatically. Reports exclude account data, keys, provider/model names, paths, URLs, raw configuration, request logs and process command lines. Only completed setup plus an explicit click enables collection. Double-clicks do not overlap; closing cancels collection; the wait is bounded to 12 seconds. Network checks refuse redirects and do not use system proxies or credentials.
 
-关联操作只保存同步目标；后续同步才备份并修改所选配置和目录。不会复制账号或自动启停服务。所选文件丢失时报告错误，不创建替代配置；请恢复原文件后重新加载。
+诊断不改配置、不启停服务、不发送推理请求、不自动上传。报告不含账号数据、密钥、供应商/模型名称、路径、URL、原始配置、请求日志或进程命令行。只有完成首次配置并主动点击才采集；重复点击不会并发执行，关闭窗口会取消，等待上限 12 秒。健康检查不跟随重定向、不使用系统代理或凭据。
 
-## Upgrade and verify / 升级及验证
+Possible home mismatches and active app-servers are evidence for investigation, not proof that Desktop has read a particular home or loaded the model catalog. Unsupported syntax, inaccessible/oversized files and process queries remain unknown. This release adds evidence collection; it does not silently associate a Desktop home or claim to fix every missing-model cause.
 
-1. In 2.6.0+, use **Settings → Check launcher updates → Update and restart**. Earlier versions need one manual full Windows ZIP upgrade. Preserve application data and runtimes.
-2. Associate the config.toml opened from Desktop settings, then start OpenCodex and sync.
-3. If necessary, finish active tasks before **Sync and restart Desktop**. Read the actual restart result in the log and check Desktop's bottom-right model picker. Active sessions may be interrupted.
+目录可能不一致和 app-server 运行仅用于辅助判断，不能证明 Desktop 读取了某个目录或加载了模型。无法识别的语法、不可访问/过大的文件和进程查询保留为未知。本版提供证据采集，不会自动关联目录，也不宣称修复所有模型缺失原因。
 
-2.6.0 及以上版本在“设置 → 检查启动器更新 → 一键更新并重启”升级。关联 Desktop 配置后启动 OpenCodex 并同步；必要时等任务结束，再“同步并重启 Desktop”，核对日志中的重启结果及 Desktop 右下角模型列表。
+## Upgrade / 升级
 
-Sync messages now distinguish files updated from Desktop loaded. Diagnostics expose only an association boolean and an unverified loading state, never the selected path or config contents. A catalog count or successful command exit does not prove the running Desktop loaded that home. The exact home used on a remote tester's computer still requires confirmation; this release does not claim that machine has been verified.
+From 2.6.0+, use Settings → Check launcher updates → Update and restart. Earlier versions need the complete Windows ZIP once. Local settings, credentials and OpenCodex runtime selection are preserved. This changes the launcher; OpenCodex runtime updates remain separate.
 
-修正“同步成功”提示：目录写入、代理运行、Desktop 加载是分别需要确认的状态。诊断只增加关联状态和“尚未验证加载”，不包含路径或文件内容。测试用户电脑实际读取的目录仍需在其 Desktop 中核对。
-
-Both builds and isolated regression/UI tests cover the new association. No real account configuration, running Desktop/proxy or inference service is used in acceptance tests. Packages are allowlisted and scanned; checksums are in SHA256SUMS.txt. The updater retains its backup/rollback behavior.
+2.6.0 及以后可在“设置 → 检查启动器更新 → 一键更新并重启”升级；更早版本需完整解压一次 Windows ZIP。保留设置、凭据和 OpenCodex 运行时选择。此处更新启动器，OpenCodex 运行时更新仍为独立功能。

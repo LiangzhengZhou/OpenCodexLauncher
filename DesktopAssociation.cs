@@ -43,6 +43,7 @@ namespace OpenCodexLauncherV2
             panel.Children.Add(Text(L.M("desktop.explain")));
             desktopTarget = Text(""); panel.Children.Add(desktopTarget); UpdateDesktopTarget();
             panel.Children.Add(Btn(L.M("desktop.select"), PickDesktopConfig));
+            panel.Children.Add(AsyncBtn(L.M("diag.button"), DiagnoseDesktop));
             return panel;
         }
         void UpdateDesktopTarget()

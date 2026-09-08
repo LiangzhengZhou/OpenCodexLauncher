@@ -1,4 +1,15 @@
-# OpenCodex Launcher 2.6.2
+# OpenCodex Launcher 2.6.3
+
+## One-click Desktop diagnostics
+
+When Desktop's bottom-right model picker is missing third-party models, click **Diagnose Desktop** on **Overview**, **Models** or **Codex routing**, then **Copy report** or **Save diagnostic log…** and send the resulting text to the maintainer. No manual file search or configuration upload is needed to collect evidence.
+
+The report compares the launcher target with the default and launcher-environment Codex homes; inspects root catalog/proxy references, selected model counts and full-route catalog coverage; queries Codex process candidates; and checks local health endpoints. Findings distinguish a possible home mismatch, absent references, missing selected models, unreadable files, unavailable proxy and unknown process state. Candidate homes and running processes do not prove which configuration Desktop loaded. No inference request is sent.
+
+Checks begin only after setup and an explicit click. They do not edit configuration, import credentials, run CLI commands, stop services or restart Desktop. Network checks are GET /healthz on numeric loopback candidate ports only, without credentials, system proxy, response-body logging or redirects. File reads are bounded to 2 MiB each and local fixed drives; linked files, network paths, relative catalog references and unsupported TOML syntax remain unverified. The overall inspection deadline is 12 seconds; closing the launcher cancels active checks. If a system call remains blocked, the deadline returns a timeout report and ignores late results.
+
+Reports contain fixed finding codes, counts, relationships, timestamp and launcher version. They exclude raw configuration, application/request logs, command lines, keys, account data, provider/model names, URLs and absolute paths. Copy/save is explicit; nothing is uploaded automatically. The report helps select the next fix but does not claim to test remote model availability or verify Desktop's loaded model list.
+
 
 [简体中文](README.zh-CN.md)
 
@@ -16,7 +27,7 @@ Use the persistent **中文 / EN** button to change language. The initial langua
 
 ## Update the launcher
 
-In 2.6.0+, use the built-in updater to install 2.6.2. For Codex Desktop's model picker, follow the Desktop association steps below.
+In 2.6.0+, use the built-in updater to install 2.6.3. For Codex Desktop's model picker, follow the Desktop association steps below.
 
 In **Settings**, use **Check launcher updates**, then **Update and restart**. The panel is also available on onboarding and recovery pages. Save form edits before confirming. Only an explicit click contacts the public GitHub Releases API; no GitHub login is needed. Updates verify GitHub's SHA-256 digest, internal file checksums and executable version. Rate limits, missing digests and network restrictions stop the update. Access to api.github.com, github.com and GitHub's release CDN is required.
 
@@ -40,7 +51,7 @@ The launcher and Codex Desktop can use different configuration homes, especially
 
 Do not assume the independent manual home is Desktop's home, or change the provider configuration mode to work around this. The target is shown on Codex routing. Association requires completed onboarding and a readable existing config.toml; a missing associated file produces an error instead of a replacement. Restore the selected file and reload if startup enters recovery. The launcher does not automatically detect or verify the running Desktop process's home.
 
-**Copy model diagnostics** distinguishes explicit association from Desktop loading: desktopConfigAssociated is a boolean and desktopLoaded remains unverified. No target path or file contents are included. Local counts and a successful CLI exit are insufficient evidence that Desktop loaded the catalog.
+Use Diagnose Desktop above to collect current, sanitized evidence before changing configuration.
 
 ## Third-party models missing in the launcher's Models page
 
@@ -48,7 +59,7 @@ On **Providers**, fetch models, check the required entries, then click **Save se
 
 Version 2.6.1 also reads provider-selected/configured models without requiring duplicate customModels entries. Entering **Models** reloads local selections. A missing or unreadable generated catalog and a failed native CLI refresh no longer hide saved third-party models. The page shows native/third-party counts and relevant warnings.
 
-If a test machine still shows zero third-party models, click **Copy model diagnostics** on **Models** and share that report. It includes launcher version, setup mode, saved/displayed counts and file/refresh status codes, but no credentials, provider/model names, endpoints or absolute paths. Do not send config.json, credentials or an application-data ZIP. A local-list entry does not prove remote model availability or that Codex Desktop has loaded the same home/catalog.
+If a test machine still shows zero third-party models, use Diagnose Desktop and share its report. Do not send config.json, credentials or an application-data ZIP.
 
 ## Install and update OpenCodex
 
@@ -90,7 +101,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.2.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.3.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.6.2",
-    "en": "Models, providers and routing console · v2.6.2"
+    "zh": "模型、供应商与路由控制台  ·  v2.6.3",
+    "en": "Models, providers and routing console · v2.6.3"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -552,8 +552,8 @@
     "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
   },
   "text.138": {
-    "zh": "启动器 2.6.2。路径配置保存到 Windows 当前用户目录。",
-    "en": "Launcher 2.6.2. Paths are stored in the current Windows user's data directory."
+    "zh": "启动器 2.6.3。路径配置保存到 Windows 当前用户目录。",
+    "en": "Launcher 2.6.3. Paths are stored in the current Windows user's data directory."
   },
   "text.139": {
     "zh": "选择 OpenCodex 入口",
@@ -1338,5 +1338,105 @@
   "text.153": {
     "zh": "目标目录文件已更新。请核对“Codex 路由”中的 Desktop 配置目标；代理运行和 Desktop 加载状态须另行确认。",
     "en": "Target catalog files updated. Verify the Desktop config target on Codex routing; proxy availability and Desktop loading require separate checks."
+  },
+  "diag.target-route-differs": {
+    "en": "The target proxy URL differs from local candidate ports. Review the routing target.",
+    "zh": "目标配置的代理地址与本机候选端口不符，需要核对路由目标。"
+  },
+  "diag.desktop-loading-unverified": {
+    "en": "These are current file, process and health observations. They do not prove Desktop loaded the models and do not test inference.",
+    "zh": "以上为本次文件、进程和健康检查结果，不能证明 Desktop 已加载新模型，也未测试模型推理。"
+  },
+  "diag.possible-home-mismatch": {
+    "en": "The launcher target has third-party models, but another candidate lacks a catalog reference or third-party models. A home mismatch is possible; candidates do not prove which home Desktop reads.",
+    "zh": "启动器目标含第三方模型，但另一候选配置没有模型引用或第三方模型。可能同步到了不同目录；候选目录不能证明 Desktop 实际读取位置。"
+  },
+  "diag.config-syntax-unknown": {
+    "en": "The TOML root-key syntax is unsupported; configuration values were not guessed.",
+    "zh": "遇到不支持的 TOML 根字段写法，未猜测配置内容。"
+  },
+  "diag.target-models-missing": {
+    "en": "Some selected third-party models are missing from the target catalog. Review the sync result.",
+    "zh": "目标模型目录缺少部分已选第三方模型，请检查同步结果。"
+  },
+  "diag.explain": {
+    "en": "Copy or save this report for the maintainer. Checks configuration structure, model counts, processes and local health endpoints. Excludes keys, provider/model names, paths and raw logs. Does not edit configuration, restart services or send inference requests.",
+    "zh": "将此报告复制或保存后发给维护者。检查配置结构、模型数量、进程和本机健康端点；不含密钥、供应商名、模型名、路径或原始日志。不改配置、不重启、不发送推理请求。"
+  },
+  "diag.copied": {
+    "en": "Report copied",
+    "zh": "报告已复制"
+  },
+  "diag.save": {
+    "en": "Save diagnostic log…",
+    "zh": "保存诊断日志…"
+  },
+  "diag.inspection-failed": {
+    "en": "Inspection could not complete. Raw system errors are omitted to protect private information.",
+    "zh": "诊断无法完成。未输出系统异常原文，以免泄露私人信息。"
+  },
+  "diag.desktop-not-detected": {
+    "en": "No matching Desktop main-process candidate was found; name-based detection may not cover every installation.",
+    "zh": "未发现符合规则的 Desktop 主进程；进程名检测可能不覆盖所有安装方式。"
+  },
+  "diag.desktop-home-unconfirmed": {
+    "en": "No Desktop configuration has been explicitly associated. Send this report so the maintainer can advise on the target.",
+    "zh": "尚未明确关联 Desktop 配置。把此报告发回，维护者可据检查结果指导关联。"
+  },
+  "diag.proxy-unavailable": {
+    "en": "Local candidate ports did not pass health checks. The proxy may be stopped or inaccessible; this is separate from catalog writing.",
+    "zh": "本机候选端口未通过健康检查。代理可能未启动或无法访问；这与模型目录是否写入是不同检查。"
+  },
+  "diag.target-route-missing": {
+    "en": "The launcher target lacks a root proxy URL. Diagnose again after syncing.",
+    "zh": "启动器目标配置缺少根级代理地址。同步后应再次诊断。"
+  },
+  "diag.no-selected-models": {
+    "en": "No selectedModels entries were found for enabled providers. Confirm model selections were saved; legacy formats need further inspection.",
+    "zh": "未找到启用供应商的 selectedModels 条目。请确认供应商页已保存模型选择；旧配置格式需进一步核对。"
+  },
+  "diag.app-server-active": {
+    "en": "An app-server is running and may cache an older model list. This does not prove catalog writing failed. Diagnostics leave it running.",
+    "zh": "发现运行中的 app-server，可能仍缓存旧模型；这不是目录写入失败的证据。诊断不会中断它。"
+  },
+  "diag.timed-out": {
+    "en": "Inspection exceeded 12 seconds. A file or system query may be inaccessible. Send this report to the maintainer.",
+    "zh": "诊断超过 12 秒，未能完成。可能存在无法访问的目录或系统查询，请将此报告发回。"
+  },
+  "diag.setup-required": {
+    "en": "Complete setup first; no local configuration or processes were inspected.",
+    "zh": "请先完成首次配置；尚未读取本机配置或检查进程。"
+  },
+  "diag.copy": {
+    "en": "Copy report",
+    "zh": "复制报告"
+  },
+  "diag.provider-unreadable": {
+    "en": "Provider configuration is missing, too large or unreadable; selected models could not be verified.",
+    "zh": "供应商配置缺失、过大或无法读取；无法确认所选模型。"
+  },
+  "diag.button": {
+    "en": "Diagnose Desktop",
+    "zh": "一键诊断 Desktop"
+  },
+  "diag.relative-catalog": {
+    "en": "The catalog uses a relative path; its runtime resolution is unverified.",
+    "zh": "模型目录使用相对路径，实际解析位置尚未确认。"
+  },
+  "diag.target-catalog-unreadable": {
+    "en": "The referenced target catalog is missing, invalid or unreadable.",
+    "zh": "目标引用的模型目录缺失、格式错误或无法读取。"
+  },
+  "diag.target-catalog-reference-missing": {
+    "en": "The launcher target has no model catalog reference. A generated catalog alone does not make Desktop read it.",
+    "zh": "启动器目标配置没有模型目录引用；仅生成目录文件不能让 Desktop 读取它。"
+  },
+  "diag.title": {
+    "en": "Desktop diagnostic report",
+    "zh": "Desktop 诊断报告"
+  },
+  "diag.processes-unknown": {
+    "en": "Codex process information could not be fully inspected. Desktop running state is unknown.",
+    "zh": "无法完整读取 Codex 进程信息，不能判断 Desktop 是否运行。"
   }
 }

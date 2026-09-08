@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 2.6.3 — 2026-09-08
+
+- Add explicit, bounded, cancellable one-click Desktop diagnostics with bilingual copy/save reports on Overview, Models and Codex routing.
+- Compare home candidates, root references and full provider/model catalog coverage; report process evidence and loopback-only health checks without claiming Desktop has loaded models.
+- Keep reports free of raw configuration, paths, provider/model names, endpoints, credentials and request logs. No inference, restart or automatic uploads.
+- Share port candidate parsing with runtime health checks; test mismatched homes, missing root keys, corruption, cancellation, privacy, redirect refusal and report UI behavior in isolated fixtures.
+- 新增一键诊断 Desktop，生成可复制/保存的双语脱敏报告；检查目录候选、模型引用、完整路由、进程及本机健康状态，不改配置、不重启、不发推理请求。
+
 ## 2.6.2 — 2026-09-08
 
 - Add explicit association with the existing config.toml opened from Codex Desktop settings. Keep the manual OpenCodex provider store, credentials and model selections independent of the selected Codex home.

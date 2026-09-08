@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -127,6 +127,7 @@ class RegressionChecks
         await ReleaseChecks.Run(root, Check);
         await InstallerChecks.Run(root, Check);
         await UpdaterChecks.Run(root, Check);
+        await DesktopDiagnosticChecks.Run(root, Check);
     }
     static async Task HttpCheck()
     {

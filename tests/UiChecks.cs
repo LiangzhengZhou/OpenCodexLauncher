@@ -23,7 +23,7 @@ class UiChecks
     static void Pump(){Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background,new Action(()=>{}));}
     static void Click(Button b){b.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));Pump();}
     static void Until(Func<bool> done){var end=DateTime.UtcNow.AddSeconds(10);while(!done()){if(DateTime.UtcNow>end)throw new Exception("UI operation timed out");Pump();System.Threading.Thread.Sleep(10);}Pump();}
-    static void Render(MainWindow w,string file,double scale)
+    static void Render(Window w,string file,double scale)
     {
         w.UpdateLayout();var visual=(FrameworkElement)w.Content;
         var bitmap=new RenderTargetBitmap((int)Math.Ceiling(visual.ActualWidth*scale),(int)Math.Ceiling(visual.ActualHeight*scale),96*scale,96*scale,PixelFormats.Pbgra32);
@@ -135,7 +135,34 @@ class UiChecks
             L.SetLanguage("zh");Pump();
             Check(Find<Button>(reopened).Any(b=>Convert.ToString(b.Content)=="关联 Desktop 配置…")&&Field<TextBlock>(reopened,"desktopTarget").Text.Contains(desktopConfig),"Desktop association labels switch language without changing selected path");
             foreach(var scale in new[]{1.0,1.5,2.0})Render(reopened,Path.Combine(output,"zh-desktop-associated-"+(int)(scale*100)+".png"),scale);
-            reopened.Close();Pump();
+            L.SetLanguage("en");Pump();
+            int diagnosticRuns=0;var diagnosticPause=new TaskCompletionSource<bool>();
+            reopened.DiagnosticInputsFactory=()=> {diagnosticRuns++;return new DesktopDiagnosticInputs {
+                Read=p=>null, Processes=t=>Task.FromResult(new DesktopProcessEvidence()),
+                Health=async(p,t)=> {await diagnosticPause.Task;return false;}
+            };};
+            var diagnose=Find<Button>(reopened).Single(b=>Convert.ToString(b.Content)=="Diagnose Desktop");
+            Check(diagnosticRuns==0,"Desktop diagnostic factory is not accessed while viewing pages");
+            Click(diagnose);Click(diagnose);
+            Check(diagnosticRuns==1&&!routedNav.IsEnabled,"double-click Desktop diagnostics starts one inspection and holds the operation gate");
+            diagnosticPause.SetResult(true);Until(()=>reopened.OwnedWindows.Count==1&&routedNav.IsEnabled);
+            var diagnosticWindow=reopened.OwnedWindows.Cast<Window>().Single();
+            var diagnosticText=Find<TextBox>(diagnosticWindow).Single();
+            Check(diagnosticText.IsReadOnly&&diagnosticText.Text.Contains("reportVersion")&&diagnosticText.Text.Contains("homes"),"one-click Desktop diagnostics opens a read-only structured report");
+            Check(Find<Button>(diagnosticWindow).Any(b=>Convert.ToString(b.Content)=="Copy report")&&Find<Button>(diagnosticWindow).Any(b=>Convert.ToString(b.Content)=="Save diagnostic log…"),"diagnostic report exposes copy and save actions");
+            diagnosticWindow.Width=540;diagnosticWindow.Height=400;diagnosticWindow.UpdateLayout();
+            foreach(var scale in new[]{1.0,1.5,2.0})Render(diagnosticWindow,Path.Combine(output,"en-diagnostic-"+(int)(scale*100)+".png"),scale);
+            L.SetLanguage("zh");Pump();
+            Check(diagnosticWindow.Title=="Desktop 诊断报告"&&Find<Button>(diagnosticWindow).Any(b=>Convert.ToString(b.Content)=="复制报告")&&diagnosticText.Text.Contains("本机候选端口"),"open diagnostic report and actions switch language without re-running inspection");
+            foreach(var scale in new[]{1.0,1.5,2.0})Render(diagnosticWindow,Path.Combine(output,"zh-diagnostic-"+(int)(scale*100)+".png"),scale);
+            diagnosticWindow.Close();
+            Check(diagnosticRuns==1&&File.ReadAllText(desktopConfig)=="# desktop fixture\n","report inspection and language switching preserve associated configuration");
+            var closingStarted=new TaskCompletionSource<bool>();var closingStopped=new TaskCompletionSource<bool>();
+            reopened.DiagnosticInputsFactory=()=>new DesktopDiagnosticInputs {Read=p=>null,Processes=t=>Task.FromResult(new DesktopProcessEvidence()),Health=async(p,t)=>{
+                closingStarted.TrySetResult(true);try{await Task.Delay(30000,t);return false;}catch(OperationCanceledException){closingStopped.TrySetResult(true);throw;}
+            }};
+            Click(diagnose);Until(()=>closingStarted.Task.IsCompleted);reopened.Close();Until(()=>closingStopped.Task.IsCompleted);Pump();
+            Check(reopened.OwnedWindows.Count==0,"closing launcher cancels diagnostics without opening a late report window");
             var linkedReopen=new MainWindow();linkedReopen.Show();Pump();
             Check(Field<PathSet>(linkedReopen,"paths").CodexConfig==desktopConfig&&Field<ComboBox>(linkedReopen,"modelBox").Items.Count==2,"reopening retains Desktop target and manual providers");linkedReopen.Close();Pump();
             File.WriteAllText(PathResolver.SettingsPath(),"{invalid");var hash=FileTransaction.Hash(PathResolver.SettingsPath());
@@ -172,7 +199,7 @@ class UiChecks
             Check(!PathResolver.Load().SetupCompleted&&Field<PathSet>(cancelWindow,"paths").OcxConfig==null,"cancel button leaves onboarding and account paths unlinked");
             Check(!Find<Button>(cancelWindow).Single(b=>Convert.ToString(b.Content)=="Confirm import").IsEnabled,"cancel restores the original disabled import confirmation");
             cancelWindow.Close();app.Shutdown();
-            Console.WriteLine("ALL "+passed+" UI CHECKS PASSED; 42 page/scale renders generated");return 0;
+            Console.WriteLine("ALL "+passed+" UI CHECKS PASSED; "+Directory.GetFiles(output,"*.png").Length+" renders generated");return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e);return 1;}
     }
