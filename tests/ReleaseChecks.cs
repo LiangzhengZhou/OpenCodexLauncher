@@ -103,6 +103,32 @@ static class ReleaseChecks
         try { await transaction.Step(()=>{File.WriteAllText(file,"external during step");TextFile.AtomicWrite(file,"owned overwrite",Encoding.UTF8);return Task.FromResult(0);}); } catch(IOException){guarded=true;}
         check(guarded && File.ReadAllText(file)=="external during step","transaction refuses external edits during a multi-write step");
         await NetworkChecks(root, check);
+        var modelConfig=Path.Combine(root,"model-list.json");
+        File.WriteAllText(modelConfig,"{\"providers\":{\"demo-provider\":{\"displayName\":\"Demo Provider\",\"selectedModels\":[\"fixture-model\"],\"models\":[\"fixture-model\",\"unchecked\"]}}}");
+        var modelPaths=new PathSet {OcxConfig=modelConfig,Catalog=Path.Combine(root,"optional-catalog.json")};
+        check(CatalogReader.Load(modelPaths,new ConfigStore()).Any(m=>m.Id=="demo-provider/fixture-model"),"provider allowlist displays without duplicate customModels or a Codex catalog");
+        check(!CatalogReader.Load(modelPaths,new ConfigStore()).Any(m=>m.Id=="demo-provider/unchecked"),"provider allowlist continues to hide unchecked model seeds");
+        var cache=new List<ModelOption>();
+        File.WriteAllText(modelPaths.Catalog,"{\"models\":[{\"slug\":\"fixture-native\"}]}");
+        CatalogReader.Load(modelPaths,new ConfigStore(),new ModelOption[0],null,cache);
+        File.WriteAllText(modelPaths.Catalog,"{incomplete");var catalogHash=FileTransaction.Hash(modelPaths.Catalog);var warnings=0;
+        var recovered=CatalogReader.Load(modelPaths,new ConfigStore(),new ModelOption[0],code=>warnings++,cache);
+        check(warnings==1&&recovered.Any(m=>m.Id=="fixture-native")&&recovered.Any(m=>m.Id=="demo-provider/fixture-model"),"partial generated catalog retains last valid catalog and saved provider models");
+        check(FileTransaction.Hash(modelPaths.Catalog)==catalogHash,"catalog fallback never repairs or overwrites the upstream file");
+        check(CatalogReader.Load(modelPaths,new ConfigStore()).Any(m=>m.IsRouted),"fresh launch with unreadable catalog still lists saved models without a cache");
+        var report=ModelDiagnostics.Create(modelPaths,new LauncherSettings {ConfigurationMode="manual",SetupCompleted=true},recovered,"unknown-private-text");
+        check(report.Contains("\"catalog\":\"unreadable\"")&&report.Contains("\"selectedModelEntries\":1"),"model diagnostics distinguish saved selections from unreadable catalogs");
+        check(!report.Contains(root)&&!report.Contains("demo-provider")&&!report.Contains("fixture-model")&&!report.Contains("unknown-private-text"),"model diagnostic report excludes provider/model names, paths and untrusted state text");
+        File.WriteAllText(modelPaths.Catalog,"{\"models\":[]}");
+        check(!CatalogReader.Load(modelPaths,new ConfigStore(),new ModelOption[0],null,cache).Any(m=>m.IsNative)&&cache.Count==0,"repaired valid empty catalog replaces the last valid cache");
+        var storeForModels=new ConfigStore();
+        File.WriteAllText(modelConfig,"{\"providers\":{\"demo-provider\":{\"models\":[\"fixture-model\"]}}}");
+        check(storeForModels.SelectedModels(modelConfig,"demo-provider").Contains("fixture-model")&&CatalogReader.Load(modelPaths,storeForModels).Any(m=>m.IsRouted),"legacy models-only config appears consistently in provider editor and model management");
+        File.WriteAllText(modelConfig,"{\"providers\":{\"demo-provider\":{\"disabled\":true,\"selectedModels\":[\"fixture-model\"]}}}");
+        check(!CatalogReader.Load(modelPaths,storeForModels).Any(m=>m.IsRouted),"disabled providers stay hidden even with saved allowlists");
+        File.WriteAllText(modelConfig,"{invalid");var failedRead=false;
+        try{CatalogReader.Load(modelPaths,storeForModels);}catch(ArgumentException){failedRead=true;}
+        check(failedRead&&File.ReadAllText(modelConfig)=="{invalid","corrupt authoritative config remains an error and is never replaced with defaults");
     }
 
     sealed class MockServer : IDisposable

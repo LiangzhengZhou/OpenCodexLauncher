@@ -13,6 +13,7 @@ release-files.txt
 NuGet.Config
 OpenCodexLauncher.csproj
 LauncherCore.cs
+ModelDiagnostics.cs
 LauncherV2.cs
 LocalEnvironment.cs
 Localization.cs

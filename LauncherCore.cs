@@ -784,7 +784,9 @@ namespace OpenCodexLauncherV2
             var root = ReadOcx(path); var p = JsonData.Object(JsonData.Value(JsonData.Object(JsonData.Value(root, "providers")), provider));
             if (JsonData.Value(p, "disabled") is bool && (bool)p["disabled"]) return new HashSet<string>(StringComparer.Ordinal);
             var chosen = JsonData.Array(JsonData.Value(p, "selectedModels")).OfType<string>().ToList();
-            if (chosen.Count == 0) chosen = JsonData.Array(JsonData.Value(root, "customModels")).Select(JsonData.Object).Where(x => JsonData.Text(x, "provider") == provider).Select(x => JsonData.Text(x, "modelId")).ToList();
+            if (chosen.Count == 0) chosen = JsonData.Array(JsonData.Value(p, "models")).OfType<string>()
+                .Concat(JsonData.Array(JsonData.Value(p, "retainModels")).OfType<string>())
+                .Concat(JsonData.Array(JsonData.Value(root, "customModels")).Select(JsonData.Object).Where(x => JsonData.Text(x, "provider") == provider).Select(x => JsonData.Text(x, "modelId"))).ToList();
             return new HashSet<string>(chosen, StringComparer.Ordinal);
         }
         public Task<string> SelectProviderModelsAsync(string path, string providerId, string displayName, IEnumerable<string> selectedIds, IEnumerable<string> discoveredIds)
@@ -909,13 +911,41 @@ namespace OpenCodexLauncherV2
             return models;
         }
         public static List<ModelOption> Load(PathSet paths, ConfigStore store) { return Load(paths, store, new List<ModelOption>()); }
-        public static List<ModelOption> Load(PathSet paths, ConfigStore store, IEnumerable<ModelOption> nativeModels)
+        public static List<ModelOption> Load(PathSet paths, ConfigStore store, IEnumerable<ModelOption> nativeModels, Action<string> warning = null, IList<ModelOption> catalogCache = null)
         {
-            var map = new Dictionary<string, ModelOption>(StringComparer.Ordinal);
-            if (File.Exists(paths.Catalog)) foreach (var model in ParseCatalog(TextFile.Read(paths.Catalog), false)) map[model.Id] = model;
-            foreach (var model in nativeModels) map[model.Id] = model;
+            // The provider config is authoritative. A generated Codex catalog is optional
+            // and may be stale or temporarily unreadable while the runtime rewrites it.
             var root = store.ReadOcx(paths.OcxConfig);
+            var map = new Dictionary<string, ModelOption>(StringComparer.Ordinal);
+            var catalog = new List<ModelOption>();
+            try
+            {
+                if (File.Exists(paths.Catalog)) catalog = ParseCatalog(TextFile.Read(paths.Catalog), false);
+                if (catalogCache != null) { catalogCache.Clear(); foreach (var model in catalog) catalogCache.Add(model); }
+            }
+            catch (Exception error)
+            {
+                if (!(error is IOException) && !(error is UnauthorizedAccessException) && !(error is ArgumentException) && !(error is InvalidOperationException)) throw;
+                if (catalogCache != null) catalog.AddRange(catalogCache);
+                if (warning != null) warning("catalog-unreadable");
+            }
+            foreach (var model in catalog) map[model.Id] = model;
+            foreach (var model in nativeModels) map[model.Id] = model;
             var providers = JsonData.Object(JsonData.Value(root, "providers"));
+            if (providers != null) foreach (var entry in providers)
+            {
+                if (entry.Key == "openai") continue;
+                var p = JsonData.Object(entry.Value);
+                var ids = JsonData.Array(JsonData.Value(p, "selectedModels")).OfType<string>()
+                    .Concat(JsonData.Array(JsonData.Value(p, "models")).OfType<string>())
+                    .Concat(JsonData.Array(JsonData.Value(p, "retainModels")).OfType<string>()).Distinct(StringComparer.Ordinal);
+                foreach (var id in ids)
+                {
+                    var slug = ModelNames.Slug(entry.Key, id);
+                    var label = JsonData.Text(JsonData.Object(JsonData.Value(p, "modelDisplayNames")), id);
+                    map[slug] = new ModelOption { Id = slug, DisplayName = label == "" ? ModelNames.Display(entry.Key, JsonData.Text(p, "displayName"), id) : label, Provider = entry.Key, IsRouted = true };
+                }
+            }
             foreach (var raw in JsonData.Array(JsonData.Value(root, "customModels")))
             {
                 var cm = JsonData.Object(raw); var provider = JsonData.Text(cm, "provider"); var id = JsonData.Text(cm, "modelId");

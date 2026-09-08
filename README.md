@@ -1,4 +1,4 @@
-# OpenCodex Launcher 2.6.0
+# OpenCodex Launcher 2.6.1
 
 [简体中文](README.zh-CN.md)
 
@@ -16,6 +16,8 @@ Use the persistent **中文 / EN** button to change language. The initial langua
 
 ## Update the launcher
 
+In 2.6.0+, use the built-in updater to install 2.6.1. See the model-list troubleshooting section below if a test machine does not show saved third-party models.
+
 In **Settings**, use **Check launcher updates**, then **Update and restart**. The panel is also available on onboarding and recovery pages. Save form edits before confirming. Only an explicit click contacts the public GitHub Releases API; no GitHub login is needed. Updates verify GitHub's SHA-256 digest, internal file checksums and executable version. Rate limits, missing digests and network restrictions stop the update. Access to api.github.com, github.com and GitHub's release CDN is required.
 
 The helper waits for this launcher to close, backs up release files, replaces them and starts the new launcher. OpenCodex services, settings, credentials, runtime selection and unrelated files are preserved. Close other launcher windows first. Write failures attempt rollback; external changes stop restoration and retain backups. The installation must be writable; there is no automatic administrator elevation. Cancelled downloads leave installed files unchanged. There are no background update checks or downgrades.
@@ -25,6 +27,14 @@ Versions before 2.6.0 need one final manual Windows ZIP upgrade to acquire this 
 If power loss interrupts replacement, keep %LOCALAPPDATA%/OpenCodexLauncher/updates and recovery. updates/<id>/recovery.txt points to the backup journal; journal.json maps target files to numbered .original backups. Close launcher windows, compare current files, then restore the full original file set. Entries with no BeforeFile represent newly added files. Preserve application data and unrelated files; do not blindly overwrite external edits. Alternatively extract a verified Windows release ZIP. Interrupted transactions do not resume automatically. Old backups remain until manually removed; never share these private directories.
 
 The EXE is not Authenticode signed. Hash verification trusts HTTPS and the repository publisher; it cannot protect against a compromised publisher. Unknown archive entries and links are rejected, so future package-layout changes may require a manual upgrade.
+
+## Third-party models missing in the launcher's Models page
+
+On **Providers**, fetch models, check the required entries, then click **Save selection**. The launcher verifies the saved selection and updates **Models** immediately; this local list does not require Codex, proxy startup or catalog sync. Saving provider details or a default model ID alone does not enable models. **Save selection and sync to Codex** performs the same local save before the separate sync step. A sync failure does not undo the saved selection.
+
+Version 2.6.1 also reads provider-selected/configured models without requiring duplicate customModels entries. Entering **Models** reloads local selections. A missing or unreadable generated catalog and a failed native CLI refresh no longer hide saved third-party models. The page shows native/third-party counts and relevant warnings.
+
+If a test machine still shows zero third-party models, click **Copy model diagnostics** on **Models** and share that report. It includes launcher version, setup mode, saved/displayed counts and file/refresh status codes, but no credentials, provider/model names, endpoints or absolute paths. Do not send config.json, credentials or an application-data ZIP. A local-list entry does not prove remote model availability or that Codex Desktop has loaded the same home/catalog.
 
 ## Install and update OpenCodex
 
@@ -66,7 +76,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.0.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.1.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

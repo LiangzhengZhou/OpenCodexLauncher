@@ -1,4 +1,12 @@
-# OpenCodex Launcher 2.6.0
+# OpenCodex Launcher 2.6.1
+
+## 启动器“模型管理”没有第三方模型
+
+在“供应商”页获取模型、勾选需要的条目，再点击“保存选择”。启动器会回读验证保存结果，并立即更新“模型管理”列表；本地列表不需要安装 Codex、启动代理或同步目录。仅保存供应商资料或填写默认模型 ID 不会启用模型。“保存选择并同步到 Codex”会先完成同样的本地保存，再执行同步；同步失败不会撤销已经保存的选择。
+
+2.6.1 支持直接读取供应商的模型选择与配置模型，不再要求重复的 customModels 条目。进入“模型管理”会重新读取本地选择；生成目录缺失、暂时不可读或官方 CLI 刷新失败，不再遮挡已保存的第三方模型。页面显示第三方/官方模型数量及相关提示。
+
+若测试用户仍看不到模型，在该页点击“复制模型诊断”，反馈复制的内容即可。诊断仅含启动器版本、配置模式、已保存/已显示数量以及文件/刷新状态，不含密钥、供应商或模型名称、端点和绝对路径。不要发送 config.json、凭据或应用数据压缩包。本地列表出现模型并不能证明远端可调用，也不代表 Codex Desktop 已加载同一份目录。
 
 [English](README.md)
 
@@ -66,7 +74,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.6.0.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.6.1.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

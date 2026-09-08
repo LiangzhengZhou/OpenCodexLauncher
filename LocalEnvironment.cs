@@ -42,7 +42,8 @@ namespace OpenCodexLauncherV2
         public static void Validate(PathSet paths)
         {
             if (File.Exists(paths.OcxConfig)) JsonData.Read(paths.OcxConfig);
-            if (File.Exists(paths.Catalog)) CatalogReader.ParseCatalog(TextFile.Read(paths.Catalog), false);
+            // A generated catalog must not prevent opening or listing saved provider models.
+            // CatalogReader reports failures separately and preserves the last valid catalog.
             if (File.Exists(paths.CodexConfig)) TextFile.Read(paths.CodexConfig);
         }
         public static void Prepare(LauncherSettings settings, PathSet paths)

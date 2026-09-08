@@ -1,35 +1,24 @@
-# 2.6.0 release notes / 发布说明
+# 2.6.1 release notes / 发布说明
 
-Release date: 2026-09-08. Windows 10/11 x64; .NET Framework 4.8. OpenCodexLauncher.exe version 2.6.0.0. Keep its .config file beside it. MIT license.
+2026-09-08. Windows 10/11 x64, .NET Framework 4.8. OpenCodexLauncher.exe version 2.6.1.0; keep its .config file beside it. MIT license.
 
-## Update the launcher in the app / 软件内更新启动器
+## Model list compatibility / 模型列表兼容修复
 
-In Settings, click **Check launcher updates**, then **Update and restart**. The same panel is available during onboarding and configuration recovery. Updates are requested explicitly from this repository's latest stable GitHub Release. No GitHub account or background checks are required. Chinese and English text switches immediately.
+- Saved provider selections and configured models populate Models even without duplicate customModels entries or a generated Codex catalog.
+- Optional catalog errors and native CLI refresh failures no longer hide locally saved third-party models. Retain the last valid catalog without overwriting damaged files.
+- Entering Models reloads selections. Save selection verifies read-back and displayed routes, and shows/logs the count before optional sync.
+- Bilingual counts, guidance and Copy model diagnostics help diagnose different setup states. Diagnostics contain only version, counts and fixed state codes: no credentials, provider/model names, endpoints or paths.
 
-在设置、首次使用或配置恢复页面，点击 **检查启动器更新**，有新版本后点击 **一键更新并重启**。确认前保存表单修改。此功能更新 OpenCodexLauncher 本身；原有“更新 OpenCodex”功能继续用于更新代理运行时。
+修复部分配置格式下已选模型没有显示，以及生成目录/CLI 刷新错误影响本地列表的情况。增加保存后回读校验、进入模型管理自动刷新、模型数量提示和“复制模型诊断”。独立空白环境中的真实勾选、保存、页面切换、损坏目录、CLI 错误和重启保留已加入验证。
 
-The download is checked against GitHub's SHA-256 digest, the package's internal checksums, allowed file names and executable version. The helper waits for this launcher to exit, retains a backup, replaces release files and starts the verified new executable. It preserves settings, credentials, installed runtimes and unrelated files; existing OpenCodex services are not restarted. Cancellation and failed validation leave the installation unchanged. Replacement failures attempt rollback; concurrent external edits retain recovery information instead of being overwritten.
+## Upgrade and verify / 升级及验证
 
-下载完成后校验来源、SHA-256、包内文件及版本。更新助手等待当前启动器退出后备份、替换并打开新版。保留设置、凭据、运行时及其他文件；不重启已有代理服务。安装目录须可写，其他启动器窗口须先关闭。替换失败尝试恢复，发现外部修改时保留备份供人工处理。
+For 2.6.0+, open Settings → Check launcher updates → Update and restart. Older versions need one manual full Windows ZIP upgrade. Keep application data, providers, credentials and runtimes.
 
-**Versions before 2.6.0 need one final manual upgrade:** close the launcher and extract the entire Windows ZIP into its application directory. Subsequent versions can use the new panel. Keep local application data and runtime installations.
+2.6.0 用户在“设置 → 检查启动器更新 → 一键更新并重启”升级；更早版本需完整解压 Windows ZIP。保留本地配置、密钥和运行时，无需重新安装 OpenCodex。
 
-**旧版用户需最后手动升级一次到 2.6.0**，才能获得这个按钮：关闭启动器，完整解压 Windows ZIP 到软件目录，重新打开。之后可在软件内更新。无需删除配置、重新填写密钥或重装 OpenCodex。
+After upgrading, select and save models on Providers, then open Models. No proxy/Desktop restart or inference request is needed to verify this local list. If models remain absent, use Copy model diagnostics and report the result. These fixes cover reproduced compatibility failures; the exact cause on an inaccessible test machine still requires its diagnostic report. Codex Desktop's model picker is a separate integration.
 
-## Missing manual Codex configuration / 手动配置文件缺失
+升级后在供应商页勾选并“保存选择”，再进入“模型管理”查看数量和下拉列表。此验证不需要重启代理或 Desktop，也不发送推理请求。若仍未显示，请反馈“复制模型诊断”的结果；测试用户电脑的确切原因仍需该诊断确认。此次修复针对启动器自己的列表。
 
-Fix the reported “Codex config not found … config.toml / Codex sync did not complete” failure. Explicit manual setup and CLI actions now create an empty config.toml only when it is missing from the launcher-managed Codex home. Existing files are never overwritten. Missing external/custom homes are reported. This builds on the 2.5.2 missing-directory fix and imports no account data.
-
-修复手动配置下缺少 config.toml 导致的同步失败。在明确配置或运行命令时，仅为启动器管理的 Codex 目录补建缺失的空 TOML 文件；保留已有内容，不导入本机账号。首次打开软件仍为空白。
-
-Codex itself remains a separate installation. If its model catalog is unavailable, OpenCodex 2.47.0 can complete configuration sync but still report that the proxy is not ready. Install/configure Codex and explicitly associate a valid home/catalog through setup, then retry. The launcher does not manufacture native models or import another account to suppress that warning.
-
-Codex 仍需单独安装。完全没有 Codex 模型目录时，上游可能在配置同步成功后仍报告未就绪；应安装并配置 Codex，再通过配置引导明确关联有效目录。此更新不伪造原生模型来隐藏该提示。
-
-## Verification and limits / 验证与限制
-
-Both native and SDK builds pass 163 isolated core checks and 38 WPF checks each, with 42 page/scale renders per UI run. Tests cover validation, cancellation, transactional replacement, rollback and an actual helper/parent/restarted-child fixture. Real OpenCodex 2.47.0 reproduces the missing-config failure and confirms successful explicit sync after repair. Readiness is tested with a separate test-only catalog cache. No paid inference or user service restart is used.
-
-Public source and Windows packages use release allowlists and text/resource/binary scans. Personal provider settings, endpoints, credentials, custom paths, account data and test logs are excluded. Fresh users start with empty configuration; dependencies download on demand.
-
-GitHub access (including its release CDN) is required; rate limits, unavailable SHA-256 metadata or network failures stop the update. The EXE is not Authenticode signed; hashes trust HTTPS and the repository publisher. There is no administrator elevation, downgrade, automatic interrupted-update recovery or backup cleanup. If power loss interrupts replacement, consult README recovery instructions or extract a verified full Windows ZIP. Retained backups and runtime logs are private. Future package-layout changes may need a manual upgrade.
+Packages are allowlisted and contain no user configuration or credentials. Checksums are in SHA256SUMS.txt. The updater retains its existing backup/rollback behavior.

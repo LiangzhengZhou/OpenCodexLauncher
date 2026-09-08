@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("2.6.0.0")]
-[assembly: AssemblyFileVersion("2.6.0.0")]
+[assembly: AssemblyVersion("2.6.1.0")]
+[assembly: AssemblyFileVersion("2.6.1.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -33,6 +33,10 @@ namespace OpenCodexLauncherV2
         readonly ObservableCollection<ModelOption> models = new ObservableCollection<ModelOption>();
         readonly ObservableCollection<ProviderModelChoice> choices = new ObservableCollection<ProviderModelChoice>();
         readonly List<ModelOption> native = new List<ModelOption>();
+        readonly List<ModelOption> catalogCache = new List<ModelOption>();
+        TextBlock modelSummary;
+        bool catalogUnreadable;
+        string nativeRefreshState = "not-requested";
         LauncherSettings settings;
         PathSet paths;
         TextBlock status, operation, providerStatus, healthText;
@@ -65,7 +69,7 @@ namespace OpenCodexLauncherV2
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 2.6.0"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher 2.6.1"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = new SolidColorBrush(Color.FromRgb(245, 247, 251)); FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("OpenCodexLauncher.icon.png"))
@@ -117,7 +121,7 @@ namespace OpenCodexLauncherV2
             var brand = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center }; if (Icon != null) brand.Children.Add(new Image { Source = Icon, Width = 42, Height = 42, Margin = new Thickness(0, 0, 13, 0) }); var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; title.Children.Add(new TextBlock { Text = "OpenCodex Launcher", Foreground = ink, FontSize = 22, Margin = new Thickness(0, 0, 0, 4) }); title.Children.Add(Text(L.M("text.000"), 12)); brand.Children.Add(title); headerGrid.Children.Add(brand);
             var health = new Border { Background = new SolidColorBrush(Color.FromRgb(236, 253, 245)), BorderBrush = new SolidColorBrush(Color.FromRgb(167, 243, 208)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(16), Padding = new Thickness(13, 7, 13, 7), VerticalAlignment = VerticalAlignment.Center }; healthText = Text(L.M("text.001")); health.Child = healthText; Grid.SetColumn(health, 1); var headerActions = new StackPanel { Orientation = Orientation.Horizontal }; headerActions.Children.Add(LanguageButton()); headerActions.Children.Add(health); Grid.SetColumn(headerActions, 1); headerGrid.Children.Add(headerActions); header.Child = headerGrid;
             var body = new Grid(); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(218) }); body.ColumnDefinitions.Add(new ColumnDefinition()); Grid.SetRow(body, 1); root.Children.Add(body);
-            var side = new Border { Background = ink, Padding = new Thickness(16, 24, 16, 18) }; Grid.SetColumn(side, 0); body.Children.Add(side); var sidePanel = new DockPanel(); var sideNote = Text(L.M("text.002"), 12); sideNote.Foreground = Brushes.LightGray; DockPanel.SetDock(sideNote, Dock.Bottom); sidePanel.Children.Add(sideNote); navigation = new ListBox { BorderThickness = new Thickness(0), Background = Brushes.Transparent, Foreground = Brushes.White, FontSize = 14, FontWeight = FontWeights.SemiBold, ItemContainerStyle = NavigationStyle() }; navigation.SelectionChanged += delegate { if (navigation.SelectedItem != null) content.Content = pages[(string)((ListBoxItem)navigation.SelectedItem).Tag]; }; sidePanel.Children.Add(navigation); side.Child = sidePanel;
+            var side = new Border { Background = ink, Padding = new Thickness(16, 24, 16, 18) }; Grid.SetColumn(side, 0); body.Children.Add(side); var sidePanel = new DockPanel(); var sideNote = Text(L.M("text.002"), 12); sideNote.Foreground = Brushes.LightGray; DockPanel.SetDock(sideNote, Dock.Bottom); sidePanel.Children.Add(sideNote); navigation = new ListBox { BorderThickness = new Thickness(0), Background = Brushes.Transparent, Foreground = Brushes.White, FontSize = 14, FontWeight = FontWeights.SemiBold, ItemContainerStyle = NavigationStyle() }; navigation.SelectionChanged += delegate { if (navigation.SelectedItem != null) { var pageId = (string)((ListBoxItem)navigation.SelectedItem).Tag; content.Content = pages[pageId]; if (pageId == "models") { try { LoadModels(); } catch (Exception) { SetText(modelSummary, L.M("models.configError")); } } } }; sidePanel.Children.Add(navigation); side.Child = sidePanel;
             content = new ContentControl { Background = page }; Grid.SetColumn(content, 1); body.Children.Add(content);
             operation = Text(L.M("text.003")); operation.Margin = new Thickness(22, 0, 22, 0); Grid.SetRow(operation, 2); root.Children.Add(operation);
             AddPage("overview", L.M("text.004"), Overview()); AddPage("providers", L.M("text.005"), Providers()); AddPage("models", L.M("text.006"), Models()); AddPage("force", L.M("text.007"), ForceLaunch()); AddPage("routes", L.M("text.008"), Routes()); AddPage("logs", L.M("text.009"), Logs()); AddPage("settings", L.M("text.010"), Settings()); navigation.SelectedIndex = 0; Content = root;
@@ -204,15 +208,21 @@ namespace OpenCodexLauncherV2
             if (selected.Length == 0 && !Confirm(L.M("text.045"))) return;
             await config.SelectProviderModelsAsync(paths.OcxConfig, p.Id, p.DisplayName, selected, choices.Select(x => x.Id));
             var saved = config.SelectedModels(paths.OcxConfig, p.Id);
-            SetText(providerStatus, L.M("text.046") + saved.Count + L.M("text.047"));
+            if (!saved.SetEquals(selected)) throw new IOException(L.M("models.saveMismatch"));
             Populate(config.Providers(paths.OcxConfig).FirstOrDefault(x => x.Id == p.Id));
-            LoadModels(); if (sync) await Sync();
+            LoadModels();
+            if (selected.Any(id => !models.Any(m => m.Id == ModelNames.Slug(p.Id, id)))) throw new IOException(L.M("models.saveMismatch"));
+            SetText(providerStatus, L.F("models.saved", saved.Count)); Log(L.F("models.saved", saved.Count));
+            if (sync) await Sync();
         }
         UIElement Models()
         {
             var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.048"), 14));
+            modelSummary = Text(L.M("models.empty")); panel.Children.Add(modelSummary);
             modelBox = new ComboBox { ItemsSource = models, Height = 40, Margin = new Thickness(0, 10, 0, 18) }; panel.Children.Add(modelBox);
             var actions = new WrapPanel(); actions.Children.Add(AsyncBtn(L.M("text.049"), RefreshModels));
+            actions.Children.Add(Btn(L.M("models.configure"), () => navigation.SelectedItem = navigation.Items.Cast<ListBoxItem>().Single(x => (string)x.Tag == "providers")));
+            actions.Children.Add(Btn(L.M("models.diagnostics"), () => { Clipboard.SetText(ModelDiagnostics.Create(paths, settings, models, nativeRefreshState)); SetText(modelSummary, L.M("models.copied")); }));
             actions.Children.Add(Btn(L.M("text.050"), () => { var id = Selected(); ModelNames.ValidateId(id); var cwd = Directory.Exists(settings.WorkingDirectory) ? settings.WorkingDirectory : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); AsyncProcessRunner.StartVisible(paths.Codex, "-m " + Commands.Quote(id), cwd, paths); }));
             actions.Children.Add(AsyncBtn(L.M("text.051"), async delegate { var id = Selected(); if (Confirm(L.M("text.052") + id + "？")) { await EnsureProxyRoute(); await config.SetDefaultModelAsync(paths.CodexConfig, id); await Sync(); await RefreshState(); } }));
             actions.Children.Add(AsyncBtn(L.M("text.053"), async delegate {
@@ -391,7 +401,7 @@ namespace OpenCodexLauncherV2
             actions.Children.Add(Btn(L.M("text.134"), () => logs.Clear()));
             actions.Children.Add(Btn(L.M("text.135"), () => { var dialog = new SaveFileDialog { Filter = L.M("text.136"), FileName = "opencodex-sanitized.log" }; if (dialog.ShowDialog(this) == true) File.WriteAllText(dialog.FileName, Redactor.Apply(logs.Text)); })); panel.Children.Add(actions);
             panel.Children.Add(Text(L.M("text.137")));
-            logs = new TextBox { IsReadOnly = true, MinHeight = 450, AcceptsReturn = true, FontFamily = new FontFamily("Consolas"), VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto }; panel.Children.Add(logs); return panel;
+            logs = new TextBox { IsReadOnly = true, MinHeight = 450, AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, FontFamily = new FontFamily("Consolas"), VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled }; panel.Children.Add(logs); return panel;
         }
         UIElement Settings()
         {
@@ -445,19 +455,30 @@ namespace OpenCodexLauncherV2
         {
             SetupService.Validate(paths);
             var previous = modelBox.SelectedItem as ModelOption; var id = previous == null ? (String.IsNullOrWhiteSpace(settings.LastSelectedModel) ? config.CurrentModel(paths.CodexConfig) : settings.LastSelectedModel) : previous.Id;
-            var next = CatalogReader.Load(paths, config, native); models.Clear(); foreach (var m in next) models.Add(m);
+            catalogUnreadable = false;
+            var next = CatalogReader.Load(paths, config, native, code => catalogUnreadable = true, catalogCache); models.Clear(); foreach (var m in next) models.Add(m);
             var chosen = models.FirstOrDefault(x => x.Id == id) ?? models.FirstOrDefault(x => x.Id == config.CurrentModel(paths.CodexConfig)) ?? models.FirstOrDefault(x => x.Id == "gpt-6-astra") ?? models.FirstOrDefault(); modelBox.SelectedItem = chosen; if (forceModelBox != null) forceModelBox.SelectedItem = chosen;
             if (reserveTargetBox != null) { var routed = models.Where(x => x.IsRouted).ToList(); reserveTargetBox.ItemsSource = routed; reserveTargetBox.SelectedItem = routed.FirstOrDefault(x => x.Id == (String.IsNullOrWhiteSpace(settings.ReserveForceTargetRoute) ? settings.ReserveForceTargetModel : settings.ReserveForceTargetRoute)) ?? routed.FirstOrDefault(x => x.Id == settings.LastSelectedModel) ?? routed.FirstOrDefault(); }
+            SetText(modelSummary, L.F("models.count", models.Count(x => x.IsRouted), models.Count(x => x.IsNative)) + "\n" +
+                (catalogUnreadable ? L.M("models.catalogError") : models.Any(x => x.IsRouted) ? L.M("models.localReady") : L.M("models.empty")));
         }
         async Task RefreshModels()
         {
+            // Show saved local models before any optional CLI work (which may fail or time out).
+            LoadModels();
             if (!String.IsNullOrEmpty(paths.Codex))
             {
+                try {
                 var result = await runner.RunAsync(paths.Codex, "debug models", Directory.Exists(paths.CodexHome) ? paths.CodexHome : Environment.CurrentDirectory, TimeSpan.FromSeconds(30), life.Token, null, paths.OcxConfig, paths.CodexHome);
-                if (result.Succeeded) { var list = CatalogReader.ParseCatalog(result.Output, true); native.Clear(); native.AddRange(list); }
-                else Log(L.M("text.154") + result.Error);
+                if (life.IsCancellationRequested) return;
+                if (result.Succeeded) { var list = CatalogReader.ParseCatalog(result.Output, true); native.Clear(); native.AddRange(list); nativeRefreshState = "ok"; }
+                else { nativeRefreshState = "failed"; Log(L.M("models.cliError")); }
+                } catch (OperationCanceledException) { throw; }
+                catch (Exception) { if (life.IsCancellationRequested) return; nativeRefreshState = "failed"; Log(L.M("models.cliError")); }
             }
+            else nativeRefreshState = "not-configured";
             LoadModels();
+            if (nativeRefreshState == "failed") SetText(modelSummary, L.F("models.count", models.Count(x => x.IsRouted), models.Count(x => x.IsNative)) + "\n" + L.M("models.cliError"));
         }
         async Task<bool> Healthy()
         {

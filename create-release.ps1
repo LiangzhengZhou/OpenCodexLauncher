@@ -22,7 +22,7 @@ else {
     Copy-Item -LiteralPath ($Executable + '.config') -Destination (Join-Path $binaryDir 'OpenCodexLauncher.exe.config')
 }
 $exe = Join-Path $binaryDir 'OpenCodexLauncher.exe'
-if ([Diagnostics.FileVersionInfo]::GetVersionInfo($exe).FileVersion -ne '2.6.0.0') { throw 'Executable version does not match release.' }
+if ([Diagnostics.FileVersionInfo]::GetVersionInfo($exe).FileVersion -ne '2.6.1.0') { throw 'Executable version does not match release.' }
 foreach ($file in @('README.md','README.zh-CN.md','CHANGELOG.md','RELEASE_NOTES.md','LICENSE')) { Copy-Item -LiteralPath (Join-Path $sourceDir $file) -Destination $binaryDir }
 $binaryHashes = Get-ChildItem -LiteralPath $binaryDir -File | Sort-Object Name | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $_.Name }
 [IO.File]::WriteAllLines((Join-Path $binaryDir 'SHA256SUMS.txt'),$binaryHashes,[Text.UTF8Encoding]::new($false))
@@ -30,8 +30,8 @@ $binaryHashes = Get-ChildItem -LiteralPath $binaryDir -File | Sort-Object Name |
 & (Join-Path $PSScriptRoot 'release-check.ps1') -Directory $binaryDir -Kind binary
 # ZipFile includes dotfiles such as .github and .gitignore; Compress-Archive may omit them.
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[IO.Compression.ZipFile]::CreateFromDirectory($sourceDir,(Join-Path $releaseRoot 'OpenCodexLauncher-2.6.0-source.zip'))
-[IO.Compression.ZipFile]::CreateFromDirectory($binaryDir,(Join-Path $releaseRoot 'OpenCodexLauncher-2.6.0-windows-x64.zip'))
+[IO.Compression.ZipFile]::CreateFromDirectory($sourceDir,(Join-Path $releaseRoot 'OpenCodexLauncher-2.6.1-source.zip'))
+[IO.Compression.ZipFile]::CreateFromDirectory($binaryDir,(Join-Path $releaseRoot 'OpenCodexLauncher-2.6.1-windows-x64.zip'))
 $hashes = Get-ChildItem -LiteralPath $releaseRoot -Filter *.zip | Sort-Object Name | ForEach-Object { (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + '  ' + $_.Name }
 [IO.File]::WriteAllLines((Join-Path $releaseRoot 'SHA256SUMS.txt'),$hashes,[Text.UTF8Encoding]::new($false))
 Write-Output 'Release created. Publish only github-source or the generated ZIP files.'

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -39,6 +40,7 @@ class UiChecks
             Directory.CreateDirectory(Path.GetDirectoryName(ambient.OcxConfig));File.WriteAllText(ambient.OcxConfig,"invalid ambient provider config");
             Directory.CreateDirectory(ambient.CodexHome);File.WriteAllText(ambient.Catalog,"invalid ambient catalog");
             var app=new Application {ShutdownMode=ShutdownMode.OnExplicitShutdown};
+            SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
             var w=new MainWindow {Width=980,Height=700};w.Show();Pump();
             Check(!Field<LauncherSettings>(w,"settings").SetupCompleted && Field<PathSet>(w,"paths").OcxConfig==null,"fresh UI ignores existing malformed ambient files");
             Check(Field<Dictionary<string,UIElement>>(w,"pages").Count==0,"fresh UI does not build provider or model pages");
@@ -67,6 +69,44 @@ class UiChecks
             Check(Find<TextBlock>(w).Any(b=>b.Text.Contains("供应商 ID")),"existing labels update immediately in Chinese");
             Click(Find<Button>(w).Single(b=>Convert.ToString(b.Content)=="中文 / EN"));
             Check(Find<TextBlock>(w).Any(b=>b.Text.Contains("Provider ID")),"existing labels update immediately in English");
+            // Exercise the real provider editor and selection-save button with no runtime.
+            id.Text="demo-provider";Field<TextBox>(w,"providerName").Text="Demo Provider";
+            Field<TextBox>(w,"providerUrl").Text="https://example.invalid/v1";
+            Click(Find<Button>(w).Single(b=>Convert.ToString(b.Content)=="Save provider"));
+            Until(()=>Field<SemaphoreSlim>(w,"gate").CurrentCount==1);
+            var provider=Field<ConfigStore>(w,"config").Providers(Field<PathSet>(w,"paths").OcxConfig).Single();
+            w.GetType().GetMethod("Populate",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(w,new object[]{provider});
+            choices.Add(new ProviderModelChoice{Id="fixture-model",DisplayName="Demo Provider Fixture Model",Selected=false});
+            w.UpdateLayout();Pump();
+            Find<CheckBox>(w).Single(c=>c.DataContext==choices[0]).IsChecked=true;Pump();
+            Check(choices[0].Selected,"real provider checkbox binding updates the model selection");
+            w.GetType().GetField("fetchedFor",BindingFlags.NonPublic|BindingFlags.Instance).SetValue(w,
+                w.GetType().GetMethod("Fingerprint",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(w,new object[]{provider}));
+            Click(Find<Button>(w).Single(b=>Convert.ToString(b.Content)=="Save selection"));
+            Until(()=>Field<SemaphoreSlim>(w,"gate").CurrentCount==1);
+            nav.SelectedIndex=2;Pump();
+            Check(Field<ComboBox>(w,"modelBox").Items.Cast<ModelOption>().Any(m=>m.Id=="demo-provider/fixture-model"&&m.DisplayName.StartsWith("Demo Provider")),"saving selection immediately populates Models without Codex, catalog, proxy or sync");
+            Check(Field<TextBlock>(w,"providerStatus").Text.Contains("Saved and verified 1")&&Field<TextBox>(w,"logs").Text.Contains("Saved and verified 1"),"model save confirmation survives provider repopulation and records a verified count");
+            var modelPaths=Field<PathSet>(w,"paths");var store=Field<ConfigStore>(w,"config");
+            nav.SelectedIndex=1;Pump();
+            store.AddCustomModelsAsync(modelPaths.OcxConfig,"demo-provider",new[]{"second-model"}).GetAwaiter().GetResult();
+            nav.SelectedIndex=2;Pump();
+            Check(Field<ComboBox>(w,"modelBox").Items.Cast<ModelOption>().Any(m=>m.Id=="demo-provider/second-model"),"entering Models reloads externally updated selections without CLI or sync");
+            File.WriteAllText(modelPaths.Catalog,"{incomplete");var damagedHash=FileTransaction.Hash(modelPaths.Catalog);
+            nav.SelectedIndex=1;nav.SelectedIndex=2;Pump();
+            Check(Field<ComboBox>(w,"modelBox").Items.Count==2&&Field<TextBlock>(w,"modelSummary").Text.Contains("unreadable"),"unreadable generated catalog reports a warning without hiding local models");
+            var fakeCli=Path.Combine(output,"invalid-model-output.cmd");File.WriteAllText(fakeCli,"@echo off\r\necho invalid-json\r\nexit /b 0\r\n");modelPaths.Codex=fakeCli;
+            var refresh=(Task)w.GetType().GetMethod("RefreshModels",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(w,null);Until(()=>refresh.IsCompleted);refresh.GetAwaiter().GetResult();
+            Check(Field<ComboBox>(w,"modelBox").Items.Count==2&&Field<TextBlock>(w,"modelSummary").Text.Contains("CLI catalog refresh failed"),"malformed CLI output preserves saved third-party models and reports the refresh failure");
+            Check(FileTransaction.Hash(modelPaths.Catalog)==damagedHash,"UI fallback leaves unreadable generated catalog untouched");
+            modelPaths.Codex=null;
+            var diagnostic=ModelDiagnostics.Create(modelPaths,Field<LauncherSettings>(w,"settings"),Field<System.Collections.ObjectModel.ObservableCollection<ModelOption>>(w,"models"),Field<string>(w,"nativeRefreshState"));
+            Check(diagnostic.Contains("\"visibleThirdPartyModels\":2")&&!diagnostic.Contains("demo-provider")&&!diagnostic.Contains(output),"UI diagnostics expose counts and failure states without private provider names or paths");
+            nav.SelectedIndex=1;nav.SelectedIndex=2;Pump();
+            var savedSelection=(ModelOption)Field<ComboBox>(w,"modelBox").Items[1];Field<ComboBox>(w,"modelBox").SelectedItem=savedSelection;
+            L.SetLanguage("zh");Pump();
+            Check(Field<ComboBox>(w,"modelBox").SelectedItem==savedSelection&&Field<TextBlock>(w,"modelSummary").Text.Contains("第三方模型 2"),"model summary switches language while retaining the selected route");
+            L.SetLanguage("en");
             foreach(var language in new[]{"en","zh"})
             {
                 L.SetLanguage(language);Pump();
@@ -78,6 +118,9 @@ class UiChecks
                 }
             }
             w.Close();Pump();
+            var reopened=new MainWindow();reopened.Show();Pump();
+            Check(!Field<bool>(reopened,"recoveryMode")&&Field<ComboBox>(reopened,"modelBox").Items.Count==2,"reopening with an unreadable optional catalog preserves saved third-party models without blocking startup");
+            reopened.Close();Pump();
             File.WriteAllText(PathResolver.SettingsPath(),"{invalid");var hash=FileTransaction.Hash(PathResolver.SettingsPath());
             var recovery=new MainWindow();recovery.Show();Pump();
             Check(Field<bool>(recovery,"recoveryMode") && FileTransaction.Hash(PathResolver.SettingsPath())==hash,"corrupt settings show recovery UI without overwriting original bytes");

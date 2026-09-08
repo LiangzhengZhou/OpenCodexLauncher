@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.6.0",
-    "en": "Models, providers and routing console · v2.6.0"
+    "zh": "模型、供应商与路由控制台  ·  v2.6.1",
+    "en": "Models, providers and routing console · v2.6.1"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -552,8 +552,8 @@
     "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
   },
   "text.138": {
-    "zh": "启动器 2.6.0。路径配置保存到 Windows 当前用户目录。",
-    "en": "Launcher 2.6.0. Paths are stored in the current Windows user's data directory."
+    "zh": "启动器 2.6.1。路径配置保存到 Windows 当前用户目录。",
+    "en": "Launcher 2.6.1. Paths are stored in the current Windows user's data directory."
   },
   "text.139": {
     "zh": "选择 OpenCodex 入口",
@@ -1154,9 +1154,7 @@
   "startup.preflight": {
     "zh": "OpenCodex 启动前检查失败（退出代码 {0}）：",
     "en": "OpenCodex startup preflight failed (exit code {0}):"
-  }
-,
-
+  },
   "update.available": {
     "zh": "可更新到 {0}。",
     "en": "Version {0} is available."
@@ -1244,5 +1242,49 @@
   "update.writable": {
     "zh": "安装目录无法写入或包含只读文件。请将软件解压到当前用户可写的目录后重试。",
     "en": "The installation folder is not writable or contains read-only files. Extract the launcher to a user-writable folder and retry."
+  },
+  "models.copied": {
+    "en": "Diagnostics copied: version, counts and states only; no keys, provider/model names, URLs or paths.",
+    "zh": "已复制诊断：仅含版本、数量和状态，不含密钥、供应商名、模型名、地址或路径。"
+  },
+  "models.localReady": {
+    "en": "Saved third-party models can be selected above; this list needs no sync or proxy restart.",
+    "zh": "已保存的第三方模型可直接在上方列表选择；此列表不需要同步或重启代理。"
+  },
+  "models.empty": {
+    "en": "No third-party models enabled. Fetch models on Providers, check the models you want, then Save selection. Saving provider details or a default model ID alone does not add models.",
+    "zh": "还没有启用的第三方模型。请到供应商页获取模型、勾选，再点击“保存选择”。只保存供应商或填写默认模型 ID 不会添加模型。"
+  },
+  "models.saved": {
+    "en": "Saved and verified {0} models; the Models list has been updated.",
+    "zh": "已保存并回读验证 {0} 个模型，模型管理列表已更新。"
+  },
+  "models.configError": {
+    "en": "Provider configuration is unreadable. The previous list was retained. Copy model diagnostics to report the issue.",
+    "zh": "供应商配置暂时不可读，已保留上次列表。请复制模型诊断反馈问题。"
+  },
+  "models.cliError": {
+    "en": "Native CLI catalog refresh failed. Local models are still listed. Copy model diagnostics to report the issue.",
+    "zh": "官方 CLI 目录刷新失败，已保留本地模型列表。可复制模型诊断反馈问题。"
+  },
+  "models.catalogError": {
+    "en": "Codex catalog is unreadable. The last valid catalog and locally saved third-party models remain available. The file was not changed.",
+    "zh": "Codex 目录暂时不可读，已保留上次有效目录并显示本地保存的第三方模型。原文件未改动。"
+  },
+  "models.count": {
+    "en": "Local list: {0} third-party models, {1} native models.",
+    "zh": "本地列表：第三方模型 {0} 个，官方模型 {1} 个。"
+  },
+  "models.configure": {
+    "en": "Configure providers",
+    "zh": "前往供应商配置"
+  },
+  "models.diagnostics": {
+    "en": "Copy model diagnostics",
+    "zh": "复制模型诊断"
+  },
+  "models.saveMismatch": {
+    "en": "Selection was written, but read-back or list verification differed. Copy model diagnostics on Models; do not delete your configuration.",
+    "zh": "模型选择已写入，但回读或列表验证不一致。请在模型管理页复制模型诊断；不要删除配置。"
   }
 }

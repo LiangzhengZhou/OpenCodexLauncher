@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 2.6.1 — 2026-09-08
+
+- Build the local model list from provider selections and configured model seeds as well as customModels; support homes without generated catalogs.
+- Keep saved third-party models available when a generated catalog is unreadable or the optional native CLI refresh fails. Preserve the last valid catalog without rewriting damaged files.
+- Reload local selections when entering Models. Verify saved selections by reading them back, retain the success message and log the verified count before optional sync.
+- Add bilingual list counts, empty-state guidance and a copyable model diagnostic report containing only version, counts and fixed status codes.
+- Test the real provider checkbox/save/navigation flow, incomplete catalogs, CLI failure, restart persistence and diagnostics in isolated new-user environments. Wrap long log lines.
+- 修复部分配置格式下模型已选却不显示，以及可选目录/CLI 刷新失败影响本地模型列表的问题；增加不含密钥、名称、端点和路径的模型诊断。
+
 ## 2.6.0 — 2026-09-08
 
 - Add explicit launcher self-update checks and update/restart controls in Settings, onboarding and recovery, with live Chinese/English text.
