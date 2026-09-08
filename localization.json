@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.6.1",
-    "en": "Models, providers and routing console · v2.6.1"
+    "zh": "模型、供应商与路由控制台  ·  v2.6.2",
+    "en": "Models, providers and routing console · v2.6.2"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -552,8 +552,8 @@
     "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
   },
   "text.138": {
-    "zh": "启动器 2.6.1。路径配置保存到 Windows 当前用户目录。",
-    "en": "Launcher 2.6.1. Paths are stored in the current Windows user's data directory."
+    "zh": "启动器 2.6.2。路径配置保存到 Windows 当前用户目录。",
+    "en": "Launcher 2.6.2. Paths are stored in the current Windows user's data directory."
   },
   "text.139": {
     "zh": "选择 OpenCodex 入口",
@@ -606,14 +606,6 @@
   "text.151": {
     "zh": "代理 30 秒内未就绪，请检查配置和 OpenCodex 运行时。",
     "en": "Proxy was not ready within 30 seconds. Check configuration and the OpenCodex runtime."
-  },
-  "text.152": {
-    "zh": "选择已保存，目录已同步到 Codex。",
-    "en": "Selection saved and catalog synced to Codex."
-  },
-  "text.153": {
-    "zh": "目录已同步。若 Desktop 未刷新，请重新打开模型选择器。",
-    "en": "Catalog synced. Reopen the model picker if Desktop has not refreshed."
   },
   "text.154": {
     "zh": "原生目录刷新失败，保留已有目录：",
@@ -1286,5 +1278,65 @@
   "models.saveMismatch": {
     "en": "Selection was written, but read-back or list verification differed. Copy model diagnostics on Models; do not delete your configuration.",
     "zh": "模型选择已写入，但回读或列表验证不一致。请在模型管理页复制模型诊断；不要删除配置。"
+  },
+  "desktop.select": {
+    "zh": "关联 Desktop 配置…",
+    "en": "Associate Desktop config…"
+  },
+  "desktop.settings": {
+    "zh": "配置 Desktop 同步目标",
+    "en": "Configure Desktop sync target"
+  },
+  "desktop.explain": {
+    "zh": "使用 Codex Desktop 时，请选择 Desktop 设置中打开的 config.toml。启动器的独立目录可能与 Desktop 不同；模型在本地列表出现，不代表 Desktop 已加载。",
+    "en": "For Codex Desktop, select the config.toml opened from Desktop settings. The independent launcher home may differ. A model in the local list does not prove Desktop has loaded it."
+  },
+  "desktop.target": {
+    "zh": "当前同步目标：{0}",
+    "en": "Current sync target: {0}"
+  },
+  "desktop.unconfirmed": {
+    "zh": "尚未明确关联 Desktop 配置。请先核对目标目录，再同步或重启。",
+    "en": "Desktop config has not been explicitly associated. Verify the target before syncing or restarting."
+  },
+  "desktop.associated": {
+    "zh": "已关联所选配置；Desktop 是否已加载仍需在其模型选择器确认。",
+    "en": "Selected config associated; verify loading in the Desktop model picker."
+  },
+  "desktop.confirm": {
+    "zh": "将后续 Codex 同步目标设为：\n{0}\n\n请确认这是从 Desktop 设置打开的配置文件。后续同步会备份并修改该配置及模型目录。保留当前供应商和密钥；本次关联不复制账号、不写入所选配置、不启动或重启服务。继续吗？",
+    "en": "Use this file for subsequent Codex sync:\n{0}\n\nConfirm it is the config opened from Desktop settings. Later syncs back up and modify this config and catalog. Keep current providers and keys; association alone does not copy accounts, edit the selected config, or start/restart services. Continue?"
+  },
+  "desktop.saved": {
+    "zh": "Desktop 配置已关联，供应商已保留。请启动 OpenCodex 后同步；需要时在任务结束后重启 Desktop。",
+    "en": "Desktop config associated; providers retained. Start OpenCodex and sync, then restart Desktop after active tasks finish if needed."
+  },
+  "desktop.invalid": {
+    "zh": "请选择 Desktop 正在使用的现有 config.toml 文件。",
+    "en": "Select the existing config.toml used by Desktop."
+  },
+  "desktop.missing": {
+    "zh": "已关联的 Desktop 配置不存在。请恢复所选文件后重新加载，不会自动创建替代配置。",
+    "en": "Associated Desktop config is missing. Restore the selected file and reload; no replacement config will be created."
+  },
+  "desktop.setup": {
+    "zh": "请先完成首次配置，再关联 Desktop。",
+    "en": "Complete setup before associating Desktop."
+  },
+  "desktop.busy": {
+    "zh": "请等待当前操作完成后再切换 Desktop 配置。",
+    "en": "Wait for the current operation before switching Desktop config."
+  },
+  "desktop.restartUnverified": {
+    "zh": "同步/重启命令已返回。请检查上方日志是否实际完成重启，并在 Desktop 模型选择器确认；退出码不能证明 Desktop 已加载目标目录。",
+    "en": "Sync/restart command returned. Check its log for the restart outcome, then verify the Desktop model picker; exit status does not prove Desktop loaded the target home."
+  },
+  "text.152": {
+    "zh": "目标目录文件已更新；Desktop 加载状态尚未确认。",
+    "en": "Target catalog files updated; Desktop loading is not verified."
+  },
+  "text.153": {
+    "zh": "目标目录文件已更新。请核对“Codex 路由”中的 Desktop 配置目标；代理运行和 Desktop 加载状态须另行确认。",
+    "en": "Target catalog files updated. Verify the Desktop config target on Codex routing; proxy availability and Desktop loading require separate checks."
   }
 }

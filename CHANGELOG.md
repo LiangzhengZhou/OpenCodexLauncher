@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 2.6.2 — 2026-09-08
+
+- Add explicit association with the existing config.toml opened from Codex Desktop settings. Keep the manual OpenCodex provider store, credentials and model selections independent of the selected Codex home.
+- Show the sync target on Codex routing; retain it across restarts and language changes. Reject missing selected files instead of creating replacement configurations.
+- Distinguish file sync, explicit configuration association and unverified Desktop loading. Prepare routing before the explicitly confirmed Desktop sync/restart command.
+- Test association, child-process home, provider preservation, read-only preview, onboarding isolation, missing-file handling and bilingual UI persistence in isolated fixtures.
+- Use ASCII build errors so the native build script also parses in Windows PowerShell 5 without a UTF-8 BOM.
+- 增加 Desktop 配置关联和同步目标显示；保留已有供应商与模型。修正同步提示，明确文件写入并不代表 Desktop 已加载，不自动重启 Desktop 或导入账号。
+
 ## 2.6.1 — 2026-09-08
 
 - Build the local model list from provider selections and configured model seeds as well as customModels; support homes without generated catalogs.

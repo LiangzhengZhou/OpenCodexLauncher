@@ -1,4 +1,4 @@
-# OpenCodex Launcher 2.6.1
+# OpenCodex Launcher 2.6.2
 
 [简体中文](README.zh-CN.md)
 
@@ -16,7 +16,7 @@ Use the persistent **中文 / EN** button to change language. The initial langua
 
 ## Update the launcher
 
-In 2.6.0+, use the built-in updater to install 2.6.1. See the model-list troubleshooting section below if a test machine does not show saved third-party models.
+In 2.6.0+, use the built-in updater to install 2.6.2. For Codex Desktop's model picker, follow the Desktop association steps below.
 
 In **Settings**, use **Check launcher updates**, then **Update and restart**. The panel is also available on onboarding and recovery pages. Save form edits before confirming. Only an explicit click contacts the public GitHub Releases API; no GitHub login is needed. Updates verify GitHub's SHA-256 digest, internal file checksums and executable version. Rate limits, missing digests and network restrictions stop the update. Access to api.github.com, github.com and GitHub's release CDN is required.
 
@@ -27,6 +27,20 @@ Versions before 2.6.0 need one final manual Windows ZIP upgrade to acquire this 
 If power loss interrupts replacement, keep %LOCALAPPDATA%/OpenCodexLauncher/updates and recovery. updates/<id>/recovery.txt points to the backup journal; journal.json maps target files to numbered .original backups. Close launcher windows, compare current files, then restore the full original file set. Entries with no BeforeFile represent newly added files. Preserve application data and unrelated files; do not blindly overwrite external edits. Alternatively extract a verified Windows release ZIP. Interrupted transactions do not resume automatically. Old backups remain until manually removed; never share these private directories.
 
 The EXE is not Authenticode signed. Hash verification trusts HTTPS and the repository publisher; it cannot protect against a compromised publisher. Unknown archive entries and links are rejected, so future package-layout changes may require a manual upgrade.
+
+## Third-party models missing in Codex Desktop
+
+The launcher and Codex Desktop can use different configuration homes, especially after manual or one-click setup. Successful sync updates the selected files; it does not prove Desktop loaded those files.
+
+1. In Codex Desktop settings, open its config.toml and note its location. Do not share its contents or account files.
+2. In the launcher, open **Codex routing → Associate Desktop config…** (also accessible from Settings). Select that existing config.toml, review the target and confirm.
+3. Existing provider configuration, keys and model selections stay in place. Association alone saves the target in launcher settings; it does not edit the selected config, copy account files, run CLI commands or restart services.
+4. Start OpenCodex from Overview and sync the model catalog. Later syncs back up and modify the selected Codex config and catalog. If the proxy is stopped, start it before expecting routed requests to work.
+5. If Desktop still shows its old list, finish active tasks and use **Sync and restart Desktop**. Review the actual restart outcome in the log, then check Desktop's bottom-right model picker. This action can interrupt Desktop sessions.
+
+Do not assume the independent manual home is Desktop's home, or change the provider configuration mode to work around this. The target is shown on Codex routing. Association requires completed onboarding and a readable existing config.toml; a missing associated file produces an error instead of a replacement. Restore the selected file and reload if startup enters recovery. The launcher does not automatically detect or verify the running Desktop process's home.
+
+**Copy model diagnostics** distinguishes explicit association from Desktop loading: desktopConfigAssociated is a boolean and desktopLoaded remains unverified. No target path or file contents are included. Local counts and a successful CLI exit are insufficient evidence that Desktop loaded the catalog.
 
 ## Third-party models missing in the launcher's Models page
 
@@ -76,7 +90,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.1.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.2.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

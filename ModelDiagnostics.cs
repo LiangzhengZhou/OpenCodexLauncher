@@ -15,6 +15,8 @@ namespace OpenCodexLauncherV2
             var report = new Dictionary<string, object> {
                 { "launcherVersion", Assembly.GetExecutingAssembly().GetName().Version.ToString() },
                 { "setupCompleted", settings.SetupCompleted },
+                { "desktopConfigAssociated", !String.IsNullOrWhiteSpace(settings.DesktopConfigPath) },
+                { "desktopLoaded", "unverified" },
                 { "configurationMode", settings.ConfigurationMode == "manual" ? "manual" : "associated" },
                 { "nativeRefresh", new [] { "ok", "failed", "not-requested", "not-configured" }.Contains(refreshState) ? refreshState : "unknown" },
                 { "codexExecutableExists", File.Exists(paths.Codex) },

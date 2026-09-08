@@ -51,6 +51,7 @@ namespace OpenCodexLauncherV2
         public string OcxPath { get; set; }
         public string PreviousOcxPath { get; set; }
         public string CodexPath { get; set; }
+        public string DesktopConfigPath { get; set; }
         public string WorkingDirectory { get; set; }
         public string Language { get; set; }
         public int SettingsVersion { get; set; }
@@ -405,6 +406,13 @@ namespace OpenCodexLauncherV2
             var profile = LocalEnvironment.Current.UserDirectory;
             var manual = settings.ConfigurationMode == "manual";
             var codexHome = manual ? Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "codex") : Home("CODEX_HOME", Path.Combine(profile, ".codex"));
+            // Associate only after explicit setup and selection. Keep the OpenCodex
+            // provider store independent so existing manual providers are preserved.
+            if (settings.SetupCompleted && !String.IsNullOrWhiteSpace(settings.DesktopConfigPath))
+            {
+                DesktopAssociation.Validate(settings);
+                codexHome = DesktopAssociation.Home(settings.DesktopConfigPath);
+            }
             var ocxHome = manual ? Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "opencodex") : Home("OPENCODEX_HOME", Path.Combine(profile, ".opencodex"));
             return new PathSet {
                 Ocx = Existing(settings.OcxPath) ?? (LocalEnvironment.Current.IsIsolated || manual ? null : FromPath("ocx.cmd") ?? Find(Path.Combine(local, "Programs"), "ocx.cmd")),

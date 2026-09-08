@@ -13,7 +13,7 @@ New-Item -ItemType Directory -Path $compileDirectory | Out-Null
 $compileOutput = Join-Path $compileDirectory $OutputName
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $csc)) { $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe' }
-if (-not (Test-Path -LiteralPath $csc)) { throw '找不到 Windows C# 编译器 csc.exe。' }
+if (-not (Test-Path -LiteralPath $csc)) { throw 'Windows C# compiler csc.exe was not found.' }
 $framework = Split-Path $csc
 $refs = @(
   (Join-Path $framework 'System.dll'),
@@ -31,7 +31,7 @@ $refs = @(
   (Join-Path $framework 'System.Xaml.dll')
 )
 $cscArgs = @('/nologo','/target:winexe','/platform:x64','/optimize+',('/out:' + $compileOutput))
-if (-not (Test-Path -LiteralPath $icon)) { throw '缺少 assets/launcher.ico。' }
+if (-not (Test-Path -LiteralPath $icon)) { throw 'Missing assets/launcher.ico.' }
 $cscArgs += ('/win32icon:' + $icon)
 $cscArgs += ('/win32manifest:' + (Join-Path $root 'app.manifest'))
 $cscArgs += ('/resource:' + $iconPng + ',OpenCodexLauncher.icon.png')
@@ -39,8 +39,8 @@ foreach ($ref in $refs) { $cscArgs += ('/reference:' + $ref) }
 $cscArgs += (Get-ChildItem -LiteralPath $root -Filter *.cs | ForEach-Object { $_.FullName })
 $cscArgs += ('/resource:' + (Join-Path $root 'localization.json') + ',OpenCodexLauncher.localization.json')
 & $csc @cscArgs
-if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $compileOutput)) { throw 'WPF v2 编译失败。' }
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $compileOutput)) { throw 'WPF compilation failed.' }
 try { Move-Item -LiteralPath $compileOutput -Destination $output -Force; Write-Output ('Created: ' + $output) }
-catch { throw "无法替换目标 EXE，请先关闭启动器后重新构建。已编译文件保留在 $compileOutput" }
+catch { throw "Cannot replace the executable. Close the launcher and rebuild. Compiled file retained at $compileOutput" }
 Remove-Item -LiteralPath $compileDirectory
 Copy-Item -LiteralPath (Join-Path $root 'App.config') -Destination ($output + '.config') -Force

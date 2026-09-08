@@ -14,6 +14,7 @@ NuGet.Config
 OpenCodexLauncher.csproj
 LauncherCore.cs
 ModelDiagnostics.cs
+DesktopAssociation.cs
 LauncherV2.cs
 LocalEnvironment.cs
 Localization.cs

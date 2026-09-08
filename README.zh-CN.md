@@ -1,4 +1,4 @@
-# OpenCodex Launcher 2.6.1
+# OpenCodex Launcher 2.6.2
 
 ## 启动器“模型管理”没有第三方模型
 
@@ -33,6 +33,20 @@
 若更新中断电，请保留 %LOCALAPPDATA%/OpenCodexLauncher/updates 和 recovery。updates/<id>/recovery.txt 指向备份目录，journal.json 记录安装文件与编号 .original 备份的对应关系。关闭全部启动器窗口，比较文件后恢复完整的旧文件集；没有 BeforeFile 的条目表示更新中新建的文件。保留本地应用数据和无关文件，不要直接覆盖其他程序的改动。也可以完整解压已校验的 Windows ZIP 恢复。中断事务不会自动恢复；旧备份由用户按需清理，这些私有目录不可分享。
 
 EXE 暂未使用 Authenticode 签名。哈希验证依赖 HTTPS 和本仓库发布账号，不能抵御发布账号本身被入侵。压缩包中未允许的文件和链接会被拒绝，未来发布文件结构变化时可能需要手动升级。
+
+## Codex Desktop 右下角没有第三方模型
+
+手动或一键初始化会使用独立的 Codex 目录，可能与 Desktop 实际读取的目录不同。“文件同步成功”不能证明 Desktop 已加载模型。
+
+1. 从 Codex Desktop 设置打开 config.toml，记下位置，不要分享文件内容或账号文件。
+2. 在启动器“Codex 路由 → 关联 Desktop 配置…”选择该文件，核对目标后确认。设置页也提供入口。
+3. 原供应商、密钥和模型选择保留。关联只保存同步目标，不修改所选配置、不复制账号、不运行 CLI 或启停服务。
+4. 从概览启动 OpenCodex，再同步模型目录；后续同步会备份并修改所选 Codex 配置和模型目录。代理停止时，需要先启动才能使用路由。
+5. 若 Desktop 仍显示旧列表，等任务结束再点击“同步并重启 Desktop”，核对日志中的实际重启结果及 Desktop 右下角模型列表。该操作可能中断 Desktop 会话。
+
+请勿默认认为启动器的独立目录就是 Desktop 目录，也无需切换整个供应商配置模式。所选 config.toml 必须存在且可读；文件丢失时报告错误，不生成替代配置。若进入恢复页，请恢复所选文件后重新加载。
+
+“复制模型诊断”只包含是否明确关联及 Desktop 加载尚未验证的状态，不含所选路径或配置内容。启动器不自动探测正在运行的 Desktop 的实际目录，目录内模型数量和 CLI 退出码也不能证明 Desktop 已加载。
 
 ## OpenCodex 一键安装与更新
 
@@ -74,7 +88,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.6.1.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.6.2.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

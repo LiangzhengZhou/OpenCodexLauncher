@@ -24,6 +24,28 @@ static class ReleaseChecks
         SetupService.Prepare(new LauncherSettings { ConfigurationMode = "manual" }, manual);
         check(!Directory.Exists(manual.CodexHome), "incomplete onboarding creates no configuration homes");
         check(manual.Ocx == null && manual.Codex == null && manual.OcxConfig.StartsWith(LocalEnvironment.Current.DataDirectory), "manual setup uses private empty homes without executable discovery");
+        var desktopHome = Path.Combine(root,"desktop-selected"); Directory.CreateDirectory(desktopHome);
+        var desktopConfig = Path.Combine(desktopHome,"config.toml"); File.WriteAllText(desktopConfig,"# desktop fixture\nmodel = \"native-fixture\"\n");
+        var desktopAuth = Path.Combine(desktopHome,"auth.json"); File.WriteAllText(desktopAuth,"dummy-private-auth");
+        var desktopBytes = FileTransaction.Hash(desktopConfig);
+        var beforeLink = new LauncherSettings { SetupCompleted=true, ConfigurationMode="manual", Language="en", OcxPath="fixture", LastSelectedModel="demo-provider/model" };
+        var linked = DesktopAssociation.Preview(beforeLink,desktopConfig); var linkedPaths=PathResolver.Resolve(linked);
+        check(String.IsNullOrEmpty(beforeLink.DesktopConfigPath)&&!File.Exists(PathResolver.SettingsPath()),"desktop preview leaves active settings and settings file unchanged");
+        check(linkedPaths.CodexHome==desktopHome&&linkedPaths.CodexConfig==desktopConfig&&linkedPaths.Catalog==Path.Combine(desktopHome,"opencodex-catalog.json"),"explicit desktop association sends config and catalog to selected home");
+        check(linkedPaths.OcxConfig==manual.OcxConfig&&linked.ConfigurationMode=="manual"&&linked.LastSelectedModel==beforeLink.LastSelectedModel,"desktop association preserves manual provider store and model selection");
+        check(FileTransaction.Hash(desktopConfig)==desktopBytes&&File.ReadAllText(desktopAuth)=="dummy-private-auth"&&Directory.GetFiles(desktopHome).Length==2,"desktop association does not rewrite config or copy credentials");
+        var desktopChild=new ProcessStartInfo { UseShellExecute=false }; AsyncProcessRunner.ApplyHomes(desktopChild,null,linkedPaths.CodexHome);
+        check(desktopChild.EnvironmentVariables["CODEX_HOME"]==desktopHome,"sync child environment targets selected Desktop home instead of independent manual home");
+        bool badDesktop=false; try{DesktopAssociation.Preview(beforeLink,Path.Combine(desktopHome,"auth.json"));}catch(IOException){badDesktop=true;}
+        check(badDesktop,"desktop selection rejects non-config files");
+        badDesktop=false; try{DesktopAssociation.Preview(new LauncherSettings(),desktopConfig);}catch(InvalidOperationException){badDesktop=true;}
+        check(badDesktop,"incomplete onboarding cannot associate an ambient Desktop config");
+        File.Move(desktopConfig,desktopConfig+".held"); badDesktop=false;
+        try{PathResolver.Resolve(linked);}catch(IOException){badDesktop=true;}
+        check(badDesktop&&!File.Exists(desktopConfig),"missing associated Desktop config is reported without creating a replacement");
+        File.Move(desktopConfig+".held",desktopConfig);
+        var reportLink=ModelDiagnostics.Create(linkedPaths,linked,new ModelOption[0],"not-configured");
+        check(reportLink.Contains("\"desktopConfigAssociated\":true")&&reportLink.Contains("\"desktopLoaded\":\"unverified\"")&&!reportLink.Contains(desktopHome),"diagnostic distinguishes association from Desktop loading without leaking path");
         Environment.SetEnvironmentVariable("OPENCODEX_HOME", root);
         check(!PathResolver.Resolve(fresh).OcxConfig.Equals(Path.Combine(root,"config.json")), "isolated paths ignore real environment configuration");
         Environment.SetEnvironmentVariable("OPENCODEX_HOME", null);

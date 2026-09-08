@@ -64,7 +64,7 @@ namespace OpenCodexLauncherV2
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(token))
             {
                 timeout.CancelAfter(TimeSpan.FromMinutes(10));
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("OpenCodexLauncher/2.6.1");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("OpenCodexLauncher/2.6.2");
                 using (var response = await client.GetAsync(TrustedUri(url),HttpCompletionOption.ResponseHeadersRead,timeout.Token).ConfigureAwait(false))
                 {
                     response.EnsureSuccessStatusCode();

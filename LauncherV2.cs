@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("2.6.1.0")]
-[assembly: AssemblyFileVersion("2.6.1.0")]
+[assembly: AssemblyVersion("2.6.2.0")]
+[assembly: AssemblyFileVersion("2.6.2.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -69,7 +69,7 @@ namespace OpenCodexLauncherV2
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 2.6.1"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher 2.6.2"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = new SolidColorBrush(Color.FromRgb(245, 247, 251)); FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("OpenCodexLauncher.icon.png"))
@@ -388,10 +388,16 @@ namespace OpenCodexLauncherV2
         UIElement Routes()
         {
             var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.123"), 14));
+            panel.Children.Add(DesktopPanel());
             panel.Children.Add(AsyncBtn(L.M("text.124"), Sync));
             panel.Children.Add(AsyncBtn(L.M("text.125"), async delegate { if (Confirm(L.M("text.126"))) await Ocx(new [] { "restore" }); }));
             panel.Children.Add(AsyncBtn(L.M("text.127"), async delegate { if (Confirm(L.M("text.128"))) await Ocx(new [] { "restore", "back" }); }));
-            panel.Children.Add(AsyncBtn(L.M("text.129"), async delegate { if (Confirm(L.M("text.130"))) await Ocx(new [] { "sync", "--restart-desktop-app" }); }));
+            panel.Children.Add(AsyncBtn(L.M("text.129"), async delegate {
+                if (!Confirm(L.M("text.130"))) return;
+                await EnsureProxyRoute();
+                await Ocx(new [] { "sync", "--restart-desktop-app" });
+                LoadModels(); Log(L.M("desktop.restartUnverified"));
+            }));
             panel.Children.Add(AsyncBtn(L.M("text.131"), async delegate { if (Confirm(L.M("text.132"))) { await Ocx(new [] { "stop" }); await RefreshState(); } })); return panel;
         }
         UIElement Logs()
@@ -408,6 +414,7 @@ namespace OpenCodexLauncherV2
             var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.138"), 14));
             panel.Children.Add(LauncherUpdatePanel());
             panel.Children.Add(InstallerPanel(false));
+            panel.Children.Add(Btn(L.M("desktop.settings"), () => navigation.SelectedItem = navigation.Items.Cast<ListBoxItem>().Single(x => (string)x.Tag == "routes")));
             panel.Children.Add(Btn(L.M("text.139"), () => PickPath(true))); panel.Children.Add(Btn(L.M("text.140"), () => PickPath(false)));
             var work = Field(panel, L.M("text.141")); work.Text = settings.WorkingDirectory ?? "";
             panel.Children.Add(Btn(L.M("text.142"), () => { if (!Directory.Exists(work.Text)) throw new IOException(L.M("text.143")); settings.WorkingDirectory = Path.GetFullPath(work.Text); PathResolver.Save(settings); }));
@@ -448,6 +455,7 @@ namespace OpenCodexLauncherV2
         }
         async Task EnsureProxyRoute()
         {
+            DesktopAssociation.Validate(settings);
             await config.SetCodexIntegrationAsync(paths.OcxConfig, true);
             await config.PrepareProxyRouteAsync(paths.CodexConfig);
         }
