@@ -35,3 +35,6 @@ OpenCodexInstaller.cs
 InstallerWindow.cs
 tests/InstallerChecks.cs
 App.config
+LauncherUpdater.cs
+LauncherUpdateWindow.cs
+tests/UpdaterChecks.cs

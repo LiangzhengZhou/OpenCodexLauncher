@@ -126,6 +126,7 @@ class RegressionChecks
          var fakePackage = Path.Combine(root, "fake-opencodex"); Directory.CreateDirectory(Path.Combine(fakePackage, "bin")); Directory.CreateDirectory(Path.Combine(fakePackage, "src")); var fakeOcx = Path.Combine(fakePackage, "bin", "ocx.mjs"); File.WriteAllText(fakeOcx, ""); var fakeRouter = Path.Combine(fakePackage, "src", "router.ts"); File.WriteAllText(fakeRouter, "  const route = routeModelInternal(config, modelId, false, policyEvidence);\n  const route = routeModelInternal(config, modelId, false, policyEvidence, true);\n"); var patchResult = OpenCodexCompatibility.EnsureReservePreRouting(fakeOcx); Check(File.ReadAllText(fakeRouter).Contains("reserve pre-route patch"), "reserve pre-routing compatibility patch applies"); var patchedHash = FileTransaction.Hash(fakeRouter); var backups = Directory.GetFiles(Path.GetDirectoryName(fakeRouter), "*.launcher-bak.*").Length; OpenCodexCompatibility.EnsureReservePreRouting(fakeOcx); Check(FileTransaction.Hash(fakeRouter) == patchedHash && Directory.GetFiles(Path.GetDirectoryName(fakeRouter), "*.launcher-bak.*").Length == backups, "reserve pre-routing compatibility patch is idempotent");
         await ReleaseChecks.Run(root, Check);
         await InstallerChecks.Run(root, Check);
+        await UpdaterChecks.Run(root, Check);
     }
     static async Task HttpCheck()
     {
@@ -141,5 +142,4 @@ class RegressionChecks
         finally { listener.Stop(); }
     }
 }
-
 

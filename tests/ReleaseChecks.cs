@@ -30,7 +30,7 @@ static class ReleaseChecks
         var info = new ProcessStartInfo { UseShellExecute = false }; AsyncProcessRunner.ApplyHomes(info, manual.OcxConfig, manual.CodexHome);
         check(info.EnvironmentVariables["CODEX_HOME"] == manual.CodexHome && info.EnvironmentVariables["OPENCODEX_HOME"] == Path.GetDirectoryName(manual.OcxConfig), "child processes receive selected configuration homes");
         check(Directory.Exists(manual.CodexHome) && Directory.Exists(Path.GetDirectoryName(manual.OcxConfig)), "launch repairs missing launcher-owned homes for existing installations");
-        check(!Directory.EnumerateFileSystemEntries(manual.CodexHome).Any() && !File.Exists(manual.OcxConfig), "home initialization is empty and never imports account files");
+        check(Directory.GetFiles(manual.CodexHome).Length == 1 && File.ReadAllText(manual.CodexConfig) == "" && !File.Exists(manual.OcxConfig), "home initialization creates only empty TOML and never imports account files");
         var sentinel = Path.Combine(manual.CodexHome, "config.toml"); File.WriteAllText(sentinel, "# retained fixture");
         SetupService.Prepare(new LauncherSettings { ConfigurationMode = "manual", SetupCompleted = true }, manual);
         check(File.ReadAllText(sentinel) == "# retained fixture", "repeated setup preserves existing configuration bytes");

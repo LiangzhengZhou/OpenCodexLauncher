@@ -22,6 +22,7 @@ namespace OpenCodexLauncherV2
         {
             var panel = new StackPanel { Margin = new Thickness(40), MaxWidth = 800, HorizontalAlignment = HorizontalAlignment.Left };
             panel.Children.Add(LanguageButton());
+            panel.Children.Add(LauncherUpdatePanel());
             Content = new ScrollViewer { Background = System.Windows.Media.Brushes.White, Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
             return panel;
         }

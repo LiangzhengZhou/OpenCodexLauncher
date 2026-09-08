@@ -43,6 +43,15 @@ class UiChecks
             Check(!Field<LauncherSettings>(w,"settings").SetupCompleted && Field<PathSet>(w,"paths").OcxConfig==null,"fresh UI ignores existing malformed ambient files");
             Check(Field<Dictionary<string,UIElement>>(w,"pages").Count==0,"fresh UI does not build provider or model pages");
             L.SetLanguage("en");Pump();Render(w,Path.Combine(output,"setup-en.png"),1);
+            int updateRequests=0;
+            w.LauncherUpdaterFactory=()=>new LauncherUpdater((uri,limit,token)=> {updateRequests++;return Task.FromResult(System.Text.Encoding.UTF8.GetBytes("{\"tag_name\":\"v"+LauncherUpdater.CurrentVersion+"\",\"draft\":false,\"prerelease\":false}"));});
+            Check(updateRequests==0 && Find<Button>(w).Any(b=>Convert.ToString(b.Content)=="Check launcher updates"),"launcher updater is available before setup without automatic network requests");
+            Click(Find<Button>(w).Single(b=>Convert.ToString(b.Content)=="Check launcher updates"));
+            Until(()=>Find<TextBlock>(w).Any(b=>b.Text=="Already on the latest stable version."));
+            Check(updateRequests==1 && !Field<LauncherSettings>(w,"settings").SetupCompleted && Field<PathSet>(w,"paths").OcxConfig==null,"launcher update check leaves onboarding and private configuration unlinked");
+            L.SetLanguage("zh");Pump();
+            Check(Find<TextBlock>(w).Any(b=>b.Text=="已是最新稳定版。"),"launcher update status changes language without repeating network requests");
+            L.SetLanguage("en");Pump();
             Click(Find<Button>(w).Single(b=>Convert.ToString(b.Content)=="Manual setup"));
             Check(Field<LauncherSettings>(w,"settings").SetupCompleted && Field<LauncherSettings>(w,"settings").ConfigurationMode=="manual","manual onboarding completes in an empty independent environment");
             Check(Field<IList>(w,"models").Count==0 && Field<ComboBox>(w,"providerBox").Items.Count==0,"manual UI starts without providers or preset models");

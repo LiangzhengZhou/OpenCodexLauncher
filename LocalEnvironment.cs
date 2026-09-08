@@ -63,7 +63,20 @@ namespace OpenCodexLauncherV2
                 // Only repair launcher-owned homes. A missing imported/custom home may
                 // be a disconnected disk or a typo; never silently replace that choice.
                 if (String.Equals(full.TrimEnd(Path.DirectorySeparatorChar), owned, StringComparison.OrdinalIgnoreCase))
+                {
                     Directory.CreateDirectory(full);
+                    if (variable == "CODEX_HOME")
+                    {
+                        var config = Path.Combine(full, "config.toml");
+                        // CreateNew preserves existing bytes even if another process creates
+                        // the file between the existence check and open. Empty TOML is valid.
+                        if (!File.Exists(config))
+                        {
+                            try { using (var file = new FileStream(config, FileMode.CreateNew, FileAccess.Write, FileShare.Read)) { } }
+                            catch (IOException) { if (!File.Exists(config)) throw; }
+                        }
+                    }
+                }
                 if (!Directory.Exists(full)) throw new DirectoryNotFoundException();
             }
             catch (Exception error)

@@ -1,5 +1,14 @@
 # Changelog / 更新记录
 
+## 2.6.0 — 2026-09-08
+
+- Add explicit launcher self-update checks and update/restart controls in Settings, onboarding and recovery, with live Chinese/English text.
+- Validate stable release metadata, pinned repository assets, SHA-256, allowlisted ZIP contents and executable version before replacement.
+- Add a separate updater helper with exact-parent waiting, backups, guarded file replacement, rollback and restart; retain settings, credentials, runtimes and running services.
+- Repair missing config.toml only in the launcher-managed manual Codex home during explicit setup/CLI actions, without overwriting existing files or importing accounts.
+- Add updater regression coverage including a real helper process and isolated parent/new-version fixtures.
+- 新增启动器自身在线更新；修复手动配置下缺少 config.toml 的同步错误，保留既有配置。
+
 ## 2.5.2 — 2026-09-08
 
 - Fix missing launcher-owned CODEX_HOME / OPENCODEX_HOME directories after manual and one-click setup; repair existing affected installations at explicit command launch without importing account data.

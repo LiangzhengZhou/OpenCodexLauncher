@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("2.5.2.0")]
-[assembly: AssemblyFileVersion("2.5.2.0")]
+[assembly: AssemblyVersion("2.6.0.0")]
+[assembly: AssemblyFileVersion("2.6.0.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -65,7 +65,7 @@ namespace OpenCodexLauncherV2
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 2.5.2"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher 2.6.0"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = new SolidColorBrush(Color.FromRgb(245, 247, 251)); FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("OpenCodexLauncher.icon.png"))
@@ -396,6 +396,7 @@ namespace OpenCodexLauncherV2
         UIElement Settings()
         {
             var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.138"), 14));
+            panel.Children.Add(LauncherUpdatePanel());
             panel.Children.Add(InstallerPanel(false));
             panel.Children.Add(Btn(L.M("text.139"), () => PickPath(true))); panel.Children.Add(Btn(L.M("text.140"), () => PickPath(false)));
             var work = Field(panel, L.M("text.141")); work.Text = settings.WorkingDirectory ?? "";
@@ -494,6 +495,7 @@ namespace OpenCodexLauncherV2
     {
         [STAThread] public static void Main(string[] args)
         {
+            if (args.Length == 2 && args[0] == "--apply-launcher-update") { Environment.ExitCode = LauncherUpdater.RunHelper(args[1]); return; }
             if (args.Length == 2 && args[0] == "--isolated") LocalEnvironment.UseIsolated(args[1]);
             var app = new Application { ShutdownMode = ShutdownMode.OnMainWindowClose };
             try { app.Run(new MainWindow()); }

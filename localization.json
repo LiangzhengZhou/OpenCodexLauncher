@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.5.2",
-    "en": "Models, providers and routing console · v2.5.2"
+    "zh": "模型、供应商与路由控制台  ·  v2.6.0",
+    "en": "Models, providers and routing console · v2.6.0"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -552,8 +552,8 @@
     "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
   },
   "text.138": {
-    "zh": "启动器 2.5.2。路径配置保存到 Windows 当前用户目录。",
-    "en": "Launcher 2.5.2. Paths are stored in the current Windows user's data directory."
+    "zh": "启动器 2.6.0。路径配置保存到 Windows 当前用户目录。",
+    "en": "Launcher 2.6.0. Paths are stored in the current Windows user's data directory."
   },
   "text.139": {
     "zh": "选择 OpenCodex 入口",
@@ -1154,5 +1154,95 @@
   "startup.preflight": {
     "zh": "OpenCodex 启动前检查失败（退出代码 {0}）：",
     "en": "OpenCodex startup preflight failed (exit code {0}):"
+  }
+,
+
+  "update.available": {
+    "zh": "可更新到 {0}。",
+    "en": "Version {0} is available."
+  },
+  "update.busy": {
+    "zh": "另一个窗口正在更新此安装，请稍后重试。",
+    "en": "Another window is updating this installation. Retry later."
+  },
+  "update.cancel": {
+    "zh": "取消下载",
+    "en": "Cancel download"
+  },
+  "update.cancelled": {
+    "zh": "已取消更新，安装文件未变。",
+    "en": "Update cancelled; installation files are unchanged."
+  },
+  "update.changed": {
+    "zh": "安装文件已被其他程序修改，请重新检查并下载更新。",
+    "en": "Installation files changed externally. Check and download the update again."
+  },
+  "update.check": {
+    "zh": "检查启动器更新",
+    "en": "Check launcher updates"
+  },
+  "update.checking": {
+    "zh": "正在检查更新…",
+    "en": "Checking for updates…"
+  },
+  "update.confirm": {
+    "zh": "下载并安装启动器 {0}？完成后将关闭并重新打开启动器，请先保存页面上的修改。代理服务和个人配置会保留。",
+    "en": "Download and install launcher {0}? The launcher will close and reopen; save your edits first. Proxy services and personal configuration are preserved."
+  },
+  "update.description": {
+    "zh": "当前启动器版本：{0}。更新后保留个人设置，不重启 OpenCodex 代理。",
+    "en": "Current launcher: {0}. Updates preserve personal settings and leave the OpenCodex proxy running."
+  },
+  "update.downloading": {
+    "zh": "正在下载并校验更新包…",
+    "en": "Downloading and verifying the update…"
+  },
+  "update.failed": {
+    "zh": "更新未完成。请检查错误详情后重试；恢复资料保留在本地 updates / recovery 目录。",
+    "en": "Update did not complete. Review the error and retry; recovery information is retained in the local updates / recovery folders."
+  },
+  "update.helper": {
+    "zh": "更新助手未能就绪。启动器保持打开，请重试。",
+    "en": "The update helper did not become ready. The launcher stays open; please retry."
+  },
+  "update.http": {
+    "zh": "GitHub 请求失败（HTTP {0}），请检查网络或稍后重试。",
+    "en": "GitHub request failed (HTTP {0}). Check your connection or retry later."
+  },
+  "update.idle": {
+    "zh": "点击检查 GitHub 上的最新稳定版。",
+    "en": "Check GitHub for the latest stable release."
+  },
+  "update.install": {
+    "zh": "一键更新并重启",
+    "en": "Update and restart"
+  },
+  "update.invalid": {
+    "zh": "更新数据、文件校验或版本不符合要求，已停止更新。",
+    "en": "Update metadata, file verification or version validation failed. Update stopped."
+  },
+  "update.latest": {
+    "zh": "已是最新稳定版。",
+    "en": "Already on the latest stable version."
+  },
+  "update.recovery": {
+    "zh": "自动恢复未完成，请保留此恢复目录并按发布说明恢复：",
+    "en": "Automatic recovery could not finish. Keep this recovery directory and follow the release recovery instructions: "
+  },
+  "update.restarting": {
+    "zh": "准备关闭启动器并替换文件…",
+    "en": "Preparing to close the launcher and replace its files…"
+  },
+  "update.rolledBack": {
+    "zh": "替换失败，已恢复旧文件。恢复目录：",
+    "en": "Replacement failed; previous files restored. Recovery directory: "
+  },
+  "update.title": {
+    "zh": "启动器更新",
+    "en": "Launcher update"
+  },
+  "update.writable": {
+    "zh": "安装目录无法写入或包含只读文件。请将软件解压到当前用户可写的目录后重试。",
+    "en": "The installation folder is not writable or contains read-only files. Extract the launcher to a user-writable folder and retry."
   }
 }
