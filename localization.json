@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.5.0",
-    "en": "Models, providers and routing console · v2.5.0"
+    "zh": "模型、供应商与路由控制台  ·  v2.5.1",
+    "en": "Models, providers and routing console · v2.5.1"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -552,8 +552,8 @@
     "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
   },
   "text.138": {
-    "zh": "启动器 2.5.0。路径配置保存到 Windows 当前用户目录。",
-    "en": "Launcher 2.5.0. Paths are stored in the current Windows user's data directory."
+    "zh": "启动器 2.5.1。路径配置保存到 Windows 当前用户目录。",
+    "en": "Launcher 2.5.1. Paths are stored in the current Windows user's data directory."
   },
   "text.139": {
     "zh": "选择 OpenCodex 入口",
@@ -1064,8 +1064,36 @@
     "en": "Cancelled. Configuration and selected version are unchanged."
   },
   "install.failed": {
-    "zh": "安装 / 检查失败，原配置和所选版本未变。可重试；失败详情保留在本地 runtimes 目录。",
-    "en": "Install / check failed. Configuration and selected version are unchanged. Retry when ready; installation failure details are retained in the local runtimes directory."
+    "zh": "安装 / 检查失败，原配置和所选版本未变。",
+    "en": "Install / check failed. Configuration and selected version are unchanged."
+  },
+  "install.prepare": {
+    "zh": "准备安装目录",
+    "en": "Preparing the installation directory"
+  },
+  "install.complete": {
+    "zh": "正在保存安装完成标记…",
+    "en": "Saving the installation completion marker…"
+  },
+  "install.failureStage": {
+    "zh": "失败阶段：{0}",
+    "en": "Failed stage: {0}"
+  },
+  "install.location": {
+    "zh": "本次安装目录：{0}",
+    "en": "Installation directory: {0}"
+  },
+  "install.log": {
+    "zh": "诊断日志：{0}\n分享前请检查并隐藏其中的本机路径等个人信息。",
+    "en": "Diagnostic log: {0}\nReview and remove personal information such as local paths before sharing."
+  },
+  "install.noLog": {
+    "zh": "无法保存诊断日志，请保留此错误信息。",
+    "en": "Could not save a diagnostic log. Keep this error message."
+  },
+  "install.accessHint": {
+    "zh": "请检查当前用户对上述目录的写入权限、目录占用情况和安全软件的拦截记录，再重试。无需删除原配置。",
+    "en": "Check this user's write permission, open directory handles and security software block history, then retry. Keep your existing configuration."
   },
   "install.reserve": {
     "zh": "请先在高级设置中关闭 Reserve Force，再安装或切换版本。新版本需要重新检查补丁兼容性。",

@@ -64,7 +64,7 @@ namespace OpenCodexLauncherV2
             using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(token))
             {
                 timeout.CancelAfter(TimeSpan.FromMinutes(10));
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("OpenCodexLauncher/2.5.0");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("OpenCodexLauncher/2.5.1");
                 using (var response = await client.GetAsync(TrustedUri(url),HttpCompletionOption.ResponseHeadersRead,timeout.Token).ConfigureAwait(false))
                 {
                     response.EnsureSuccessStatusCode();
@@ -234,14 +234,19 @@ namespace OpenCodexLauncherV2
         static string ExtendedPath(string path){return path.StartsWith(@"\\")?@"\\?\UNC\"+path.Substring(2):@"\\?\"+path;}
         public async Task<string> InstallAsync(OpenCodexRelease release,Action<string> progress,CancellationToken token)
         {
-            token.ThrowIfCancellationRequested();Directory.CreateDirectory(root);
-            // Unique generations never overwrite a live runtime, including an externally patched one.
-            using(var installLock=new FileStream(Path.Combine(root,"install.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None))
+            token.ThrowIfCancellationRequested();
+            var stage=Path.Combine(root,"ocx-"+release.Version+"-"+Guid.NewGuid().ToString("N"));
+            string phase="install.prepare";
+            Action<string> report=key=>{phase=key;progress(key);};
+            try
             {
-                var id=Guid.NewGuid().ToString("N");var stage=Path.Combine(root,".staging-"+id);Directory.CreateDirectory(stage);
-                try
+                Directory.CreateDirectory(root);
+                using(var installLock=new FileStream(Path.Combine(root,"install.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None))
                 {
-                    progress("install.node");
+                    // Keep this unique path stable: npm/Bun or a scanner may hold directory handles.
+                    // A directory name is not proof of completion. Only return it after committing the marker.
+                    Directory.CreateDirectory(stage);
+                    report("install.node");
                     var nodeVersion=SelectNode(await platform.ReadAsync("https://nodejs.org/dist/index.json",token).ConfigureAwait(false));
                     var name="node-"+nodeVersion+"-win-x64.zip";var baseUrl="https://nodejs.org/dist/"+nodeVersion+"/";
                     var sums=await platform.ReadAsync(baseUrl+"SHASUMS256.txt",token).ConfigureAwait(false);
@@ -252,31 +257,38 @@ namespace OpenCodexLauncherV2
                     var node=Path.Combine(nodeDir,"node.exe");var home=Path.Combine(stage,"install-home");
                     var nodeOutput=await platform.RunAsync(node,new[]{"--version"},stage,home,token).ConfigureAwait(false);
                     if(nodeOutput.Trim()!=nodeVersion)throw new InvalidDataException(L.M("install.versionMismatch"));
-                    progress("install.package");
+                    report("install.package");
                     var tarball=Path.Combine(stage,"opencodex.tgz");await platform.DownloadAsync(release.Tarball,tarball,token).ConfigureAwait(false);Verify(tarball,release.Integrity,true);
                     var app=Path.Combine(stage,"app");Directory.CreateDirectory(app);File.WriteAllText(Path.Combine(app,"package.json"),"{\"private\":true}");
                     var npm=Path.Combine(nodeDir,"node_modules","npm","bin","npm-cli.js");
-                    progress("install.dependencies");
+                    report("install.dependencies");
                     await platform.RunAsync(node,new[]{npm,"install","--ignore-scripts","--no-audit","--no-fund","--engine-strict","--registry=https://registry.npmjs.org/","--prefix",app,"--",tarball},app,home,token).ConfigureAwait(false);
                     // Only Bun's required runtime installer is executed; other dependency lifecycle scripts stay disabled.
                     var bun=Path.Combine(app,"node_modules","bun","install.js");
                     await platform.RunAsync(node,new[]{bun},Path.GetDirectoryName(bun),home,token).ConfigureAwait(false);
                     var relative=Path.Combine("app","node_modules","@bitkyc08","opencodex","bin","ocx.mjs");var entry=Path.Combine(stage,relative);
-                    progress("install.verify");
+                    report("install.verify");
                     if(!File.Exists(entry)||ReadInstalledVersion(entry)!=release.Version)throw new InvalidDataException(L.M("install.versionMismatch"));
                     var output=await platform.RunAsync(node,new[]{entry,"--version"},app,home,token).ConfigureAwait(false);
                     if(!Regex.IsMatch(output,@"(?<![\d.])"+Regex.Escape(release.Version)+@"(?![\w.+-])"))throw new InvalidDataException(L.M("install.versionMismatch"));
                     token.ThrowIfCancellationRequested();
-                    File.WriteAllText(Path.Combine(stage,"installation.json"),JsonData.Serializer().Serialize(new {version=release.Version,node=nodeVersion,integrity=release.Integrity,installedUtc=DateTime.UtcNow.ToString("o")}));
-                    var destination=Path.Combine(root,"ocx-"+release.Version+"-"+id);Directory.Move(stage,destination);
-                    return Path.Combine(destination,relative);
+                    report("install.complete");
+                    token.ThrowIfCancellationRequested();
+                    TextFile.AtomicWrite(Path.Combine(stage,"installation.json"),JsonData.Serializer().Serialize(new {version=release.Version,node=nodeVersion,integrity=release.Integrity,installedUtc=DateTime.UtcNow.ToString("o")}),new UTF8Encoding(false));
+                    return entry;
                 }
-                catch(Exception error)
-                {
-                    // Preserve failed staging for diagnosis. No settings/configurations have been changed.
-                    try{File.WriteAllText(Path.Combine(stage,"failure.log"),Redactor.Apply(error.ToString()));}catch{}
-                    throw;
-                }
+            }
+            catch(Exception error)
+            {
+                // Keep incomplete generations for diagnosis, never select them or touch the previous runtime.
+                string log=null;
+                try{var file=Path.Combine(stage,"failure.log");File.WriteAllText(file,"phase="+phase+Environment.NewLine+Redactor.Apply(error.ToString()));log=file;}catch{}
+                if(error is OperationCanceledException)throw;
+                var message=L.F("install.failureStage",L.M(phase))+"\n"+L.F("install.location",stage)+"\n"+Redactor.Apply(error.Message);
+                if(error is UnauthorizedAccessException || (error.HResult & 0xffff)==5 || (error.HResult & 0xffff)==32)
+                    message+="\n"+L.M("install.accessHint");
+                message+="\n"+(log==null?L.M("install.noLog"):L.F("install.log",log));
+                throw new IOException(message,error);
             }
         }
     }

@@ -1,4 +1,4 @@
-# OpenCodex Launcher 2.5.0
+# OpenCodex Launcher 2.5.1
 
 [English](README.md)
 
@@ -28,6 +28,10 @@
 
 ## 数据与旧版升级
 
+若 2.5.0 在 runtimes/.staging-... 报“访问被拒绝”或目录被占用，请关闭启动器，把 2.5.1 Windows ZIP 完整解压到软件目录（保留随包提供的 EXE 配置文件），重新打开并重试安装。保留本地应用数据与已有运行时。2.5.1 直接使用独立且固定的目录，验证通过后才写入 installation.json 完成标记，避免最后重命名目录；未完成的目录仅保留用于诊断，不会自动选用。
+
+若仍失败，提示会给出失败阶段，以及确实保存成功的诊断日志位置。访问错误请检查目录权限、占用情况和安全软件拦截记录。分享日志前检查并隐藏个人路径，不要上传整个 runtimes 或配置目录。本修复不能绕过实际存在的写入限制。
+
 启动器设置及当前 Windows 用户 DPAPI 加密凭据存放在 %LOCALAPPDATA%/OpenCodexLauncher。请勿分享此目录。已关联的 OpenCodex/Codex 配置仍放在外部原位置；上游配置可能包含其自身保存的明文凭据，DPAPI 仅保护启动器凭据库中的内容。
 
 升级前备份旧安装和本地应用数据，再替换 EXE。2.5 会识别旧设置，保留路径、策略及高级功能状态，下次保存设置时更新格式。常规启动不再自动读取 EXE 旁的 settings.json；若非常旧的版本只有该文件，可在明确升级时将其复制到本地应用数据目录，但不能覆盖已存在的设置。设置损坏时打开恢复页，不会写入空设置覆盖原文件。
@@ -50,7 +54,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.5.0.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.5.1.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 2.5.1 — 2026-09-08
+
+- Fix installation finalization when Windows directory handles prevent moving the runtime: use a stable unique directory and atomically save a completion marker after validation.
+- Keep failed/cancelled generations unselected and preserve existing configuration and runtimes.
+- Include the failed phase and actual diagnostic log path in installation errors; report when a log could not be saved. Add Chinese/English guidance for access errors.
+- Add a real Windows directory-handle regression and coverage for completion write failure, late cancellation and diagnostic reporting.
+- 修复安装目录被占用时，收尾重命名失败导致的一键安装失败；保留旧配置，增加失败阶段及日志位置提示。
+
 ## 2.5.0 — 2026-09-07
 
 - Add one-click OpenCodex installation with private Node.js/Bun runtimes and empty first-use configuration.

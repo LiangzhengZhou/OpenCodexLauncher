@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -19,6 +21,7 @@ public sealed class FakeInstallerPlatform : IInstallerPlatform
     public CancellationTokenSource CancelAtNpm;
     public TaskCompletionSource<bool> PauseDownload;
     public string Version="3.2.1";
+    public Action<string> OnVerify;
     public FakeInstallerPlatform()
     {
         using(var memory=new MemoryStream())
@@ -62,14 +65,19 @@ public sealed class FakeInstallerPlatform : IInstallerPlatform
             File.WriteAllText(Path.Combine(package,"bin","ocx.mjs"),"fixture");
             var bun=Path.Combine(directory,"node_modules","bun");Directory.CreateDirectory(bun);File.WriteAllText(Path.Combine(bun,"install.js"),"fixture");
         }
+        if(args.Last()=="--version" && OnVerify!=null)OnVerify(Path.GetDirectoryName(directory));
         return Task.FromResult(args.Last()=="--version"?(BadVersion?"0.0.1":Version):"");
     }
 }
 
 static class InstallerChecks
 {
+    // A real Windows directory handle without FILE_SHARE_DELETE reproduces a busy runtime.
+    [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)]
+    static extern SafeFileHandle CreateFile(string name,uint access,uint share,IntPtr security,uint creation,uint flags,IntPtr template);
     static async Task<bool> Fails(Func<Task> action){try{await action();return false;}catch{return true;}}
     static bool Reject(Action action){try{action();return false;}catch{return true;}}
+    static int Completed(string root){return Directory.GetDirectories(root,"ocx-*").Count(x=>File.Exists(Path.Combine(x,"installation.json")));}
     public static async Task Run(string root,Action<bool,string> check)
     {
         var fake=new FakeInstallerPlatform();var release=OpenCodexRelease.Parse(fake.Metadata());
@@ -88,7 +96,7 @@ static class InstallerChecks
         check(fake.Calls==0&&!Directory.Exists(runtimeRoot),"constructing installer does not read environment or access network");
         var settingsHash=FileTransaction.Hash(PathResolver.SettingsPath());
         var stages=new List<string>();var entry=await service.InstallAsync(release,stages.Add,CancellationToken.None);
-        check(File.Exists(entry)&&OpenCodexInstaller.ReadInstalledVersion(entry)=="3.2.1"&&stages.Last()=="install.verify","successful installer validates package and CLI in a new generation");
+        check(File.Exists(entry)&&OpenCodexInstaller.ReadInstalledVersion(entry)=="3.2.1"&&stages.Last()=="install.complete","successful installer validates package and CLI in a new generation");
         check(OpenCodexInstaller.ManagedNode(entry)!=null&&Commands.Ocx(entry,"--version").File==OpenCodexInstaller.ManagedNode(entry),"managed runtime starts with private Node without system Node");
         check(FileTransaction.Hash(PathResolver.SettingsPath())==settingsHash,"install service never changes settings before explicit selection");
         var old=new LauncherSettings { OcxPath=entry,ConfigurationMode="imported",WorkingDirectory="draft",Language="zh",LastSelectedModel="demo-provider/example",SetupCompleted=true };
@@ -103,8 +111,8 @@ static class InstallerChecks
             using(var cancel=new CancellationTokenSource())
             {
                 if(failure=="cancel")bad.CancelAtNpm=cancel;
-                var before=Directory.GetDirectories(runtimeRoot,"ocx-*").Length;
-                check(await Fails(async()=>{await new OpenCodexInstaller(runtimeRoot,bad).InstallAsync(release,key=>{},cancel.Token);})&&Directory.GetDirectories(runtimeRoot,"ocx-*").Length==before&&File.Exists(entry)&&FileTransaction.Hash(PathResolver.SettingsPath())==settingsHash,"failed "+failure+" leaves selected settings and previous runtime intact");
+                var before=Completed(runtimeRoot);
+                check(await Fails(async()=>{await new OpenCodexInstaller(runtimeRoot,bad).InstallAsync(release,key=>{},cancel.Token);})&&Completed(runtimeRoot)==before&&File.Exists(entry)&&FileTransaction.Hash(PathResolver.SettingsPath())==settingsHash,"failed "+failure+" leaves selected settings and previous runtime intact");
                 if(failure=="hash")check(bad.Runs==0,"hash mismatch executes no downloaded code");
             }
         }
@@ -115,6 +123,40 @@ static class InstallerChecks
         var malicious=Path.Combine(root,"traversal.zip");using(var stream=File.Create(malicious))using(var zip=new ZipArchive(stream,ZipArchiveMode.Create))using(var writer=new StreamWriter(zip.CreateEntry("node/../../escape.txt").Open()))writer.Write("bad");
         check(Reject(()=>OpenCodexInstaller.ExtractNode(malicious,Path.Combine(root,"extract"),CancellationToken.None))&&!File.Exists(Path.Combine(root,"escape.txt")),"ZIP path traversal is rejected");
         using(var cancel=new CancellationTokenSource()){cancel.Cancel();var before=fake.Calls;check(await Fails(async()=>{await service.InstallAsync(release,key=>{},cancel.Token);})&&fake.Calls==before,"pre-cancelled installation has no network effects");}
+        SafeFileHandle directoryLease=null;string generation=null;
+        try
+        {
+            var busy=new FakeInstallerPlatform {OnVerify=directory=>{
+                generation=directory;
+                directoryLease=CreateFile(directory,1,3,IntPtr.Zero,3,0x02000000,IntPtr.Zero);
+                if(directoryLease.IsInvalid)throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+                check(Reject(()=>Directory.Move(directory,directory+"-renamed")),"Windows directory handle reproduces the old final-rename failure");
+            }};
+            var busyEntry=await new OpenCodexInstaller(runtimeRoot,busy).InstallAsync(release,key=>{},CancellationToken.None);
+            check(File.Exists(busyEntry)&&busyEntry.StartsWith(generation+Path.DirectorySeparatorChar)&&File.Exists(Path.Combine(generation,"installation.json")),"installation completes while generation directory is held open without relocation");
+        }
+        finally {if(directoryLease!=null)directoryLease.Dispose();}
+        var completed=Completed(runtimeRoot);string failedGeneration=null;
+        var cannotCommit=new FakeInstallerPlatform {OnVerify=directory=>{failedGeneration=directory;Directory.CreateDirectory(Path.Combine(directory,"installation.json"));}};
+        check(await Fails(async()=>{await new OpenCodexInstaller(runtimeRoot,cannotCommit).InstallAsync(release,key=>{},CancellationToken.None);})&&Completed(runtimeRoot)==completed&&FileTransaction.Hash(PathResolver.SettingsPath())==settingsHash,"completion marker failure never activates the partially installed runtime");
+        check(File.ReadAllText(Path.Combine(failedGeneration,"failure.log")).StartsWith("phase=install.complete"),"diagnostic log records the failed completion phase");
+        using(var cancel=new CancellationTokenSource())
+        {
+            bool cancelled=false;
+            try{await service.InstallAsync(release,key=>{if(key=="install.complete")cancel.Cancel();},cancel.Token);}catch(OperationCanceledException){cancelled=true;}
+            check(cancelled&&Completed(runtimeRoot)==completed,"cancellation immediately before completion preserves cancellation semantics and publishes no marker");
+        }
+        foreach(var language in new[]{"zh","en"})
+        {
+            L.SetLanguage(language);string diagnostic="";
+            var denied=new FakeInstallerPlatform {OnVerify=directory=>{failedGeneration=directory;throw new UnauthorizedAccessException("simulated access denial");}};
+            try{await new OpenCodexInstaller(runtimeRoot,denied).InstallAsync(release,key=>{},CancellationToken.None);}catch(IOException error){diagnostic=error.Message;}
+            check(diagnostic.Contains(L.Get("install.accessHint"))&&diagnostic.Contains(Path.Combine(failedGeneration,"failure.log"))&&File.ReadAllText(Path.Combine(failedGeneration,"failure.log")).StartsWith("phase=install.verify"),"access denial includes localized guidance, actual log path and phase in "+language);
+        }
+        var unavailable=Path.Combine(root,"unwritable-runtime-root");File.WriteAllText(unavailable,"fixture");
+        string noLog="";var untouched=new FakeInstallerPlatform();
+        try{await new OpenCodexInstaller(unavailable,untouched).InstallAsync(release,key=>{},CancellationToken.None);}catch(IOException error){noLog=error.Message;}
+        check(noLog.Contains(L.Get("install.noLog"))&&noLog.Contains(L.Get("install.prepare"))&&untouched.Calls==0,"directory preparation failure reports unavailable log and starts no network work");
         var pidFile=Path.Combine(root,"installer-child.pid");
         using(var cancel=new CancellationTokenSource())
         {
