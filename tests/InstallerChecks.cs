@@ -115,14 +115,13 @@ static class InstallerChecks
         var malicious=Path.Combine(root,"traversal.zip");using(var stream=File.Create(malicious))using(var zip=new ZipArchive(stream,ZipArchiveMode.Create))using(var writer=new StreamWriter(zip.CreateEntry("node/../../escape.txt").Open()))writer.Write("bad");
         check(Reject(()=>OpenCodexInstaller.ExtractNode(malicious,Path.Combine(root,"extract"),CancellationToken.None))&&!File.Exists(Path.Combine(root,"escape.txt")),"ZIP path traversal is rejected");
         using(var cancel=new CancellationTokenSource()){cancel.Cancel();var before=fake.Calls;check(await Fails(async()=>{await service.InstallAsync(release,key=>{},cancel.Token);})&&fake.Calls==before,"pre-cancelled installation has no network effects");}
-        var script=Path.Combine(root,"installer-process.ps1");var pidFile=Path.Combine(root,"installer-child.pid");
-        File.WriteAllText(script,"$child=Start-Process -FilePath (Join-Path $env:WINDIR 'System32/ping.exe') -ArgumentList @('-t','127.0.0.1') -WindowStyle Hidden -PassThru\n[IO.File]::WriteAllText($args[0],$child.Id.ToString())\nStart-Sleep -Seconds 30\n");
+        var pidFile=Path.Combine(root,"installer-child.pid");
         using(var cancel=new CancellationTokenSource())
         {
-            var command=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");
-            var task=new InstallerPlatform().RunAsync(command,new[]{"-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-File",script,pidFile},root,Path.Combine(root,"process-home"),cancel.Token);
-            var limit=DateTime.UtcNow.AddSeconds(10);while(!File.Exists(pidFile)&&!task.IsCompleted&&DateTime.UtcNow<limit)await Task.Delay(50);
-            if(!File.Exists(pidFile)){cancel.Cancel();await Fails(async()=>{await task;});throw new Exception("installer process probe did not start");}
+            var command=Process.GetCurrentProcess().MainModule.FileName;
+            var task=new InstallerPlatform().RunAsync(command,new[]{"installer-parent",pidFile},root,Path.Combine(root,"process-home"),cancel.Token);
+            var limit=DateTime.UtcNow.AddSeconds(20);while(!File.Exists(pidFile)&&!task.IsCompleted&&DateTime.UtcNow<limit)await Task.Delay(50);
+            if(!File.Exists(pidFile)){if(task.IsCompleted)await task;cancel.Cancel();await Fails(async()=>{await task;});throw new Exception("installer process probe did not start");}
             using(var child=Process.GetProcessById(Int32.Parse(File.ReadAllText(pidFile))))
             {cancel.Cancel();var cancelled=await Fails(async()=>{await task;});check(cancelled&&child.WaitForExit(3000),"cancellation terminates installer child processes with the Windows job");}
         }

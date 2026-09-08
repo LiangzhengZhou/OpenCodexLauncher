@@ -21,6 +21,14 @@ class RegressionChecks
 
     static int Main(string[] args)
     {
+        // Use this executable as the process-tree fixture, without shell startup dependencies.
+        if (args.Length > 0 && args[0] == "installer-child") { Thread.Sleep(60000); return 0; }
+        if (args.Length > 1 && args[0] == "installer-parent")
+        {
+            using (var child = Process.Start(new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, "installer-child") { UseShellExecute=false, CreateNoWindow=true }))
+            { File.WriteAllText(args[1], child.Id.ToString()); Thread.Sleep(60000); }
+            return 0;
+        }
         if (args.Length > 0 && args[0] == "echo-args") { Console.WriteLine(JsonData.Serializer().Serialize(args.Skip(1).ToArray())); return 0; }
         if (args.Length > 0 && args[0] == "output") { for (var i = 0; i < 4000; i++) { Console.WriteLine("OUT-" + i); Console.Error.WriteLine("ERR-" + i); } return 0; }
         root = args.Length > 0 ? args[0] : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "fixtures-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(root);
@@ -131,7 +139,6 @@ class RegressionChecks
         finally { listener.Stop(); }
     }
 }
-
 
 
 
