@@ -1,4 +1,8 @@
-# OpenCodex Launcher 2.6.5
+# OpenCodex Launcher 3.0 Preview
+This working tree is an unpublished 3.0 UI preview. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
+
+The existing installation is not replaced. Version 2.6.5 is the confirmed critical rollback target, but the historical-version workflow and a real round-trip upgrade remain unverified. This is not a production release. The 2.6.x sections below document retained functionality.
+
 
 ## Diagnose message connection failures
 
@@ -118,7 +122,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.5.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.0.0.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

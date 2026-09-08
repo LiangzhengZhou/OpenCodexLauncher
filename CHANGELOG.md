@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.0.0 Preview — 2026-09-09
+
+- 深度重设计供应商与模型管理界面：当前供应商概览、连接/API、模型状态卡片、按供应商隔离模型、搜索与全部/已选筛选。
+- API Key 默认隐藏，支持临时显示、键盘编辑、未修改保留和明确清除；移除新保存逻辑中的默认模型 ID。
+- 保留 2.6.5 的供应商、模型、Desktop 同步、诊断、路由、更新、安装和双语能力；新图标已嵌入预览 EXE。
+- 2.6.5 已确认作为首个关键回退版本；历史版本选择和双向回退验证尚未完成。
+
 ## 2.6.5 — 2026-09-08
 
 - Extend one-click Desktop diagnostics with bounded, direct-loopback TCP/GET evidence for message connection failures. Export only status codes, fixed paths and proxy-presence flags.

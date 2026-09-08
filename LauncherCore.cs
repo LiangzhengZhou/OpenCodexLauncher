@@ -29,6 +29,7 @@ namespace OpenCodexLauncherV2
 
     public sealed class ProviderModelChoice : INotifyPropertyChanged
     {
+        public string Route { get; set; }
         public string Id { get; set; }
         public string DisplayName { get; set; }
         private bool _selected;
@@ -255,6 +256,9 @@ namespace OpenCodexLauncherV2
     public static class Redactor
     {
         private const string Mask = "***REDACTED***";
+        static readonly object secretsLock = new object();
+        static readonly HashSet<string> secrets = new HashSet<string>(StringComparer.Ordinal);
+        public static void RegisterSecret(string value) { if (!String.IsNullOrEmpty(value)) lock (secretsLock) secrets.Add(value); }
         private static bool SecretField(string key)
         {
             var normalized = Regex.Replace(key, "[^A-Za-z]", "").ToLowerInvariant();
@@ -270,6 +274,7 @@ namespace OpenCodexLauncherV2
         }
         private static string CleanText(string text)
         {
+            lock (secretsLock) foreach (var secret in secrets.OrderByDescending(x => x.Length)) text = text.Replace(secret, Mask);
             text = Regex.Replace(text, @"(?i)sk-[A-Za-z0-9_-]{12,}", Mask);
             text = Regex.Replace(text, @"(?i)(Bearer\s+)[A-Za-z0-9._~+/=-]+", "$1" + Mask);
             text = Regex.Replace(text, @"(?i)([""']?(?:api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|password|secret|cookie)[""']?\s*[=:]\s*)[""']?[^\s,;""'}&]+[""']?", "$1" + Mask);
@@ -762,7 +767,6 @@ namespace OpenCodexLauncherV2
             if (provider.Id.Equals("openai", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException(L.M("text.192"));
             provider.BaseUrl = ProviderClient.NormalizeBaseUrl(provider.BaseUrl);
             if (provider.Adapter != "openai-chat" && provider.Adapter != "openai-responses") throw new ArgumentException(L.M("text.193"));
-            if (!String.IsNullOrEmpty(provider.DefaultModel)) ModelNames.ValidateId(provider.DefaultModel);
             if ((provider.DisplayName ?? "").Length > 100 || (provider.DisplayName ?? "").Any(Char.IsControl)) throw new ArgumentException(L.M("text.194"));
             return Task.Run(() => Locked(path, delegate {
                 var before = File.Exists(path) ? TextFile.Read(path) : null;
@@ -774,7 +778,7 @@ namespace OpenCodexLauncherV2
                 var p = old == null ? new Dictionary<string, object>() : new Dictionary<string, object>(old);
                 p["baseUrl"] = provider.BaseUrl; p["adapter"] = provider.Adapter;
                 p["displayName"] = String.IsNullOrWhiteSpace(provider.DisplayName) ? provider.Id.ToUpperInvariant() : provider.DisplayName.Trim();
-                if (String.IsNullOrWhiteSpace(provider.DefaultModel)) p.Remove("defaultModel"); else p["defaultModel"] = provider.DefaultModel;
+                // Preserve legacy defaultModel bytes for 2.6.5 rollback; new saves ignore this field.
                 // New providers remain off until the user chooses models.
                 if (old == null) p["disabled"] = true;
                 byte[] previousKey = null; bool changedKey = !String.IsNullOrWhiteSpace(key);
@@ -785,6 +789,26 @@ namespace OpenCodexLauncherV2
                     return WriteChecked(path, before, JsonData.Serializer().Serialize(root), new UTF8Encoding(false));
                 }
                 catch { if (changedKey) CredentialStore.Restore(provider.Id, previousKey); throw; }
+            }));
+        }
+        public Task<string> MarkProviderModelsStaleAsync(string path, string id)
+        { return UpdateAsync(path, root => { var p = JsonData.Object(JsonData.Value(JsonData.Object(JsonData.Value(root, "providers")), id)); if (p == null) throw new InvalidOperationException("Provider missing."); p["launcherModelsConnection"] = ""; }); }
+        public Task<string> RecordProviderModelsAsync(string path, string id, IEnumerable<string> models, string fingerprint, string time)
+        {
+            ModelNames.ValidateProvider(id); var ids = models.Distinct(StringComparer.Ordinal).ToArray(); foreach (var model in ids) ModelNames.ValidateId(model);
+            return UpdateAsync(path, root => { var p = JsonData.Object(JsonData.Value(JsonData.Object(JsonData.Value(root, "providers")), id)); if (p == null) throw new InvalidOperationException("Provider missing."); p["discoveredModels"] = ids; p["launcherModelsConnection"] = fingerprint; p["launcherModelsFetchedAt"] = time; });
+        }
+        public Task<string> ClearProviderKeyAsync(string path, string id)
+        {
+            ModelNames.ValidateProvider(id);
+            return Task.Run(() => Locked(path, delegate {
+                var before = TextFile.Read(path); var root = JsonData.Parse(before);
+                var p = JsonData.Object(JsonData.Value(JsonData.Object(JsonData.Value(root, "providers")), id));
+                if (p == null) throw new InvalidOperationException("Provider missing.");
+                var previous = CredentialStore.Snapshot(id);
+                // An encrypted empty value prevents an ambient legacy key from reappearing.
+                try { CredentialStore.Save(id, String.Empty); p.Remove("apiKey"); p["launcherModelsConnection"] = ""; return WriteChecked(path, before, JsonData.Serializer().Serialize(root), new UTF8Encoding(false)); }
+                catch { CredentialStore.Restore(id, previous); throw; }
             }));
         }
         public HashSet<string> SelectedModels(string path, string provider)

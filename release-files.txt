@@ -48,3 +48,8 @@ DesktopRepairWindow.cs
 tests/DesktopSyncChecks.cs
 TransportDiagnostics.cs
 tests/TransportDiagnosticChecks.cs
+ModernTheme.cs
+VersionManagementPanel.cs
+ModernWorkspace.cs
+tests/WorkspaceUiChecks.cs
+ModernDialog.cs

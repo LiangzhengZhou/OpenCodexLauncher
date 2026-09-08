@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.6.5",
-    "en": "Models, providers and routing console · v2.6.5"
+    "zh": "模型、供应商与路由控制台  ·  3.0 预览版",
+    "en": "Models, providers and routing console · 3.0 Preview"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -1506,10 +1506,165 @@
   "repair.discovery-timeout": {
     "zh": "配置候选检测超时，未保存关联。请稍后重试。",
     "en": "Configuration candidate discovery timed out. No association saved; retry later."
-  }
-,
+  },
   "diag.transport-get-only": {
     "zh": "连接检查来自启动器进程，仅使用 TCP 和无凭据 GET。消息地址的 GET 返回 404/405 不代表 POST 失败；本地鉴权和模型推理未测试。空请求日志也不能排除日志写入前的拒绝。",
     "en": "Connectivity checks run in the launcher using TCP and credential-free GET only. GET 404/405 at the responses address does not establish POST failure. POST authentication and inference are untested; empty request logs do not exclude rejection before logging."
+  },
+  "version.title": {
+    "zh": "版本管理",
+    "en": "Version management"
+  },
+  "version.description": {
+    "zh": "查看启动器与 OpenCodex 版本，并使用设置中的更新入口。",
+    "en": "View launcher and OpenCodex versions. Use the update controls below."
+  },
+  "version.history": {
+    "zh": "关键版本说明",
+    "en": "Critical version notes"
+  },
+  "version.historyText": {
+    "zh": "2.6.5 已确认为首个关键回退版本。3.0 当前为界面预览版；版本回退发布包将在正式发布前完成验证。",
+    "en": "2.6.5 is confirmed as the first critical rollback version. This 3.0 build is a UI preview; rollback release artifacts require validation before publication."
+  },
+  "workspace.providers": {
+    "zh": "供应商工作台",
+    "en": "Provider workspace"
+  },
+  "workspace.providersNote": {
+    "zh": "管理连接、凭据与模型。每个供应商独立保存，切换时保留草稿。",
+    "en": "Manage connections, credentials and models. Drafts stay with each provider."
+  },
+  "workspace.current": {
+    "zh": "当前供应商",
+    "en": "Current provider"
+  },
+  "workspace.connection": {
+    "zh": "连接与 API",
+    "en": "Connection & API"
+  },
+  "workspace.modelState": {
+    "zh": "模型状态",
+    "en": "Model status"
+  },
+  "workspace.showKey": {
+    "zh": "显示密钥",
+    "en": "Show key"
+  },
+  "workspace.hideKey": {
+    "zh": "隐藏密钥",
+    "en": "Hide key"
+  },
+  "workspace.clearKey": {
+    "zh": "清除 API Key…",
+    "en": "Clear API key…"
+  },
+  "workspace.keyNote": {
+    "zh": "密钥默认隐藏；离开页面或窗口后自动隐藏。留空保存会保留原密钥，清除请使用上方按钮。",
+    "en": "Keys are hidden again when you leave this page or window. Saving an empty field preserves the stored key; use Clear to remove it."
+  },
+  "workspace.modelsNote": {
+    "zh": "获取的列表与已选模型会保留。前往模型管理，选择要在 Desktop 中显示的模型。",
+    "en": "Fetched and selected models are retained. Open the model workspace to choose the models shown in Desktop."
+  },
+  "workspace.manage": {
+    "zh": "管理此供应商的模型 →",
+    "en": "Manage provider models →"
+  },
+  "workspace.saveFirst": {
+    "zh": "请先保存供应商。",
+    "en": "Save the provider first."
+  },
+  "workspace.clearConfirm": {
+    "zh": "确认清除此供应商已保存的 API Key？供应商和模型选择会保留。",
+    "en": "Remove the stored API key for this provider? The provider and model selections will be retained."
+  },
+  "workspace.newProvider": {
+    "zh": "新供应商",
+    "en": "New provider"
+  },
+  "workspace.unverified": {
+    "zh": "连接与推理未验证",
+    "en": "Connection and inference unverified"
+  },
+  "workspace.counts": {
+    "zh": "{0} 个模型 · {1} 个已选",
+    "en": "{0} models · {1} selected"
+  },
+  "workspace.fetchFailed": {
+    "zh": "获取失败，原列表及勾选已保留。",
+    "en": "Fetch failed. Previous models and selections are retained."
+  },
+  "workspace.stale": {
+    "zh": "连接信息已变更，模型待重新获取。原列表仍保留。",
+    "en": "Connection changed. Fetch again to revalidate; previous models are retained."
+  },
+  "workspace.noModels": {
+    "zh": "尚无模型。请先保存供应商并获取模型。",
+    "en": "No models yet. Save the provider and fetch models first."
+  },
+  "workspace.cached": {
+    "zh": "模型列表已保留；目录获取不代表推理验证通过。",
+    "en": "Model list retained. Listing models does not verify inference."
+  },
+  "workspace.fetchedAt": {
+    "zh": "最后获取：{0}",
+    "en": "Last fetched: {0}"
+  },
+  "workspace.chooseProvider": {
+    "zh": "选择供应商",
+    "en": "Choose a provider"
+  },
+  "workspace.unsaved": {
+    "zh": " · 选择尚未保存",
+    "en": " · Unsaved selection"
+  },
+  "workspace.models": {
+    "zh": "模型工作区",
+    "en": "Model workspace"
+  },
+  "workspace.modelIntro": {
+    "zh": "按供应商浏览、筛选和勾选模型。保存选择后同步到 Desktop。",
+    "en": "Browse, filter and select models per provider, then save and sync to Desktop."
+  },
+  "workspace.all": {
+    "zh": "显示全部",
+    "en": "Show all"
+  },
+  "workspace.selected": {
+    "zh": "仅显示已选",
+    "en": "Selected only"
+  },
+  "workspace.noMatches": {
+    "zh": "当前筛选下没有模型。",
+    "en": "No models match this filter."
+  },
+  "workspace.advanced": {
+    "zh": "高级模型操作 · 运行、诊断与验证",
+    "en": "Advanced model actions · Run, diagnose and verify"
+  },
+  "workspace.ok": {
+    "zh": "确定",
+    "en": "OK"
+  },
+  "workspace.cancel": {
+    "zh": "取消",
+    "en": "Cancel"
+  },
+  "workspace.confirm": {
+    "zh": "确认",
+    "en": "Confirm"
+  },
+  "workspace.keyMissing": {
+    "zh": "未设置 API Key",
+    "en": "API key not set"
+  },
+  "workspace.keyPresent": {
+    "zh": "API Key 已设置 · 连通性未验证",
+    "en": "API key set · connectivity unverified"
+  },
+  "workspace.copy": {
+    "zh": "复制脱敏详情",
+    "en": "Copy redacted details"
   }
 }

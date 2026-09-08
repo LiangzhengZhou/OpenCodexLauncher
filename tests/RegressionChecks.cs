@@ -41,6 +41,24 @@ class RegressionChecks
     static async Task Run()
     {
         var store = new ConfigStore();
+        var legacy = Write("workspace-legacy.json", "{\"providers\":{\"fixture-provider\":{\"adapter\":\"openai-chat\",\"baseUrl\":\"https://example.invalid/v1\",\"defaultModel\":\"legacy-model\",\"selectedModels\":[\"shared-model\"],\"models\":[\"shared-model\"]}}}");
+        var edit = new ProviderOption {Id="fixture-provider",DisplayName="Fixture Provider",BaseUrl="https://example.invalid/v1",Adapter="openai-chat",DefaultModel="ignored-new-default"};
+        await store.UpsertProviderAsync(legacy,edit,"dummy-legacy-key");
+        Check(JsonData.Text(Provider(legacy,edit.Id),"defaultModel")=="legacy-model","3.0 provider save preserves legacy default field without depending on it");
+        Check(store.SelectedModels(legacy,edit.Id).SetEquals(new[]{"shared-model"}),"provider edit preserves 2.6.5 selected model arrays");
+        await store.RecordProviderModelsAsync(legacy,edit.Id,new[]{"shared-model","new-model"},"fixture-fingerprint","2026-09-09T00:00:00Z");
+        Check(store.SelectedModels(legacy,edit.Id).SetEquals(new[]{"shared-model"}),"discovery metadata never auto-selects new models");
+        await store.MarkProviderModelsStaleAsync(legacy,edit.Id);
+        Check(JsonData.Array(JsonData.Value(Provider(legacy,edit.Id),"discoveredModels")).Count==2&&store.SelectedModels(legacy,edit.Id).Count==1,"stale connection metadata preserves discovered universe and selection");
+        var previousKey=CredentialStore.Snapshot(edit.Id);var originalHash=FileTransaction.Hash(legacy);bool clearFailed=false;
+        using(var locked=new FileStream(legacy,FileMode.Open,FileAccess.Read,FileShare.Read)) {try {await store.ClearProviderKeyAsync(legacy,edit.Id);}catch(IOException){clearFailed=true;}}
+        Check(clearFailed&&originalHash==FileTransaction.Hash(legacy)&&previousKey.SequenceEqual(CredentialStore.Snapshot(edit.Id)),"clear failure with locked config restores original DPAPI bytes and config");
+        await store.ClearProviderKeyAsync(legacy,edit.Id);
+        Check(CredentialStore.Load(edit.Id)==""&&CredentialStore.ForProvider(legacy,edit.Id)==""&&!Provider(legacy,edit.Id).ContainsKey("apiKey"),"explicit clear removes config reference and effective credential");
+        await store.UpsertProviderAsync(legacy,edit,null);
+        Check(CredentialStore.ForProvider(legacy,edit.Id)==""&&JsonData.Text(Provider(legacy,edit.Id),"defaultModel")=="legacy-model","saving after clear cannot recreate key or rewrite legacy default");
+        var fresh = Write("workspace-new.json","{}");await store.UpsertProviderAsync(fresh,edit,null);
+        Check(!Provider(fresh,edit.Id).ContainsKey("defaultModel"),"new providers never generate a default-model field");
         var config = Write("config.json", "{\"defaultProvider\":\"demo-provider\",\"providers\":{\"openai\":{\"adapter\":\"openai-responses\",\"baseUrl\":\"https://chatgpt.com/backend-api/codex\"},\"demo-provider\":{\"adapter\":\"openai-chat\",\"baseUrl\":\"https://example.invalid/v1\",\"displayName\":\"Old\",\"headers\":{\"X-Example\":\"dummy\"},\"timeout\":123},\"other\":{\"baseUrl\":\"https://example.invalid\"}},\"customModels\":[{\"id\":\"old\",\"provider\":\"demo-provider\",\"modelId\":\"gpt-5.6-sol\",\"contextWindow\":10000},{\"id\":\"other\",\"provider\":\"other\",\"modelId\":\"keep-me\"}]}");
         var officialBefore = JsonData.Serializer().Serialize(Provider(config, "openai"));
         var p = new ProviderOption { Id="demo-provider", DisplayName="Demo Provider", BaseUrl="https://example.invalid/v1/responses", Adapter="openai-chat" };
@@ -145,4 +163,3 @@ class RegressionChecks
         finally { listener.Stop(); }
     }
 }
-

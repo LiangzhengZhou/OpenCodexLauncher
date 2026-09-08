@@ -23,7 +23,7 @@ foreach ($file in Get-ChildItem -LiteralPath $scanRoot -File -Recurse -Force) {
     }
     foreach ($text in $texts) {
         if ($text -match '(?i)sk-[A-Za-z0-9_-]{20,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----') { $findings.Add("$relative : credential-like value") }
-        if ($text -match '(?i)[A-Z]:[\/](?:Users|Lib|Software)[\/]') { $findings.Add("$relative : personal absolute path") }
+        if ($text -match '(?i)[A-Z]:[\\/](?:Users|Lib|Software)[\\/]') { $findings.Add("$relative : personal absolute path") }
         foreach ($value in $ForbiddenValues) {
             if ($value.Length -ge 4 -and $text.IndexOf($value, [StringComparison]::OrdinalIgnoreCase) -ge 0) { $findings.Add("$relative : private value match"); break }
         }

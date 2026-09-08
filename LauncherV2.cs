@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("2.6.5.0")]
-[assembly: AssemblyFileVersion("2.6.5.0")]
+[assembly: AssemblyVersion("3.0.0.0")]
+[assembly: AssemblyFileVersion("3.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -40,7 +40,7 @@ namespace OpenCodexLauncherV2
         LauncherSettings settings;
         PathSet paths;
         TextBlock status, operation, providerStatus, healthText;
-        TextBox providerId, providerName, providerUrl, providerDefault, search, logs;
+        TextBox providerId, providerName, providerUrl, search, logs;
         PasswordBox providerKey;
         ComboBox providerBox, adapterBox, modelBox, forceModelBox, strategyBox, runtimeBox, reserveTargetBox;
         CheckBox strictRouteBox, reserveForceBox;
@@ -57,21 +57,23 @@ namespace OpenCodexLauncherV2
         DispatcherTimer timer;
         RunningSession activeSession;
         RuntimeController activeRuntimeController;
-        readonly Brush blue = new SolidColorBrush(Color.FromRgb(37, 99, 235));
-        readonly Brush ink = new SolidColorBrush(Color.FromRgb(15, 23, 42));
-        readonly Brush muted = new SolidColorBrush(Color.FromRgb(100, 116, 139));
-        readonly Brush page = new SolidColorBrush(Color.FromRgb(244, 247, 251));
-        readonly Brush line = new SolidColorBrush(Color.FromRgb(226, 232, 240));
+        readonly Brush blue = new SolidColorBrush(Color.FromRgb(83, 91, 181));
+        readonly Brush ink = new SolidColorBrush(Color.FromRgb(30, 25, 59));
+        readonly Brush muted = new SolidColorBrush(Color.FromRgb(101, 92, 132));
+        readonly Brush page = new LinearGradientBrush(Color.FromRgb(249, 242, 250), Color.FromRgb(235, 244, 255), 35);
+        readonly Brush line = new SolidColorBrush(Color.FromRgb(225, 218, 238));
 
         public MainWindow()
         {
+            ModernTheme.Apply(this);
             string startupError = null;
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 2.6.5"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher 3.0.0 Preview"; Width = 1320; Height = 900; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            Background = new SolidColorBrush(Color.FromRgb(245, 247, 251)); FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
+            Background = page; FontFamily = new FontFamily("DengXian, Segoe UI"); FontSize = 14; FontWeight = FontWeights.SemiBold; UseLayoutRounding = true;
+            Deactivated += delegate { HideProviderKey(); };
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("OpenCodexLauncher.icon.png"))
             { if (stream != null) { var icon = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad); icon.Freeze(); Icon = icon; } }
             if (startupError != null) BuildRecovery(startupError); else if (!settings.SetupCompleted) BuildSetup(); else Build();
@@ -93,10 +95,10 @@ namespace OpenCodexLauncherV2
             var b = Btn(label, action); if (secondary) { b.Background = Brushes.White; b.Foreground = ink; b.BorderBrush = line; } return b;
         }
         Button AsyncBtn(string label, Func<Task> action) { return Btn(label, async () => await Run(label, action)); }
-        Border Card(UIElement value) { return new Border { Child = value, Background = Brushes.White, BorderBrush = line, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Padding = new Thickness(22), Margin = new Thickness(0, 0, 0, 16) }; }
+        Border Card(UIElement value) { return new Border { Child = value, Background = new SolidColorBrush(Color.FromArgb(232, 255, 255, 255)), BorderBrush = line, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(22), Padding = new Thickness(22), Margin = new Thickness(0, 0, 0, 16), Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 20, ShadowDepth = 4, Opacity = 0.10, Color = Color.FromRgb(82, 60, 130) } }; }
         TextBox Field(Panel panel, string label)
         {
-            var caption = Text(label, 12); caption.Foreground = muted; caption.FontWeight = FontWeights.SemiBold; panel.Children.Add(caption); var field = new TextBox { MinHeight = 38, Padding = new Thickness(10, 8, 10, 8), Margin = new Thickness(0, 0, 0, 12), BorderBrush = line, BorderThickness = new Thickness(1) }; panel.Children.Add(field); return field;
+            var caption = Text(label, 12); caption.Foreground = muted; caption.FontWeight = FontWeights.SemiBold; panel.Children.Add(caption); var field = new TextBox { MinHeight = 44, Padding = new Thickness(12, 8, 12, 8), Margin = new Thickness(0, 0, 0, 12), BorderBrush = line, BorderThickness = new Thickness(1) }; panel.Children.Add(field); return field;
         }
         Border SectionHeader(string title, string subtitle)
         {
@@ -110,20 +112,24 @@ namespace OpenCodexLauncherV2
         }
         Style NavigationStyle()
         {
-            var style = new Style(typeof(ListBoxItem)); style.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(14, 12, 14, 12))); style.Setters.Add(new Setter(Control.MarginProperty, new Thickness(0, 0, 0, 4))); style.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
-            var selected = new Trigger { Property = ListBoxItem.IsSelectedProperty, Value = true }; selected.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromRgb(30, 64, 175)))); selected.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White)); style.Triggers.Add(selected); return style;
+            var style = new Style(typeof(ListBoxItem), (Style)FindResource(typeof(ListBoxItem))); style.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(14, 12, 14, 12))); style.Setters.Add(new Setter(Control.MarginProperty, new Thickness(0, 0, 0, 4))); style.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
+            var selected = new Trigger { Property = ListBoxItem.IsSelectedProperty, Value = true }; selected.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromRgb(233, 238, 247)))); selected.Setters.Add(new Setter(Control.ForegroundProperty, blue)); style.Triggers.Add(selected); return style;
         }
         void Build()
         {
-            var root = new Grid { Background = page }; root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(92) }); root.RowDefinitions.Add(new RowDefinition()); root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(32) });
-            var header = new Border { Background = Brushes.White, BorderBrush = line, BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(26, 14, 30, 14) }; Grid.SetRow(header, 0); root.Children.Add(header);
+            var root = new Grid { Background = page }; root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(92) }); root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); root.RowDefinitions.Add(new RowDefinition());
+            var atmosphere = new Canvas { IsHitTestVisible = false, Opacity = 0.82 };
+            atmosphere.Children.Add(new Border { Width = 420, Height = 420, CornerRadius = new CornerRadius(210), Background = new RadialGradientBrush(Color.FromArgb(115, 235, 130, 205), Color.FromArgb(0, 235, 130, 205)), RenderTransform = new TranslateTransform(760, -70) });
+            atmosphere.Children.Add(new Border { Width = 340, Height = 340, CornerRadius = new CornerRadius(170), Background = new RadialGradientBrush(Color.FromArgb(100, 80, 190, 255), Color.FromArgb(0, 80, 190, 255)), RenderTransform = new TranslateTransform(-110, 470) });
+            Grid.SetRow(atmosphere, 2); root.Children.Add(atmosphere);
+            var header = new Border { Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(Color.FromArgb(215, 255, 221, 241), 0), new GradientStop(Color.FromArgb(175, 218, 232, 255), 0.48), new GradientStop(Color.FromArgb(235, 255, 255, 255), 1) }, new Point(0, 0), new Point(1, 0)), BorderBrush = line, BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(26, 14, 30, 14) }; Grid.SetRow(header, 0); root.Children.Add(header);
             var headerGrid = new Grid(); headerGrid.ColumnDefinitions.Add(new ColumnDefinition()); headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            var brand = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center }; if (Icon != null) brand.Children.Add(new Image { Source = Icon, Width = 42, Height = 42, Margin = new Thickness(0, 0, 13, 0) }); var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; title.Children.Add(new TextBlock { Text = "OpenCodex Launcher", Foreground = ink, FontSize = 22, Margin = new Thickness(0, 0, 0, 4) }); title.Children.Add(Text(L.M("text.000"), 12)); brand.Children.Add(title); headerGrid.Children.Add(brand);
+            var brand = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center }; if (Icon != null) brand.Children.Add(new Image { Source = Icon, Width = 58, Height = 58, Stretch = Stretch.Uniform, Margin = new Thickness(-4, 0, 11, 0) }); var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; title.Children.Add(new TextBlock { Text = "OpenCodex Launcher", Foreground = ink, FontSize = 22, Margin = new Thickness(0, 0, 0, 4) }); title.Children.Add(Text(L.M("text.000"), 12)); brand.Children.Add(title); headerGrid.Children.Add(brand);
             var health = new Border { Background = new SolidColorBrush(Color.FromRgb(236, 253, 245)), BorderBrush = new SolidColorBrush(Color.FromRgb(167, 243, 208)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(16), Padding = new Thickness(13, 7, 13, 7), VerticalAlignment = VerticalAlignment.Center }; healthText = Text(L.M("text.001")); health.Child = healthText; Grid.SetColumn(health, 1); var headerActions = new StackPanel { Orientation = Orientation.Horizontal }; headerActions.Children.Add(LanguageButton()); headerActions.Children.Add(health); Grid.SetColumn(headerActions, 1); headerGrid.Children.Add(headerActions); header.Child = headerGrid;
-            var body = new Grid(); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(218) }); body.ColumnDefinitions.Add(new ColumnDefinition()); Grid.SetRow(body, 1); root.Children.Add(body);
-            var side = new Border { Background = ink, Padding = new Thickness(16, 24, 16, 18) }; Grid.SetColumn(side, 0); body.Children.Add(side); var sidePanel = new DockPanel(); var sideNote = Text(L.M("text.002"), 12); sideNote.Foreground = Brushes.LightGray; DockPanel.SetDock(sideNote, Dock.Bottom); sidePanel.Children.Add(sideNote); navigation = new ListBox { BorderThickness = new Thickness(0), Background = Brushes.Transparent, Foreground = Brushes.White, FontSize = 14, FontWeight = FontWeights.SemiBold, ItemContainerStyle = NavigationStyle() }; navigation.SelectionChanged += delegate { if (navigation.SelectedItem != null) { var pageId = (string)((ListBoxItem)navigation.SelectedItem).Tag; content.Content = pages[pageId]; if (pageId == "models") { try { LoadModels(); } catch (Exception) { SetText(modelSummary, L.M("models.configError")); } } } }; sidePanel.Children.Add(navigation); side.Child = sidePanel;
-            content = new ContentControl { Background = page }; Grid.SetColumn(content, 1); body.Children.Add(content);
-            operation = Text(L.M("text.003")); operation.Margin = new Thickness(22, 0, 22, 0); Grid.SetRow(operation, 2); root.Children.Add(operation);
+            var body = new Grid(); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(218) }); body.ColumnDefinitions.Add(new ColumnDefinition()); Grid.SetRow(body, 2); root.Children.Add(body);
+            var side = new Border { Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(Color.FromArgb(180, 255, 225, 244), 0), new GradientStop(Color.FromArgb(135, 255, 232, 201), 0.42), new GradientStop(Color.FromArgb(210, 255, 255, 255), 1) }, new Point(0, 0), new Point(0, 1)), BorderBrush = line, BorderThickness = new Thickness(0,0,1,0), Padding = new Thickness(16, 24, 16, 18) }; Grid.SetColumn(side, 0); body.Children.Add(side); var sidePanel = new DockPanel(); var sideNote = Text(L.M("text.002"), 12); sideNote.Foreground = muted; DockPanel.SetDock(sideNote, Dock.Bottom); sidePanel.Children.Add(sideNote); navigation = new ListBox { BorderThickness = new Thickness(0), Background = Brushes.Transparent, Foreground = ink, FontSize = 14, FontWeight = FontWeights.SemiBold, ItemContainerStyle = NavigationStyle() }; navigation.SelectionChanged += delegate { if (navigation.SelectedItem != null) { var pageId = (string)((ListBoxItem)navigation.SelectedItem).Tag; HideProviderKey(); content.Content = pages[pageId]; if (pageId == "models") { try { LoadModels(); } catch (Exception) { SetText(modelSummary, L.M("models.configError")); } } } }; sidePanel.Children.Add(navigation); side.Child = sidePanel;
+            content = new ContentControl { Background = Brushes.Transparent }; Grid.SetColumn(content, 1); body.Children.Add(content);
+            operation = Text(L.M("text.003")); operation.Margin = new Thickness(24, 10, 24, 10); operation.FontSize = 14; operation.FontWeight = FontWeights.SemiBold; var feedback = new Border { Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(Color.FromRgb(255, 247, 239), 0), new GradientStop(Color.FromRgb(250, 235, 219), 1) }, new Point(0, 0), new Point(1, 0)), BorderBrush = new SolidColorBrush(Color.FromRgb(239, 214, 184)), BorderThickness = new Thickness(0, 1, 0, 1), Child = operation }; Grid.SetRow(feedback, 1); root.Children.Add(feedback);
             AddPage("overview", L.M("text.004"), Overview()); AddPage("providers", L.M("text.005"), Providers()); AddPage("models", L.M("text.006"), Models()); AddPage("force", L.M("text.007"), ForceLaunch()); AddPage("routes", L.M("text.008"), Routes()); AddPage("logs", L.M("text.009"), Logs()); AddPage("settings", L.M("text.010"), Settings()); navigation.SelectedIndex = 0; Content = root;
         }
         UIElement Overview()
@@ -134,94 +140,13 @@ namespace OpenCodexLauncherV2
             buttons.Children.Add(AsyncBtn(L.M("text.016"), async delegate { await RefreshModels(); await RefreshState(); })); buttons.Children.Add(AsyncBtn(L.M("text.017"), async () => Open((await OpenCodexEndpointResolver.ResolveAsync(paths.OcxConfig, life.Token)).BaseUrl))); panel.Children.Add(buttons);
             buttons.Children.Add(AsyncBtn(L.M("diag.button"), DiagnoseDesktop));
             buttons.Children.Add(AsyncBtn(L.M("repair.button"), AssociateAndSyncDesktop));
-            status = Text(L.M("text.018"), 14); panel.Children.Add(Card(status)); return panel;
-        }
-        UIElement Providers()
-        {
-            populating = true;
-            var panel = new StackPanel(); panel.Children.Add(SectionHeader(L.M("text.005"), L.M("text.019")));
-            var editor = new StackPanel(); providerBox = new ComboBox { ItemsSource = config.Providers(paths.OcxConfig), Height = 34, Margin = new Thickness(0, 0, 0, 8) }; editor.Children.Add(providerBox);
-            providerBox.SelectionChanged += delegate { if (!populating) Populate(providerBox.SelectedItem as ProviderOption); };
-            editor.Children.Add(Btn(L.M("text.020"), () => Populate(null)));
-            var grid = new Grid { HorizontalAlignment = HorizontalAlignment.Stretch }; grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 260 }); grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 260 });
-            var left = new StackPanel { Margin = new Thickness(0, 0, 14, 0) }; var right = new StackPanel(); Grid.SetColumn(right, 1); grid.Children.Add(left); grid.Children.Add(right);
-            providerId = Field(left, L.M("text.021")); providerName = Field(right, L.M("text.022"));
-            providerUrl = Field(left, L.M("text.023"));
-            right.Children.Add(Text(L.M("text.024"))); adapterBox = new ComboBox { ItemsSource = new [] { "openai-responses", "openai-chat" }, SelectedIndex = 0, Height = 34, Margin = new Thickness(0, 0, 0, 8) }; right.Children.Add(adapterBox);
-            providerDefault = Field(left, L.M("text.025")); right.Children.Add(Text(L.M("text.026"))); providerKey = new PasswordBox { Height = 34, Padding = new Thickness(8) }; right.Children.Add(providerKey); editor.Children.Add(grid);
-            var actions = new WrapPanel(); actions.Children.Add(AsyncBtn(L.M("text.027"), SaveProvider)); actions.Children.Add(AsyncBtn(L.M("text.028"), FetchModels)); editor.Children.Add(actions);
-            providerStatus = Text(L.M("text.029")); editor.Children.Add(providerStatus); panel.Children.Add(Card(editor));
-            var picker = new StackPanel(); search = Field(picker, L.M("text.030"));
-            var list = new ListBox { ItemsSource = choices, MinHeight = 220, MaxHeight = 330, BorderThickness = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Stretch };
-            var template = new DataTemplate(typeof(ProviderModelChoice)); var check = new FrameworkElementFactory(typeof(CheckBox));
-            check.SetBinding(CheckBox.IsCheckedProperty, new Binding("Selected") { Mode = BindingMode.TwoWay, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged });
-            check.SetBinding(CheckBox.ContentProperty, new Binding("DisplayName")); check.SetValue(CheckBox.PaddingProperty, new Thickness(5)); template.VisualTree = check; list.ItemTemplate = template; picker.Children.Add(list);
-            search.TextChanged += delegate { var query = search.Text.Trim(); CollectionViewSource.GetDefaultView(choices).Filter = obj => { var row = (ProviderModelChoice)obj; return row.Id.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 || row.DisplayName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0; }; };
-            var select = new UniformGrid { Columns = 2, Margin = new Thickness(0, 10, 0, 0) };
-            select.Children.Add(Btn(L.M("text.031"), () => { foreach (var row in CollectionViewSource.GetDefaultView(choices).Cast<ProviderModelChoice>()) row.Selected = true; }, true));
-            select.Children.Add(Btn(L.M("text.032"), () => { foreach (var row in choices) row.Selected = false; }, true));
-            select.Children.Add(AsyncBtn(L.M("text.033"), () => Import(false))); select.Children.Add(AsyncBtn(L.M("text.034"), () => Import(true))); picker.Children.Add(select); panel.Children.Add(Card(picker));
-            foreach (var field in new [] { providerId, providerName, providerUrl, providerDefault }) field.TextChanged += delegate { Invalidate(); };
-            providerKey.PasswordChanged += delegate { Invalidate(); }; adapterBox.SelectionChanged += delegate { Invalidate(); };
-            populating = false;
-            Populate(config.Providers(paths.OcxConfig).FirstOrDefault(p => p.Id == config.Provider(paths.OcxConfig) && p.Id != "openai") ?? config.Providers(paths.OcxConfig).FirstOrDefault(p => p.Id != "openai")); return panel;
-        }
-        void Populate(ProviderOption p)
-        {
-            populating = true; choices.Clear(); fetchedFor = null;
-            providerId.Text = p == null ? "" : p.Id; providerName.Text = p == null ? "" : p.DisplayName; providerUrl.Text = p == null ? "" : p.BaseUrl; providerDefault.Text = p == null ? "" : p.DefaultModel;
-            adapterBox.SelectedItem = p == null || String.IsNullOrEmpty(p.Adapter) ? "openai-responses" : p.Adapter; providerKey.Clear();
-            SetText(providerStatus, p != null && p.Id == "openai" ? L.M("text.035") : L.M("text.036"));
-            if (p != null && p.Id != "openai")
-            {
-                var selected = config.SelectedModels(paths.OcxConfig, p.Id);
-                var currentConfig = config.ReadOcx(paths.OcxConfig);
-                object providersValue;
-                currentConfig.TryGetValue("providers", out providersValue);
-                var providerRaw = JsonData.Object(JsonData.Value(JsonData.Object(providersValue), p.Id));
-                var discovered = JsonData.Array(JsonData.Value(providerRaw, "discoveredModels")).OfType<string>();
-                var saved = JsonData.Array(JsonData.Value(config.ReadOcx(paths.OcxConfig), "customModels")).Select(JsonData.Object).Where(x => JsonData.Text(x, "provider") == p.Id).Select(x => JsonData.Text(x, "modelId")).Concat(discovered).Concat(selected).Distinct(StringComparer.Ordinal);
-                foreach (var id in saved) choices.Add(Choice(p, id, selected.Contains(id)));
-                if (choices.Count > 0) fetchedFor = Fingerprint(p);
-            }
-            populating = false;
-        }
-        ProviderModelChoice Choice(ProviderOption p, string id, bool selected) { return new ProviderModelChoice { Id = id, DisplayName = ModelNames.Display(p.Id, p.DisplayName, id) + "    ·    " + id, Selected = selected }; }
-        void Invalidate() { if (populating) return; choices.Clear(); fetchedFor = null; SetText(providerStatus, L.M("text.037")); }
-        ProviderOption Form() { return new ProviderOption { Id = providerId.Text.Trim(), DisplayName = providerName.Text.Trim(), BaseUrl = ProviderClient.NormalizeBaseUrl(providerUrl.Text), Adapter = Convert.ToString(adapterBox.SelectedItem), DefaultModel = providerDefault.Text.Trim() }; }
-        string Fingerprint(ProviderOption p) { return p.Id + "\n" + ProviderClient.NormalizeBaseUrl(p.BaseUrl) + "\n" + p.Adapter + "\n" + p.DisplayName; }
-        async Task SaveProvider()
-        {
-            var p = Form(); var backup = await config.UpsertProviderAsync(paths.OcxConfig, p, providerKey.Password);
-            populating = true; providerKey.Clear(); providerUrl.Text = p.BaseUrl; providerBox.ItemsSource = config.Providers(paths.OcxConfig); populating = false;
-            SetText(providerStatus, L.M("text.038")); Log(L.M("text.039") + p.Id + L.M("text.040") + backup);
-        }
-        async Task FetchModels()
-        {
-            await SaveProvider(); var p = Form(); var selected = config.SelectedModels(paths.OcxConfig, p.Id);
-            var fetched = await ProviderClient.FetchModelsAsync(p, CredentialStore.ForProvider(paths.OcxConfig, p.Id), life.Token);
-            choices.Clear(); foreach (var id in fetched.Concat(selected).Distinct(StringComparer.Ordinal).OrderBy(x => x)) choices.Add(Choice(p, id, selected.Contains(id)));
-            fetchedFor = Fingerprint(p); SetText(providerStatus, L.M("text.041") + fetched.Count + L.M("text.042") + selected.Count + L.M("text.043"));
-        }
-        async Task Import(bool sync)
-        {
-            var p = Form(); if (fetchedFor == null || fetchedFor != Fingerprint(p)) throw new InvalidOperationException(L.M("text.044"));
-            var selected = choices.Where(x => x.Selected).Select(x => x.Id).ToArray();
-            if (selected.Length == 0 && !Confirm(L.M("text.045"))) return;
-            await config.SelectProviderModelsAsync(paths.OcxConfig, p.Id, p.DisplayName, selected, choices.Select(x => x.Id));
-            var saved = config.SelectedModels(paths.OcxConfig, p.Id);
-            if (!saved.SetEquals(selected)) throw new IOException(L.M("models.saveMismatch"));
-            Populate(config.Providers(paths.OcxConfig).FirstOrDefault(x => x.Id == p.Id));
-            LoadModels();
-            if (selected.Any(id => !models.Any(m => m.Id == ModelNames.Slug(p.Id, id)))) throw new IOException(L.M("models.saveMismatch"));
-            SetText(providerStatus, L.F("models.saved", saved.Count)); Log(L.F("models.saved", saved.Count));
-            if (sync) await Sync();
+            status = Text(L.M("text.018"), 15); status.LineHeight = 21; status.Margin = new Thickness(2, 2, 2, 2); panel.Children.Add(Card(status)); return panel;
         }
         UIElement Models()
         {
-            var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.048"), 14));
-            modelSummary = Text(L.M("models.empty")); panel.Children.Add(modelSummary);
-            modelBox = new ComboBox { ItemsSource = models, Height = 40, Margin = new Thickness(0, 10, 0, 18) }; panel.Children.Add(modelBox);
+            var panel = new StackPanel(); panel.Children.Add(ModelWorkspace()); var legacy = new StackPanel(); legacy.Children.Add(Text(L.M("text.048"), 14));
+            modelSummary = Text(L.M("models.empty")); legacy.Children.Add(modelSummary);
+            modelBox = new ComboBox { ItemsSource = models, Height = 40, Margin = new Thickness(0, 10, 0, 18) }; legacy.Children.Add(modelBox);
             var actions = new WrapPanel(); actions.Children.Add(AsyncBtn(L.M("text.049"), RefreshModels));
             actions.Children.Add(Btn(L.M("models.configure"), () => navigation.SelectedItem = navigation.Items.Cast<ListBoxItem>().Single(x => (string)x.Tag == "providers")));
             actions.Children.Add(AsyncBtn(L.M("diag.button"), DiagnoseDesktop));
@@ -230,10 +155,10 @@ namespace OpenCodexLauncherV2
             actions.Children.Add(AsyncBtn(L.M("text.051"), async delegate { var id = Selected(); if (Confirm(L.M("text.052") + id + "？")) { await EnsureProxyRoute(); await config.SetDefaultModelAsync(paths.CodexConfig, id); await Sync(); await RefreshState(); } }));
             actions.Children.Add(AsyncBtn(L.M("text.053"), async delegate {
                 var id = Selected(); await RefreshModels(); var cataloged = File.Exists(paths.Catalog) && CatalogReader.ParseCatalog(TextFile.Read(paths.Catalog), false).Any(x => x.Id == id);
-                MessageBox.Show(this, L.M("text.054") + id + L.M("text.055") + native.Any(x => x.Id == id) + L.M("text.056") + cataloged + L.M("text.057") + await Healthy() + L.M("text.058"), L.M("text.059"));
+                ModernDialog.Show(this, L.M("text.054") + id + L.M("text.055") + native.Any(x => x.Id == id) + L.M("text.056") + cataloged + L.M("text.057") + await Healthy() + L.M("text.058"), L.M("text.059"));
             }));
-            actions.Children.Add(AsyncBtn(L.M("text.060"), async delegate { var id = Selected(); ModelNames.ValidateId(id); if (Confirm(L.M("text.061") + id + L.M("text.062"))) await Ocx(new [] { "access", "test", id, "--protocol", "responses" }); })); panel.Children.Add(actions);
-            panel.Children.Add(Card(Text(L.M("text.063"), 14))); return panel;
+            actions.Children.Add(AsyncBtn(L.M("text.060"), async delegate { var id = Selected(); ModelNames.ValidateId(id); if (Confirm(L.M("text.061") + id + L.M("text.062"))) await Ocx(new [] { "access", "test", id, "--protocol", "responses" }); })); legacy.Children.Add(actions);
+            legacy.Children.Add(Text(L.M("text.063"), 14)); var advanced = new Expander { Content = legacy, Margin = new Thickness(0, 12, 0, 12) }; L.Bind(advanced, HeaderedContentControl.HeaderProperty, L.M("workspace.advanced")); panel.Children.Add(Card(advanced)); return panel;
         }
         UIElement ForceLaunch()
         {
@@ -354,7 +279,7 @@ namespace OpenCodexLauncherV2
             await StartProxy();
             var model = new LauncherModel { Id = selected.Id, RouteId = selected.Id, ModelId = selected.Id.Contains("/") ? selected.Id.Substring(selected.Id.IndexOf('/') + 1) : selected.Id, ProviderId = selected.Provider, DisplayName = selected.DisplayName, Routed = selected.IsRouted, NativeCodex = selected.IsNative, Availability = "unknown" };
             var client = new OpenCodexClient(paths.OcxConfig); activeRuntimeController = new RuntimeController(paths, client, life.Token); activeRequest = new LaunchRequest { FallbackBudget = fallback, ProjectPath = Directory.Exists(settings.WorkingDirectory) ? settings.WorkingDirectory : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), SelectedModel = model, Strategy = strategy, PreferredRuntime = preferred }; var session = await activeRuntimeController.LaunchAsync(activeRequest); activeSession = session;
-            Log(L.M("text.102") + session.Runtime + L.M("text.103") + session.ModelRouteId + L.M("text.104")); MessageBox.Show(this, L.M("text.105") + session.Runtime + L.M("text.106") + session.ModelRouteId + L.M("text.107"), L.M("text.007"));
+            Log(L.M("text.102") + session.Runtime + L.M("text.103") + session.ModelRouteId + L.M("text.104")); ModernDialog.Show(this, L.M("text.105") + session.Runtime + L.M("text.106") + session.ModelRouteId + L.M("text.107"), L.M("text.007"));
         }
         async Task RefreshDiagnostics()
         {
@@ -414,14 +339,14 @@ namespace OpenCodexLauncherV2
         }
         UIElement Settings()
         {
-            var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.138"), 14));
+            var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.138"), 14)); panel.Children.Add(VersionManagementPanel());
             panel.Children.Add(LauncherUpdatePanel());
             panel.Children.Add(InstallerPanel(false));
             panel.Children.Add(Btn(L.M("desktop.settings"), () => navigation.SelectedItem = navigation.Items.Cast<ListBoxItem>().Single(x => (string)x.Tag == "routes")));
             panel.Children.Add(Btn(L.M("text.139"), () => PickPath(true))); panel.Children.Add(Btn(L.M("text.140"), () => PickPath(false)));
             var work = Field(panel, L.M("text.141")); work.Text = settings.WorkingDirectory ?? "";
             panel.Children.Add(Btn(L.M("text.142"), () => { if (!Directory.Exists(work.Text)) throw new IOException(L.M("text.143")); settings.WorkingDirectory = Path.GetFullPath(work.Text); PathResolver.Save(settings); }));
-            panel.Children.Add(AsyncBtn(L.M("text.144"), async delegate { var result = await Ocx(new [] { "--version" }); MessageBox.Show(this, Redactor.Apply(result.Output), L.M("text.145")); }));
+            panel.Children.Add(AsyncBtn(L.M("text.144"), async delegate { var result = await Ocx(new [] { "--version" }); ModernDialog.Show(this, Redactor.Apply(result.Output), L.M("text.145")); }));
             panel.Children.Add(Btn(L.M("text.146"), () => Open("https://github.com/lidge-jun/opencodex/releases"))); return panel;
         }
         void PickPath(bool ocx)
@@ -522,12 +447,16 @@ namespace OpenCodexLauncherV2
         async Task Run(LocalText label, Func<Task> action)
         {
             if (!await gate.WaitAsync(0)) return;
-            if (navigation != null) navigation.IsEnabled = false; SetText(operation, label + "…");
+            if (navigation != null) navigation.IsEnabled = false;
+            var currentPage = navigation == null ? null : navigation.SelectedItem as ListBoxItem;
+            // Freeze editor drafts during writes, while leaving installer cancellation usable.
+            if (content != null && currentPage != null && ((string)currentPage.Tag == "providers" || (string)currentPage.Tag == "models")) content.IsEnabled = false;
+            SetText(operation, label + "…");
             try { await action(); if (!life.IsCancellationRequested) SetText(operation, label + L.M("text.165")); }
             catch (OperationCanceledException) { if (!life.IsCancellationRequested) SetText(operation, label + L.M("text.166")); }
             catch (DesktopSyncIncomplete) { if (!life.IsCancellationRequested) SetText(operation, L.M("repair.incomplete")); }
             catch (Exception e) { if (!life.IsCancellationRequested) { SetText(operation, label + L.M("text.167")); Error(e.Message); } }
-            finally { gate.Release(); if (navigation != null && !life.IsCancellationRequested) navigation.IsEnabled = true; }
+            finally { gate.Release(); if (navigation != null && !life.IsCancellationRequested) navigation.IsEnabled = true; if (content != null && !life.IsCancellationRequested) content.IsEnabled = true; }
         }
         void Log(string text)
         {
@@ -536,8 +465,8 @@ namespace OpenCodexLauncherV2
             if (logs == null) return; logs.AppendText("[" + DateTime.Now.ToString("HH:mm:ss") + "] " + Redactor.Apply(text) + Environment.NewLine);
             if (logs.Text.Length > 200000) logs.Text = logs.Text.Substring(logs.Text.Length - 200000);
         }
-        bool Confirm(string text) { return MessageBox.Show(this, text, "OpenCodex Launcher", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes; }
-        void Error(string text) { Log(text); if (!life.IsCancellationRequested) MessageBox.Show(this, Redactor.Apply(text), L.M("text.168"), MessageBoxButton.OK, MessageBoxImage.Warning); }
+        bool Confirm(string text) { HideProviderKey(); return ModernDialog.Show(this, text, "OpenCodex Launcher", true); }
+        void Error(string text) { Log(text); if (!life.IsCancellationRequested) ModernDialog.Show(this, Redactor.Apply(text), L.M("text.168"), false); }
         void Open(string url) { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
     }
     public static class AppEntry
@@ -552,3 +481,4 @@ namespace OpenCodexLauncherV2
         }
     }
 }
+

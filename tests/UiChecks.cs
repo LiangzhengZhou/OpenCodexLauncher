@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using OpenCodexLauncherV2;
 
-class UiChecks
+partial class UiChecks
 {
     static int passed;
     static void Check(bool value,string name){if(!value)throw new Exception("FAIL: "+name);Console.WriteLine("PASS: "+name);passed++;}
@@ -76,6 +76,7 @@ class UiChecks
             Until(()=>Field<SemaphoreSlim>(w,"gate").CurrentCount==1);
             var provider=Field<ConfigStore>(w,"config").Providers(Field<PathSet>(w,"paths").OcxConfig).Single();
             w.GetType().GetMethod("Populate",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(w,new object[]{provider});
+            choices.Clear(); nav.SelectedIndex=2;Pump();
             choices.Add(new ProviderModelChoice{Id="fixture-model",DisplayName="Demo Provider Fixture Model",Selected=false});
             w.UpdateLayout();Pump();
             Find<CheckBox>(w).Single(c=>c.DataContext==choices[0]).IsChecked=true;Pump();
@@ -244,7 +245,7 @@ class UiChecks
             Until(()=>Find<TextBlock>(cancelWindow).Any(b=>b.Text.StartsWith("Cancelled.")));
             Check(!PathResolver.Load().SetupCompleted&&Field<PathSet>(cancelWindow,"paths").OcxConfig==null,"cancel button leaves onboarding and account paths unlinked");
             Check(!Find<Button>(cancelWindow).Single(b=>Convert.ToString(b.Content)=="Confirm import").IsEnabled,"cancel restores the original disabled import confirmation");
-            cancelWindow.Close();app.Shutdown();
+            cancelWindow.Close();WorkspaceChecks(output);app.Shutdown();
             Console.WriteLine("ALL "+passed+" UI CHECKS PASSED; "+Directory.GetFiles(output,"*.png").Length+" renders generated");return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e);return 1;}

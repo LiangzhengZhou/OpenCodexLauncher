@@ -1,4 +1,8 @@
-# OpenCodex Launcher 2.6.5
+# OpenCodex Launcher 3.0.0 Preview
+
+本预览以 2.6.5 为兼容基线，包含供应商页和模型管理页的深度重设计。2.6.5 已确认列入关键回退版本；指定版本回退工作流仍待后续验证，暂不作为正式发布承诺。
+
+This preview keeps the 2.6.5 compatibility baseline and ships the redesigned provider and model workspaces. Version 2.6.5 is confirmed as the first critical rollback target; the selectable historical rollback workflow remains pending validation.
 
 ## 中文
 
