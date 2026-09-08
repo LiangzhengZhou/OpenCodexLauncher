@@ -21,6 +21,8 @@ class RegressionChecks
 
     static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "startup-failure") { Console.Error.WriteLine("fixture import failed; api_key=dummy-startup-secret"); return 17; }
+        if (args.Length > 0 && args[0] == "startup-home") { return Directory.Exists(Environment.GetEnvironmentVariable("CODEX_HOME")) && Directory.Exists(Environment.GetEnvironmentVariable("OPENCODEX_HOME")) ? 0 : 19; }
         // Use this executable as the process-tree fixture, without shell startup dependencies.
         if (args.Length > 0 && args[0] == "installer-child") { Thread.Sleep(60000); return 0; }
         if (args.Length > 1 && args[0] == "installer-parent")
@@ -139,6 +141,5 @@ class RegressionChecks
         finally { listener.Stop(); }
     }
 }
-
 
 

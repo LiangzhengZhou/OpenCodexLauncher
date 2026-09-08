@@ -403,10 +403,9 @@ namespace OpenCodexLauncherV2
             settings = settings ?? new LauncherSettings();
             var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var profile = LocalEnvironment.Current.UserDirectory;
-            var codexHome = Home("CODEX_HOME", Path.Combine(profile, ".codex"));
-            var ocxHome = Home("OPENCODEX_HOME", Path.Combine(profile, ".opencodex"));
             var manual = settings.ConfigurationMode == "manual";
-            if (manual) { codexHome = Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "codex"); ocxHome = Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "opencodex"); }
+            var codexHome = manual ? Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "codex") : Home("CODEX_HOME", Path.Combine(profile, ".codex"));
+            var ocxHome = manual ? Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "opencodex") : Home("OPENCODEX_HOME", Path.Combine(profile, ".opencodex"));
             return new PathSet {
                 Ocx = Existing(settings.OcxPath) ?? (LocalEnvironment.Current.IsIsolated || manual ? null : FromPath("ocx.cmd") ?? Find(Path.Combine(local, "Programs"), "ocx.cmd")),
                 Codex = Existing(settings.CodexPath) ?? (LocalEnvironment.Current.IsIsolated || manual ? null : Find(Path.Combine(local, "OpenAI", "Codex", "bin"), "codex.exe") ?? FromPath("codex.exe")),
@@ -591,6 +590,8 @@ namespace OpenCodexLauncherV2
         }
         public static void ApplyHomes(ProcessStartInfo info, string configPath, string codexHome)
         {
+            SetupService.PrepareHome(codexHome, "CODEX_HOME");
+            if (configPath != null) SetupService.PrepareHome(Path.GetDirectoryName(configPath), "OPENCODEX_HOME");
             if (configPath != null) { CredentialStore.ApplyTo(info, configPath); info.EnvironmentVariables["OPENCODEX_HOME"] = Path.GetDirectoryName(configPath); }
             if (codexHome != null) info.EnvironmentVariables["CODEX_HOME"] = codexHome;
         }
@@ -601,6 +602,16 @@ namespace OpenCodexLauncherV2
             var info = new ProcessStartInfo(spec.File, spec.Arguments) { WorkingDirectory = spec.Directory, UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden };
             ApplyHomes(info, credentialsConfig, codexHome);
             return Process.Start(info);
+        }
+        public async Task CheckStartupAsync(CommandSpec command, string configPath, string codexHome, CancellationToken token)
+        {
+            var result = await RunAsync(command.File, command.Arguments, command.Directory,
+                TimeSpan.FromSeconds(30), token, null, configPath, codexHome);
+            token.ThrowIfCancellationRequested();
+            if (result.Succeeded) return;
+            var detail = Redactor.Apply(result.Error + "\n" + result.Output).Trim();
+            if (detail.Length > 4000) detail = detail.Substring(0, 4000) + "…";
+            throw new InvalidOperationException(L.F("startup.preflight", result.ExitCode) + "\n" + detail);
         }
     }
 

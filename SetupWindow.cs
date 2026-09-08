@@ -56,7 +56,7 @@ namespace OpenCodexLauncherV2
         {
             settings.SetupCompleted = true;
             paths = PathResolver.Resolve(settings);
-            SetupService.Validate(paths);
+            SetupService.Prepare(settings, paths);
             PathResolver.Save(settings);
             Build(); LoadModels();
             if (timer != null) timer.Start();

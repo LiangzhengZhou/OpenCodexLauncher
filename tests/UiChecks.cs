@@ -46,6 +46,7 @@ class UiChecks
             Click(Find<Button>(w).Single(b=>Convert.ToString(b.Content)=="Manual setup"));
             Check(Field<LauncherSettings>(w,"settings").SetupCompleted && Field<LauncherSettings>(w,"settings").ConfigurationMode=="manual","manual onboarding completes in an empty independent environment");
             Check(Field<IList>(w,"models").Count==0 && Field<ComboBox>(w,"providerBox").Items.Count==0,"manual UI starts without providers or preset models");
+            Check(Directory.Exists(Field<PathSet>(w,"paths").CodexHome),"manual onboarding creates the empty Codex home before returning to the UI");
             var nav=Field<ListBox>(w,"navigation");nav.SelectedIndex=1;Pump();
             var id=Field<TextBox>(w,"providerId");var key=Field<PasswordBox>(w,"providerKey");id.Text="draft-provider";key.Password="dummy-draft-key";
             var choices=Field<System.Collections.ObjectModel.ObservableCollection<ProviderModelChoice>>(w,"choices");var choice=new ProviderModelChoice{Id="draft-model",DisplayName="draft-model",Selected=true};choices.Add(choice);
@@ -83,6 +84,7 @@ class UiChecks
             Until(()=>Field<LauncherSettings>(install,"settings").SetupCompleted);
             Check(PathResolver.Load().ConfigurationMode=="manual"&&File.Exists(PathResolver.Load().OcxPath),"one-click UI saves the verified runtime and completes empty onboarding");
             Check(Field<IList>(install,"models").Count==0&&Field<ComboBox>(install,"providerBox").Items.Count==0,"one-click installation does not populate providers or models");
+            Check(Directory.Exists(Field<PathSet>(install,"paths").CodexHome),"one-click onboarding creates the empty Codex home before publishing selection");
             var installNav=Field<ListBox>(install,"navigation");installNav.SelectedIndex=6;Pump();
             Click(Find<Button>(install).Single(b=>Convert.ToString(b.Content)=="Check for updates"));
             Until(()=>Find<TextBlock>(install).Any(b=>b.Text.Contains("current or newer")));

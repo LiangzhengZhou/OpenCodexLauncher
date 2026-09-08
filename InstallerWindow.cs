@@ -54,7 +54,7 @@ namespace OpenCodexLauncherV2
                 finally {reporting=false;}
                 token.ThrowIfCancellationRequested();
                 var next=RuntimeSelection.Create(settings,paths.Ocx,entry,onboarding);
-                var nextPaths=PathResolver.Resolve(next);SetupService.Validate(nextPaths);
+                var nextPaths=PathResolver.Resolve(next);SetupService.Prepare(next,nextPaths);
                 PathResolver.Save(next);settings=next;paths=nextPaths;
                 SetText(state,L.F("install.done",release.Version));
                 if(onboarding){Build();LoadModels();if(timer!=null)timer.Start();SetText(operation,L.F("install.done",release.Version));}

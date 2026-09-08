@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 2.5.2 — 2026-09-08
+
+- Fix missing launcher-owned CODEX_HOME / OPENCODEX_HOME directories after manual and one-click setup; repair existing affected installations at explicit command launch without importing account data.
+- Preserve existing configuration files and reject missing external homes or file/path collisions with localized guidance.
+- Check the real Node/Bun CLI help path before proxy startup and show bounded, redacted runtime/import errors.
+- Add 10 core and 2 UI regressions; reproduce the failure with real OpenCodex 2.47.0 and verify an isolated proxy reaches readiness.
 ## 2.5.1 — 2026-09-08
 
 - Fix installation finalization when Windows directory handles prevent moving the runtime: use a stable unique directory and atomically save a completion marker after validation.

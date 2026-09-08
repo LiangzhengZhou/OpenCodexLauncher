@@ -1,4 +1,4 @@
-# OpenCodex Launcher 2.5.1
+# OpenCodex Launcher 2.5.2
 
 [English](README.md)
 
@@ -28,7 +28,7 @@
 
 ## 数据与旧版升级
 
-若 2.5.0 在 runtimes/.staging-... 报“访问被拒绝”或目录被占用，请关闭启动器，把 2.5.1 Windows ZIP 完整解压到软件目录（保留随包提供的 EXE 配置文件），重新打开并重试安装。保留本地应用数据与已有运行时。2.5.1 直接使用独立且固定的目录，验证通过后才写入 installation.json 完成标记，避免最后重命名目录；未完成的目录仅保留用于诊断，不会自动选用。
+若 2.5.0 在 runtimes/.staging-... 报“访问被拒绝”或目录被占用，请关闭启动器，把 2.5.2 Windows ZIP 完整解压到软件目录（保留随包提供的 EXE 配置文件），重新打开并重试安装。保留本地应用数据与已有运行时。2.5.1 及后续版本直接使用独立且固定的目录，验证通过后才写入 installation.json 完成标记，避免最后重命名目录；未完成的目录仅保留用于诊断，不会自动选用。
 
 若仍失败，提示会给出失败阶段，以及确实保存成功的诊断日志位置。访问错误请检查目录权限、占用情况和安全软件拦截记录。分享日志前检查并隐藏个人路径，不要上传整个 runtimes 或配置目录。本修复不能绕过实际存在的写入限制。
 
@@ -54,7 +54,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.5.1.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.5.2.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
@@ -65,3 +65,9 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 仅上传生成的 github-source 目录或 ZIP，不要上传整个工作目录。release-files.txt 为严格发布白名单；发布检查扫描文本、资源和二进制字符串，排除用户数据、缓存及历史资料。维护者还应通过 release-check.ps1 的 ForbiddenValues 在内存中提供自己的私有值进行专项扫描，不要将私有值写入仓库或打印。扫描无法保证发现所有秘密及编码变体。仓库内提供双构建、回归及发布检查的 GitHub Actions 工作流，上传仓库后才会执行。
 
 详情参见 [发布说明](RELEASE_NOTES.md)、[安全说明](SECURITY.md) 和 [MIT 许可](LICENSE)。
+
+### 启动时提示 CODEX_HOME / ENOENT
+
+2.5.2 在手动或一键初始化完成时创建启动器管理的空 Codex/OpenCodex 目录。旧版安装缺少这些目录时，下次明确运行 CLI 命令会补建；不会导入账号文件。外部导入或自定义目录缺失时明确报错，不静默创建替代目录。启动代理前通过 CLI 帮助命令检查运行环境，捕获仅查询版本时无法发现的加载错误。
+
+若在 2.5.1 遇到此问题，关闭启动器后完整解压 2.5.2 Windows ZIP，重新打开并重试即可。此目录创建缺陷不需要删除应用数据、重装 OpenCodex 或重新填写供应商密钥。其他代理启动错误仍可能需要查看上游运行日志。

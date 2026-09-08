@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.5.1",
-    "en": "Models, providers and routing console · v2.5.1"
+    "zh": "模型、供应商与路由控制台  ·  v2.5.2",
+    "en": "Models, providers and routing console · v2.5.2"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -552,8 +552,8 @@
     "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
   },
   "text.138": {
-    "zh": "启动器 2.5.1。路径配置保存到 Windows 当前用户目录。",
-    "en": "Launcher 2.5.1. Paths are stored in the current Windows user's data directory."
+    "zh": "启动器 2.5.2。路径配置保存到 Windows 当前用户目录。",
+    "en": "Launcher 2.5.2. Paths are stored in the current Windows user's data directory."
   },
   "text.139": {
     "zh": "选择 OpenCodex 入口",
@@ -1146,5 +1146,13 @@
   "install.versionMismatch": {
     "zh": "新运行时的版本验证失败。",
     "en": "The new runtime failed version verification."
+  },
+  "startup.home": {
+    "zh": "{0} 目录不存在、无法访问或不是文件夹：{1}。请检查路径和访问权限。",
+    "en": "{0} is missing, inaccessible, or not a directory: {1}. Check the selected path and its permissions."
+  },
+  "startup.preflight": {
+    "zh": "OpenCodex 启动前检查失败（退出代码 {0}）：",
+    "en": "OpenCodex startup preflight failed (exit code {0}):"
   }
 }

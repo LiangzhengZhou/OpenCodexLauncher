@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("2.5.1.0")]
-[assembly: AssemblyFileVersion("2.5.1.0")]
+[assembly: AssemblyVersion("2.5.2.0")]
+[assembly: AssemblyFileVersion("2.5.2.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -65,7 +65,7 @@ namespace OpenCodexLauncherV2
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 2.5.1"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher 2.5.2"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = new SolidColorBrush(Color.FromRgb(245, 247, 251)); FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("OpenCodexLauncher.icon.png"))
@@ -420,6 +420,9 @@ namespace OpenCodexLauncherV2
         async Task StartProxy()
         {
             if (await Healthy()) { Log(L.M("text.149")); return; }
+            // --version exits in the Node shim; --help also loads the Bun CLI and
+            // validates its imports/homes without starting a service or inference.
+            await runner.CheckStartupAsync(Commands.Ocx(paths.Ocx, "--help"), paths.OcxConfig, paths.CodexHome, life.Token);
             using (var process = AsyncProcessRunner.StartDetached(Commands.Ocx(paths.Ocx, "start"), paths.OcxConfig, paths.CodexHome))
             {
                 for (var i = 0; i < 30; i++) { await Task.Delay(1000, life.Token); if (await Healthy()) { await RefreshState(); return; } if (process.HasExited && process.ExitCode != 0) throw new InvalidOperationException(L.M("text.150") + process.ExitCode); }

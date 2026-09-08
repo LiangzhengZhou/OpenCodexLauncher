@@ -1,4 +1,4 @@
-# OpenCodex Launcher 2.5.1
+# OpenCodex Launcher 2.5.2
 
 [简体中文](README.zh-CN.md)
 
@@ -28,7 +28,7 @@ Keep OpenCodexLauncher.exe.config beside the EXE for .NET 4.8 and long dependenc
 
 ## Data and upgrades
 
-If 2.5.0 reports access denied or a directory in use under runtimes/.staging-..., close the launcher and extract the full 2.5.1 Windows ZIP into your application directory, including the EXE configuration file. Reopen it and retry installation. Keep your local application data and existing runtimes. Version 2.5.1 installs directly into a unique stable directory and writes installation.json only after validation, avoiding the final directory move. An incomplete directory is retained for diagnosis and is not selected automatically.
+If 2.5.0 reports access denied or a directory in use under runtimes/.staging-..., close the launcher and extract the full 2.5.2 Windows ZIP into your application directory, including the EXE configuration file. Reopen it and retry installation. Keep your local application data and existing runtimes. Version 2.5.1 and later install directly into a unique stable directory and writes installation.json only after validation, avoiding the final directory move. An incomplete directory is retained for diagnosis and is not selected automatically.
 
 If installation still fails, the error includes the failed phase and the diagnostic log path when one could be written. For an access error, check directory permissions, open handles and security software block history. Review logs for personal paths before sharing; do not upload your entire runtimes or configuration directory. This fix does not bypass a genuine write restriction.
 
@@ -54,7 +54,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.5.1.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.5.2.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
@@ -68,3 +68,9 @@ Tests use isolated homes and fictional credentials. Network tests use a loopback
 Publish only the generated github-source directory or generated ZIP files. The exact release-files.txt allowlist excludes user data, historical files, binaries from source, caches and private work. The release check validates the allowlist and searches text/resource/binary strings for credential-like values and personal paths. Maintainers should additionally pass their private strings in memory to release-check.ps1 using ForbiddenValues; never commit or print those values. No scanner guarantees detection of every secret or encoding. The supplied GitHub Actions workflow checks both builds, regressions and packaging after the repository is published.
 
 See [release notes](RELEASE_NOTES.md), [security notes](SECURITY.md) and [MIT license](LICENSE).
+
+### Startup fails with CODEX_HOME / ENOENT
+
+Version 2.5.2 creates the empty launcher-owned Codex and OpenCodex home directories when manual or one-click setup completes. Existing installations with missing launcher-owned homes are repaired on the next explicit CLI command. No account files are imported. Missing imported/custom directories are reported instead of silently replaced. A CLI help preflight captures runtime/import errors before starting the proxy; this also catches problems that a version-only check misses.
+
+If you saw this failure in 2.5.1, close the launcher and extract the entire 2.5.2 Windows ZIP, then reopen and retry. Do not delete application data, reinstall OpenCodex, or re-enter provider keys for this directory-creation defect. Other startup failures can still require the upstream runtime logs.

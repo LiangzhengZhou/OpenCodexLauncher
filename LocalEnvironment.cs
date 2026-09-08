@@ -45,5 +45,32 @@ namespace OpenCodexLauncherV2
             if (File.Exists(paths.Catalog)) CatalogReader.ParseCatalog(TextFile.Read(paths.Catalog), false);
             if (File.Exists(paths.CodexConfig)) TextFile.Read(paths.CodexConfig);
         }
+        public static void Prepare(LauncherSettings settings, PathSet paths)
+        {
+            Validate(paths);
+            if (!settings.SetupCompleted || settings.ConfigurationMode != "manual") return;
+            PrepareHome(paths.CodexHome, "CODEX_HOME");
+            PrepareHome(Path.GetDirectoryName(paths.OcxConfig), "OPENCODEX_HOME");
+        }
+        public static void PrepareHome(string path, string variable)
+        {
+            if (String.IsNullOrWhiteSpace(path)) return;
+            var full = Path.GetFullPath(path);
+            var owned = Path.Combine(LocalEnvironment.Current.DataDirectory, "manual",
+                variable == "CODEX_HOME" ? "codex" : "opencodex");
+            try
+            {
+                // Only repair launcher-owned homes. A missing imported/custom home may
+                // be a disconnected disk or a typo; never silently replace that choice.
+                if (String.Equals(full.TrimEnd(Path.DirectorySeparatorChar), owned, StringComparison.OrdinalIgnoreCase))
+                    Directory.CreateDirectory(full);
+                if (!Directory.Exists(full)) throw new DirectoryNotFoundException();
+            }
+            catch (Exception error)
+            {
+                if (!(error is IOException) && !(error is UnauthorizedAccessException)) throw;
+                throw new IOException(L.F("startup.home", variable, full), error);
+            }
+        }
     }
 }

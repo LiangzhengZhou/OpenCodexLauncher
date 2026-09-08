@@ -21,12 +21,40 @@ static class ReleaseChecks
         var legacy = SetupService.Normalize(new LauncherSettings { OcxPath = "fixture", LaunchStrategy = "auto", StrictRouteVerification = false, ReserveForceEnabled = true }, true);
         check(legacy.SetupCompleted && legacy.LaunchStrategy == "auto" && legacy.ReserveForceEnabled && !legacy.StrictRouteVerification, "legacy migration preserves strategy and advanced settings");
         var manual = PathResolver.Resolve(new LauncherSettings { ConfigurationMode = "manual" });
+        SetupService.Prepare(new LauncherSettings { ConfigurationMode = "manual" }, manual);
+        check(!Directory.Exists(manual.CodexHome), "incomplete onboarding creates no configuration homes");
         check(manual.Ocx == null && manual.Codex == null && manual.OcxConfig.StartsWith(LocalEnvironment.Current.DataDirectory), "manual setup uses private empty homes without executable discovery");
         Environment.SetEnvironmentVariable("OPENCODEX_HOME", root);
         check(!PathResolver.Resolve(fresh).OcxConfig.Equals(Path.Combine(root,"config.json")), "isolated paths ignore real environment configuration");
         Environment.SetEnvironmentVariable("OPENCODEX_HOME", null);
         var info = new ProcessStartInfo { UseShellExecute = false }; AsyncProcessRunner.ApplyHomes(info, manual.OcxConfig, manual.CodexHome);
         check(info.EnvironmentVariables["CODEX_HOME"] == manual.CodexHome && info.EnvironmentVariables["OPENCODEX_HOME"] == Path.GetDirectoryName(manual.OcxConfig), "child processes receive selected configuration homes");
+        check(Directory.Exists(manual.CodexHome) && Directory.Exists(Path.GetDirectoryName(manual.OcxConfig)), "launch repairs missing launcher-owned homes for existing installations");
+        check(!Directory.EnumerateFileSystemEntries(manual.CodexHome).Any() && !File.Exists(manual.OcxConfig), "home initialization is empty and never imports account files");
+        var sentinel = Path.Combine(manual.CodexHome, "config.toml"); File.WriteAllText(sentinel, "# retained fixture");
+        SetupService.Prepare(new LauncherSettings { ConfigurationMode = "manual", SetupCompleted = true }, manual);
+        check(File.ReadAllText(sentinel) == "# retained fixture", "repeated setup preserves existing configuration bytes");
+        var missing = Path.Combine(root, "missing-import"); bool refused = false;
+        try { AsyncProcessRunner.ApplyHomes(new ProcessStartInfo(), null, missing); } catch(IOException error) { refused = error.Message.Contains("CODEX_HOME"); }
+        check(refused && !Directory.Exists(missing), "missing imported home is reported without inventing a replacement");
+        var collision = Path.Combine(root, "home-is-file"); File.WriteAllText(collision, "retained"); refused = false;
+        try { SetupService.PrepareHome(collision, "CODEX_HOME"); } catch(IOException) { refused = true; }
+        check(refused && File.ReadAllText(collision) == "retained", "file at a home path is rejected without overwrite");
+        var fixture = Process.GetCurrentProcess().MainModule.FileName;
+        var command = new CommandSpec { File = fixture, Arguments = "startup-failure", Directory = root };
+        string diagnostic = "";
+        try { await new AsyncProcessRunner().CheckStartupAsync(command, manual.OcxConfig, manual.CodexHome, CancellationToken.None); }
+        catch(InvalidOperationException error) { diagnostic = error.Message; }
+        check(diagnostic.Contains("fixture import failed") && diagnostic.Contains("17"), "startup preflight reports child stderr and exit status");
+        check(!diagnostic.Contains("dummy-startup-secret") && diagnostic.Contains("REDACTED"), "startup preflight redacts credential-shaped output");
+        command.Arguments = "startup-home";
+        await new AsyncProcessRunner().CheckStartupAsync(command, manual.OcxConfig, manual.CodexHome, CancellationToken.None);
+        check(true, "startup preflight succeeds with existing selected homes");
+        using(var cancelled = new CancellationTokenSource()) {
+            cancelled.Cancel(); refused = false;
+            try { await new AsyncProcessRunner().CheckStartupAsync(command, manual.OcxConfig, manual.CodexHome, cancelled.Token); } catch(OperationCanceledException) { refused = true; }
+            check(refused, "cancelled startup preflight does not start the child");
+        }
         CredentialStore.Save("fixture-key", "dummy-test-only");
         check(CredentialStore.PathFor("fixture-key").StartsWith(LocalEnvironment.Current.DataDirectory) && CredentialStore.Load("fixture-key") == "dummy-test-only", "DPAPI credentials roundtrip inside isolated store");
         Directory.CreateDirectory(LocalEnvironment.Current.DataDirectory);
