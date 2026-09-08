@@ -1,0 +1,50 @@
+# Build output
+bin/
+obj/
+dist/
+build/
+test-output/
+*.exe
+*.dll
+*.pdb
+*.cab
+*.building.*
+.vs/
+
+# Local configuration and credentials
+settings.json
+*.local.json
+.env
+.env.*
+!.env.example
+.codex/
+.opencodex/
+credentials/
+*.bin
+*.log
+*.jsonl
+*.bak
+*.bak.*
+*.tmp
+*.tmp-*
+
+# IDE and OS files
+.idea/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
+
+# Private work and recovery data
+private/
+artifacts/
+recovery/
+backups/
+public/
+release-output/
+dist-sdk/
+*.zip
+*.original
+admin-api-token
+runtime-port.json
+runtime.json

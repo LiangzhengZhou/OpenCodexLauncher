@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>OpenCodexLauncher</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RootNamespace>OpenCodexLauncherV2</RootNamespace>
+    <ApplicationIcon>assets\launcher.ico</ApplicationIcon>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Security" />
+    <Compile Include="*.cs" />
+    <EmbeddedResource Include="localization.json" LogicalName="OpenCodexLauncher.localization.json" />
+    <EmbeddedResource Include="assets\launcher.png" LogicalName="OpenCodexLauncher.icon.png" />
+  </ItemGroup>
+</Project>

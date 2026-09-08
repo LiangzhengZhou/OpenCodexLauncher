@@ -1,0 +1,45 @@
+name: Build and release checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Native build and isolated regressions
+        shell: pwsh
+        run: ./tests/run-tests.ps1 -OutputDirectory ./artifacts/native
+      - name: SDK build and isolated regressions
+        shell: pwsh
+        run: |
+          dotnet build OpenCodexLauncher.csproj -c Release -o ./artifacts/sdk
+          if ($LASTEXITCODE -ne 0) { throw 'SDK build failed' }
+          ./tests/run-tests.ps1 -OutputDirectory ./artifacts/sdk -SkipBuild
+      - name: WPF localization and onboarding checks
+        shell: pwsh
+        run: ./tests/run-ui-tests.ps1 -OutputDirectory ./artifacts/native
+      - name: Allowlisted release and extracted archive checks
+        shell: pwsh
+        run: |
+          ./create-release.ps1 -OutputDirectory ./release-output -Executable ./artifacts/native/OpenCodexLauncher.exe
+          Expand-Archive ./release-output/OpenCodexLauncher-2.5.0-source.zip ./artifacts/extracted-source
+          Expand-Archive ./release-output/OpenCodexLauncher-2.5.0-windows-x64.zip ./artifacts/extracted-binary
+          ./release-check.ps1 -Directory ./artifacts/extracted-source -Kind source
+          ./release-check.ps1 -Directory ./artifacts/extracted-binary -Kind binary
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenCodexLauncher-2.5.0
+          path: |
+            release-output/*.zip
+            release-output/SHA256SUMS.txt

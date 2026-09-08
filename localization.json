@@ -1,0 +1,1122 @@
+{
+  "text.000": {
+    "zh": "模型、供应商与路由控制台  ·  v2.5.0",
+    "en": "Models, providers and routing console · v2.5.0"
+  },
+  "text.001": {
+    "zh": "● 检查中",
+    "en": "● Checking"
+  },
+  "text.002": {
+    "zh": "安全管理本地 OpenCodex 与 Codex CLI。",
+    "en": "Manage local OpenCodex and Codex CLI."
+  },
+  "text.003": {
+    "zh": "就绪",
+    "en": "Ready"
+  },
+  "text.004": {
+    "zh": "概览",
+    "en": "Overview"
+  },
+  "text.005": {
+    "zh": "供应商",
+    "en": "Providers"
+  },
+  "text.006": {
+    "zh": "模型管理",
+    "en": "Models"
+  },
+  "text.007": {
+    "zh": "强制启动",
+    "en": "Force launch"
+  },
+  "text.008": {
+    "zh": "Codex 路由",
+    "en": "Codex routing"
+  },
+  "text.009": {
+    "zh": "日志",
+    "en": "Logs"
+  },
+  "text.010": {
+    "zh": "设置",
+    "en": "Settings"
+  },
+  "text.011": {
+    "zh": "控制中心",
+    "en": "Control center"
+  },
+  "text.012": {
+    "zh": "查看本地运行状态，并从这里开始配置供应商、模型、强制启动和路由。",
+    "en": "Check local services and configure providers, models, runtime launches and routing."
+  },
+  "text.013": {
+    "zh": "保存供应商 → 获取模型 → 勾选 → 保存选择并同步到 Codex。\n官方模型保留原生 ID；第三方模型显示为供应商前缀，例如 Demo Provider GPT-6 Astra。",
+    "en": "Save provider → Fetch models → Select models → Save and sync to Codex.\nNative models keep their IDs. Third-party models show a provider prefix, e.g. Demo Provider GPT-6 Astra."
+  },
+  "text.014": {
+    "zh": "启动 OpenCodex",
+    "en": "Start OpenCodex"
+  },
+  "text.015": {
+    "zh": "同步到 Codex",
+    "en": "Sync to Codex"
+  },
+  "text.016": {
+    "zh": "刷新",
+    "en": "Refresh"
+  },
+  "text.017": {
+    "zh": "打开管理面板",
+    "en": "Open dashboard"
+  },
+  "text.018": {
+    "zh": "正在读取…",
+    "en": "Reading…"
+  },
+  "text.019": {
+    "zh": "配置 OpenAI-compatible 服务，然后选择要暴露给 Codex 的模型。",
+    "en": "Configure an OpenAI-compatible service and select models to expose to Codex."
+  },
+  "text.020": {
+    "zh": "新增供应商",
+    "en": "Add provider"
+  },
+  "text.021": {
+    "zh": "供应商 ID（例如 demo-provider）",
+    "en": "Provider ID (e.g. demo-provider)"
+  },
+  "text.022": {
+    "zh": "显示名称 / 模型前缀（例如 Demo Provider）",
+    "en": "Display name / model prefix (e.g. Demo Provider)"
+  },
+  "text.023": {
+    "zh": "API 基础地址（例如 https://example.invalid/v1）",
+    "en": "API base URL (e.g. https://example.invalid/v1)"
+  },
+  "text.024": {
+    "zh": "API 协议",
+    "en": "API protocol"
+  },
+  "text.025": {
+    "zh": "默认模型 ID（可选）",
+    "en": "Default model ID (optional)"
+  },
+  "text.026": {
+    "zh": "API Key（留空保留已保存密钥）",
+    "en": "API key (leave blank to keep saved key)"
+  },
+  "text.027": {
+    "zh": "保存供应商",
+    "en": "Save provider"
+  },
+  "text.028": {
+    "zh": "保存并获取模型",
+    "en": "Save and fetch models"
+  },
+  "text.029": {
+    "zh": "获取后自行勾选模型；不会自动勾选全部。",
+    "en": "Select models after fetching; models are not all selected automatically."
+  },
+  "text.030": {
+    "zh": "筛选模型 ID 或名称",
+    "en": "Filter by model ID or name"
+  },
+  "text.031": {
+    "zh": "勾选筛选结果",
+    "en": "Select filtered results"
+  },
+  "text.032": {
+    "zh": "取消全部",
+    "en": "Clear selection"
+  },
+  "text.033": {
+    "zh": "保存选择",
+    "en": "Save selection"
+  },
+  "text.034": {
+    "zh": "保存选择并同步到 Codex",
+    "en": "Save selection and sync to Codex"
+  },
+  "text.035": {
+    "zh": "官方模型由 Codex 登录管理，请勿用第三方地址覆盖。",
+    "en": "Native models use your Codex login. Do not replace their endpoint with a third-party URL."
+  },
+  "text.036": {
+    "zh": "点击保存并获取模型；已保存的选择会保留。",
+    "en": "Save and fetch models. Your saved selection will be preserved."
+  },
+  "text.037": {
+    "zh": "供应商信息已更改，请重新保存并获取模型。",
+    "en": "Provider details changed. Save and fetch models again."
+  },
+  "text.038": {
+    "zh": "供应商已保存，可以获取模型。",
+    "en": "Provider saved. You can now fetch models."
+  },
+  "text.039": {
+    "zh": "供应商已保存：",
+    "en": "Provider saved: "
+  },
+  "text.040": {
+    "zh": "；备份：",
+    "en": "; backup: "
+  },
+  "text.041": {
+    "zh": "接口返回 ",
+    "en": "API returned "
+  },
+  "text.042": {
+    "zh": " 个模型，已勾选 ",
+    "en": " models; selected "
+  },
+  "text.043": {
+    "zh": " 个。请选择后保存并同步。",
+    "en": ". Select models, then save and sync."
+  },
+  "text.044": {
+    "zh": "请先获取当前供应商的模型列表。",
+    "en": "Fetch the current provider's model list first."
+  },
+  "text.045": {
+    "zh": "该供应商将暂时停用，已有模型参数仍保留。继续吗？",
+    "en": "This provider will be disabled temporarily. Existing model settings will be kept. Continue?"
+  },
+  "text.046": {
+    "zh": "已保存 ",
+    "en": "Saved "
+  },
+  "text.047": {
+    "zh": " 个模型；已写入供应商配置。",
+    "en": " models to the provider configuration."
+  },
+  "text.048": {
+    "zh": "官方模型从 Codex 目录读取。第三方模型带供应商名称；目录存在不代表账号调用权限已经验证。",
+    "en": "Native models come from the Codex catalog. Third-party models show provider names. Catalog entries do not verify account access."
+  },
+  "text.049": {
+    "zh": "刷新模型目录",
+    "en": "Refresh model catalog"
+  },
+  "text.050": {
+    "zh": "启动 CLI 会话",
+    "en": "Start CLI session"
+  },
+  "text.051": {
+    "zh": "设为默认模型",
+    "en": "Set default model"
+  },
+  "text.052": {
+    "zh": "将默认模型设置为 ",
+    "en": "Set the default model to "
+  },
+  "text.053": {
+    "zh": "验证目录与代理",
+    "en": "Check catalog and proxy"
+  },
+  "text.054": {
+    "zh": "模型：",
+    "en": "Model: "
+  },
+  "text.055": {
+    "zh": "\n官方目录：",
+    "en": "\nNative catalog: "
+  },
+  "text.056": {
+    "zh": "\nOpenCodex 目录：",
+    "en": "\nOpenCodex catalog: "
+  },
+  "text.057": {
+    "zh": "\n代理健康：",
+    "en": "\nProxy healthy: "
+  },
+  "text.058": {
+    "zh": "\n没有发送推理请求。",
+    "en": "\nNo inference request was sent."
+  },
+  "text.059": {
+    "zh": "目录验证",
+    "en": "Catalog check"
+  },
+  "text.060": {
+    "zh": "发送测试请求",
+    "en": "Send test request"
+  },
+  "text.061": {
+    "zh": "向 ",
+    "en": "Send to "
+  },
+  "text.062": {
+    "zh": " 发送真实测试请求，可能消耗额度。继续吗？",
+    "en": " a real test request that may consume credits. Continue?"
+  },
+  "text.063": {
+    "zh": "保存并同步后，请重新打开 Codex 的模型选择器。如果已有 Desktop 窗口仍使用旧目录，可在路由页手动重启 Desktop。",
+    "en": "After saving and syncing, reopen the Codex model picker. You can manually restart Desktop on the routing page if its catalog is stale."
+  },
+  "text.064": {
+    "zh": "强制启动由 Launcher 自己决定模型，不依赖 Codex Desktop 的模型选择器，也不会因为官方额度耗尽而禁用。运行时可以切换，但模型路由 ID 不会自动降级。",
+    "en": "The launcher selects the model independently of the Desktop picker or native quota. Runtime fallback preserves the exact model route."
+  },
+  "text.065": {
+    "zh": "启动策略",
+    "en": "Launch strategy"
+  },
+  "text.066": {
+    "zh": "提示：follow-codex 会继续使用现有 Codex Desktop；额度耗尽时可能显示 Luna。要固定第三方模型，请选择 force 并点击“以选中模型启动”。",
+    "en": "follow-codex uses your existing Desktop routing. To pin a third-party model, choose force and click Launch selected model."
+  },
+  "text.067": {
+    "zh": "首选运行时（模型保持不变）",
+    "en": "Preferred runtime (same model)"
+  },
+  "text.068": {
+    "zh": "严格验证模型路由（发现 gpt-reserve 等覆盖时停止）",
+    "en": "Strict route verification (stop on a correlated model mismatch)"
+  },
+  "text.069": {
+    "zh": "官方额度与第三方可用性分开显示；读取失败不会禁用强制模式。",
+    "en": "Native quota and third-party availability are separate. A quota read failure does not disable force launch."
+  },
+  "text.070": {
+    "zh": "以选中模型启动",
+    "en": "Launch selected model"
+  },
+  "text.071": {
+    "zh": "刷新诊断",
+    "en": "Refresh diagnostics"
+  },
+  "text.072": {
+    "zh": "运行时顺序：Codex CLI → Claude Code。若首选运行时失败，Launcher 只会使用同一个 provider/model 路由尝试下一个运行时；不会切到官方 reserve 或其他模型。",
+    "en": "The preferred runtime is tried first, followed by the alternative. Each attempt preserves the same provider/model route."
+  },
+  "text.073": {
+    "zh": "高级功能：Reserve Force 在供应商解析前重写进入 OpenCodex 的 gpt-reserve 请求。其他模型请求和 Desktop 显示保持原样。本页展示服务范围观察结果，不能证明某个 Desktop 会话的路由。",
+    "en": "Advanced: Reserve Force rewrites incoming gpt-reserve requests before provider resolution. Other model requests and Desktop display labels remain unchanged. Diagnostics show service-wide observations, not proof for a specific Desktop session."
+  },
+  "text.074": {
+    "zh": "额度耗尽强制路由（Reserve Force）",
+    "en": "Reserve Force routing"
+  },
+  "text.075": {
+    "zh": "Reserve target（仅第三方模型）",
+    "en": "Reserve target (third-party models)"
+  },
+  "text.076": {
+    "zh": "Reserve Force 状态读取中…",
+    "en": "Reading Reserve Force status…"
+  },
+  "text.077": {
+    "zh": "启用并重启 OpenCodex",
+    "en": "Enable and restart OpenCodex"
+  },
+  "text.078": {
+    "zh": "停用并恢复原路由",
+    "en": "Disable and restore routing"
+  },
+  "text.079": {
+    "zh": "刷新 Reserve 状态",
+    "en": "Refresh Reserve status"
+  },
+  "text.080": {
+    "zh": "请选择一个已配置且可路由的第三方模型。",
+    "en": "Select a configured third-party model with a valid route."
+  },
+  "text.081": {
+    "zh": "OpenCodex 重启后 15 秒内未恢复。请检查日志和端口。",
+    "en": "OpenCodex did not recover within 15 seconds. Check logs and ports."
+  },
+  "text.082": {
+    "zh": "Reserve Force 将修改上游源码和路由配置，并重启代理，可能中断任务。继续吗？",
+    "en": "Reserve Force modifies upstream source and routing configuration, then restarts the proxy. Active tasks may be interrupted. Continue?"
+  },
+  "text.083": {
+    "zh": "已启用 pre-routing：gpt-reserve → ",
+    "en": "Pre-routing enabled: gpt-reserve → "
+  },
+  "text.084": {
+    "zh": "）。正在等待下一次 reserve 请求进行实际验证。",
+    "en": "). Waiting for a reserve request to observe the route."
+  },
+  "text.085": {
+    "zh": "Reserve Force 已启用：gpt-reserve -> ",
+    "en": "Reserve Force enabled: gpt-reserve -> "
+  },
+  "text.086": {
+    "zh": "；OpenCodex 已重启。",
+    "en": "; OpenCodex restarted."
+  },
+  "text.087": {
+    "zh": "检测到 Reserve Force 已被其他配置修改（当前为 ",
+    "en": "Reserve Force was changed externally (current target: "
+  },
+  "text.088": {
+    "zh": "），为避免覆盖外部设置，本次停用已中止。",
+    "en": "). Disable was stopped to preserve external settings."
+  },
+  "text.089": {
+    "zh": "停用 Reserve Force 将修改路由配置并重启代理。继续吗？",
+    "en": "Disabling Reserve Force changes routing configuration and restarts the proxy. Continue?"
+  },
+  "text.090": {
+    "zh": "已停用，gpt-reserve 已恢复原路由。",
+    "en": "Disabled. gpt-reserve uses its original routing."
+  },
+  "text.091": {
+    "zh": "Reserve Force 已停用；OpenCodex pre-routing 已恢复原状。",
+    "en": "Reserve Force disabled; original pre-routing restored."
+  },
+  "text.092": {
+    "zh": "未启用：gpt-reserve 保持原始路由。",
+    "en": "Disabled: gpt-reserve keeps its original routing."
+  },
+  "text.093": {
+    "zh": "配置存在但 Launcher 未 armed：",
+    "en": "Configuration exists but the launcher has not armed it: "
+  },
+  "text.094": {
+    "zh": "配置异常：期望 ",
+    "en": "Configuration mismatch. Expected "
+  },
+  "text.095": {
+    "zh": "，实际为 ",
+    "en": ", actual: "
+  },
+  "text.096": {
+    "zh": "未知",
+    "en": "Unknown"
+  },
+  "text.097": {
+    "zh": "匹配",
+    "en": "Matched"
+  },
+  "text.098": {
+    "zh": "失败（provider/model/status 不满足）",
+    "en": "Failed (provider/model/status mismatch)"
+  },
+  "text.099": {
+    "zh": "\n等待下一次 gpt-reserve 请求进行实际验证。",
+    "en": "\nWaiting for a gpt-reserve request to observe routing."
+  },
+  "text.100": {
+    "zh": "Reserve Force 状态读取失败：",
+    "en": "Cannot read Reserve Force status: "
+  },
+  "text.101": {
+    "zh": "请先在强制启动页选择模型。",
+    "en": "Select a model on the Force launch page first."
+  },
+  "text.102": {
+    "zh": "运行时已启动：",
+    "en": "Runtime started: "
+  },
+  "text.103": {
+    "zh": "；模型参数已固定：",
+    "en": "; model argument pinned: "
+  },
+  "text.104": {
+    "zh": "；只有含可靠会话标识和时间戳的请求才能用于验证。",
+    "en": "; verification requires a request with a matching authoritative session ID and timestamp."
+  },
+  "text.105": {
+    "zh": "已启动 ",
+    "en": "Started "
+  },
+  "text.106": {
+    "zh": "\n模型：",
+    "en": "\nModel: "
+  },
+  "text.107": {
+    "zh": "\n路由状态：启动参数已固定；获得会话关联证据前保持待验证。",
+    "en": "\nRoute: arguments pinned; pending until correlated request evidence is available."
+  },
+  "text.108": {
+    "zh": "读取失败：",
+    "en": "Read failed: "
+  },
+  "text.109": {
+    "zh": "无活动会话",
+    "en": "No active session"
+  },
+  "text.110": {
+    "zh": "已验证",
+    "en": "Verified"
+  },
+  "text.111": {
+    "zh": "待验证（缺少会话关联证据）",
+    "en": "Pending verification"
+  },
+  "text.112": {
+    "zh": "路由不匹配；严格校验已关闭，运行时继续运行。",
+    "en": "Route mismatch; strict verification is off, so the runtime continues."
+  },
+  "text.113": {
+    "zh": "拒绝：",
+    "en": "Rejected: "
+  },
+  "text.114": {
+    "zh": "检测到模型覆盖，已停止当前运行时；保留模型 ",
+    "en": "Model override detected. Runtime stopped; keeping model "
+  },
+  "text.115": {
+    "zh": "，尝试 ",
+    "en": ", trying "
+  },
+  "text.116": {
+    "zh": "；已启动备用运行时",
+    "en": "; alternative runtime started"
+  },
+  "text.117": {
+    "zh": "；备用运行时失败：",
+    "en": "; alternative runtime failed: "
+  },
+  "text.118": {
+    "zh": "运行中",
+    "en": "Running"
+  },
+  "text.119": {
+    "zh": "未就绪",
+    "en": "Not ready"
+  },
+  "text.120": {
+    "zh": "\n当前会话路由：",
+    "en": "\nCurrent session route: "
+  },
+  "text.121": {
+    "zh": "\n第三方模型：独立于 Native quota，强制模式仍可用。",
+    "en": "\nThird-party models use their own quota and remain available in force mode."
+  },
+  "text.122": {
+    "zh": "请先选择模型。",
+    "en": "Select a model first."
+  },
+  "text.123": {
+    "zh": "同步保留官方模型和自选第三方模型。重启和停止会影响现有任务，请按需使用。",
+    "en": "Sync preserves native and selected third-party models. Restart and stop actions affect active tasks."
+  },
+  "text.124": {
+    "zh": "同步模型（不重启 Codex）",
+    "en": "Sync models (no Codex restart)"
+  },
+  "text.125": {
+    "zh": "恢复原生 Codex",
+    "en": "Restore native Codex"
+  },
+  "text.126": {
+    "zh": "解除 OpenCodex 路由？",
+    "en": "Remove OpenCodex routing?"
+  },
+  "text.127": {
+    "zh": "重新接入 OpenCodex",
+    "en": "Reconnect OpenCodex"
+  },
+  "text.128": {
+    "zh": "重新启用 OpenCodex 代理路由？",
+    "en": "Enable OpenCodex proxy routing again?"
+  },
+  "text.129": {
+    "zh": "同步并重启 Desktop",
+    "en": "Sync and restart Desktop"
+  },
+  "text.130": {
+    "zh": "这会重启 Codex Desktop，可能中断任务。继续吗？",
+    "en": "This restarts Codex Desktop and may interrupt tasks. Continue?"
+  },
+  "text.131": {
+    "zh": "停止 OpenCodex",
+    "en": "Stop OpenCodex"
+  },
+  "text.132": {
+    "zh": "停止代理并恢复原生路由？第三方请求将中断。",
+    "en": "Stop the proxy and restore native routing? Third-party requests will be interrupted."
+  },
+  "text.133": {
+    "zh": "刷新最近请求",
+    "en": "Refresh recent requests"
+  },
+  "text.134": {
+    "zh": "清空显示",
+    "en": "Clear display"
+  },
+  "text.135": {
+    "zh": "保存脱敏日志",
+    "en": "Save redacted logs"
+  },
+  "text.136": {
+    "zh": "日志|*.log",
+    "en": "Logs|*.log"
+  },
+  "text.137": {
+    "zh": "凭据字段会脱敏；分享前仍需检查请求正文和个人路径。",
+    "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
+  },
+  "text.138": {
+    "zh": "启动器 2.5.0。路径配置保存到 Windows 当前用户目录。",
+    "en": "Launcher 2.5.0. Paths are stored in the current Windows user's data directory."
+  },
+  "text.139": {
+    "zh": "选择 OpenCodex 入口",
+    "en": "Choose OpenCodex entry"
+  },
+  "text.140": {
+    "zh": "选择 Codex CLI",
+    "en": "Choose Codex CLI"
+  },
+  "text.141": {
+    "zh": "CLI 项目工作目录",
+    "en": "CLI project directory"
+  },
+  "text.142": {
+    "zh": "保存工作目录",
+    "en": "Save working directory"
+  },
+  "text.143": {
+    "zh": "目录不存在。",
+    "en": "Directory does not exist."
+  },
+  "text.144": {
+    "zh": "查看 OpenCodex 版本",
+    "en": "Show OpenCodex version"
+  },
+  "text.145": {
+    "zh": "OpenCodex 版本",
+    "en": "OpenCodex version"
+  },
+  "text.146": {
+    "zh": "查看上游更新",
+    "en": "View upstream updates"
+  },
+  "text.147": {
+    "zh": "OpenCodex|ocx.cmd;ocx.mjs;ocx.exe|所有文件|*.*",
+    "en": "OpenCodex|ocx.cmd;ocx.mjs;ocx.exe|All files|*.*"
+  },
+  "text.148": {
+    "zh": "OpenCodex 命令失败，退出代码 ",
+    "en": "OpenCodex command failed with exit code "
+  },
+  "text.149": {
+    "zh": "OpenCodex 已在运行。",
+    "en": "OpenCodex is already running."
+  },
+  "text.150": {
+    "zh": "代理启动失败，退出代码 ",
+    "en": "Proxy start failed with exit code "
+  },
+  "text.151": {
+    "zh": "代理 30 秒内未就绪，请检查配置和 OpenCodex 运行时。",
+    "en": "Proxy was not ready within 30 seconds. Check configuration and the OpenCodex runtime."
+  },
+  "text.152": {
+    "zh": "选择已保存，目录已同步到 Codex。",
+    "en": "Selection saved and catalog synced to Codex."
+  },
+  "text.153": {
+    "zh": "目录已同步。若 Desktop 未刷新，请重新打开模型选择器。",
+    "en": "Catalog synced. Reopen the model picker if Desktop has not refreshed."
+  },
+  "text.154": {
+    "zh": "原生目录刷新失败，保留已有目录：",
+    "en": "Native catalog refresh failed; keeping the previous catalog: "
+  },
+  "text.155": {
+    "zh": "● 运行中",
+    "en": "● Running"
+  },
+  "text.156": {
+    "zh": "● 未就绪",
+    "en": "● Not ready"
+  },
+  "text.157": {
+    "zh": "代理：",
+    "en": "Proxy: "
+  },
+  "text.158": {
+    "zh": "\n默认供应商：",
+    "en": "\nDefault provider: "
+  },
+  "text.159": {
+    "zh": "\n默认模型：",
+    "en": "\nDefault model: "
+  },
+  "text.160": {
+    "zh": " 个模型\n模型列表：",
+    "en": " models\nModel list: "
+  },
+  "text.161": {
+    "zh": " 个\n\nOpenCodex：",
+    "en": " entries\n\nOpenCodex: "
+  },
+  "text.162": {
+    "zh": "\n配置：",
+    "en": "\nConfiguration: "
+  },
+  "text.163": {
+    "zh": "\n目录：",
+    "en": "\nCatalog: "
+  },
+  "text.164": {
+    "zh": "配置读取失败：",
+    "en": "Cannot read configuration: "
+  },
+  "text.165": {
+    "zh": "完成",
+    "en": " completed"
+  },
+  "text.166": {
+    "zh": "已取消",
+    "en": " cancelled"
+  },
+  "text.167": {
+    "zh": "失败",
+    "en": " failed"
+  },
+  "text.168": {
+    "zh": "操作失败",
+    "en": "Operation failed"
+  },
+  "text.169": {
+    "zh": "OpenCodex Launcher 无法启动",
+    "en": "OpenCodex Launcher could not start"
+  },
+  "text.170": {
+    "zh": "模型路由不一致：请求 ",
+    "en": "Model route mismatch. Requested "
+  },
+  "text.171": {
+    "zh": "，实际 ",
+    "en": ", actual "
+  },
+  "text.172": {
+    "zh": "。运行时已拒绝继续。",
+    "en": ". Route verification rejected this result."
+  },
+  "text.173": {
+    "zh": "没有选择模型。",
+    "en": "No model selected."
+  },
+  "text.174": {
+    "zh": "JSON 字段应为数组。",
+    "en": "JSON field must be an array."
+  },
+  "text.175": {
+    "zh": "JSON 根节点应为对象。",
+    "en": "JSON root must be an object."
+  },
+  "text.176": {
+    "zh": "模型 ID 含不支持的字符（仅允许字母、数字及 . _ : / + @ -）。",
+    "en": "Model ID contains unsupported characters (allowed: letters, digits and . _ : / + @ -)."
+  },
+  "text.177": {
+    "zh": "供应商 ID 只能包含字母、数字、点、下划线和短横线。",
+    "en": "Provider ID may contain letters, digits, dots, underscores and hyphens only."
+  },
+  "text.178": {
+    "zh": "供应商密钥环境变量重名，请重新保存这些供应商的密钥。",
+    "en": "Provider credential environment variables collide. Save these providers' keys again."
+  },
+  "text.179": {
+    "zh": "已为 OpenCodex 应用 Reserve Force pre-routing 补丁；备份：",
+    "en": "Applied the Reserve Force pre-routing patch; backup: "
+  },
+  "text.180": {
+    "zh": "参数含 NUL。",
+    "en": "Argument contains NUL."
+  },
+  "text.181": {
+    "zh": "找不到 OpenCodex 入口，请在设置中选择 ocx.cmd 或 ocx.mjs。",
+    "en": "OpenCodex entry not found. Choose ocx.cmd or ocx.mjs in Settings."
+  },
+  "text.182": {
+    "zh": "无法解析 ocx.cmd 的标准 npm 入口，请选择安装目录中的 bin/ocx.mjs。",
+    "en": "Cannot resolve the standard npm entry from ocx.cmd. Choose bin/ocx.mjs from the installation."
+  },
+  "text.183": {
+    "zh": "找不到 Node.js，请先安装 Node.js 或将其加入 PATH。",
+    "en": "Node.js not found. Install it or add it to PATH."
+  },
+  "text.184": {
+    "zh": "命令输出超过 8 MB 限制。",
+    "en": "Command output exceeded 8 MB."
+  },
+  "text.185": {
+    "zh": "命令超时。",
+    "en": "Command timed out."
+  },
+  "text.186": {
+    "zh": "另一个启动器正在修改配置，请稍后重试。",
+    "en": "Another launcher is editing the configuration. Try again later."
+  },
+  "text.187": {
+    "zh": "配置已被其他程序修改，请刷新后重试。",
+    "en": "Configuration changed externally. Refresh and retry."
+  },
+  "text.188": {
+    "zh": "首次创建配置",
+    "en": "Created initial configuration"
+  },
+  "text.189": {
+    "zh": "未配置",
+    "en": "Not configured"
+  },
+  "text.190": {
+    "zh": "路由已经是可接管状态",
+    "en": "Routing is ready for integration"
+  },
+  "text.191": {
+    "zh": "Reserve target 必须是 provider/model 路由。",
+    "en": "Reserve target must be a provider/model route."
+  },
+  "text.192": {
+    "zh": "openai 保留给官方 Codex 登录。OpenAI API Key 请使用独立供应商 ID，例如 openai-api。",
+    "en": "openai is reserved for native Codex login. Use a separate ID such as openai-api for an OpenAI API key."
+  },
+  "text.193": {
+    "zh": "请选择 Chat Completions 或 Responses 协议。",
+    "en": "Choose Chat Completions or Responses protocol."
+  },
+  "text.194": {
+    "zh": "显示名称过长或含控制字符。",
+    "en": "Display name is too long or contains control characters."
+  },
+  "text.195": {
+    "zh": "供应商 ID 与现有 ID 仅大小写不同。",
+    "en": "Provider ID differs from an existing ID only by letter case."
+  },
+  "text.196": {
+    "zh": "官方模型由 Codex 管理，不通过第三方列表筛选。",
+    "en": "Native models are managed by Codex, not by third-party model selection."
+  },
+  "text.197": {
+    "zh": "请先保存供应商，再获取和选择模型。",
+    "en": "Save the provider before fetching and selecting models."
+  },
+  "text.198": {
+    "zh": "模型 ID 转换后重名（例如 a/b 与 a-b），请先在供应商端消除歧义。",
+    "en": "Model IDs collide after normalization (e.g. a/b and a-b). Resolve the ambiguity at the provider first."
+  },
+  "text.199": {
+    "zh": "供应商未保存或没有启用模型。",
+    "en": "Provider has not been saved or has no enabled models."
+  },
+  "text.200": {
+    "zh": "请输入完整 API 基础地址，不要在 URL 中包含密钥、查询参数或片段。",
+    "en": "Enter a complete API base URL without credentials, query parameters or fragments."
+  },
+  "text.201": {
+    "zh": "远程供应商请使用 HTTPS；HTTP 仅用于本机测试。",
+    "en": "Remote providers require HTTPS. HTTP is allowed only for local testing."
+  },
+  "text.202": {
+    "zh": "接口响应缺少 data 数组，请检查 API 地址。",
+    "en": "Response is missing the data array. Check the API URL."
+  },
+  "text.203": {
+    "zh": "模型列表存在没有 id 的项目。",
+    "en": "The model list contains an entry without an ID."
+  },
+  "text.204": {
+    "zh": "模型列表超过 10000 项限制。",
+    "en": "The model list exceeds 10,000 entries."
+  },
+  "text.205": {
+    "zh": "获取模型失败，HTTP ",
+    "en": "Model fetch failed, HTTP "
+  },
+  "text.206": {
+    "zh": "：请检查 API Key 和供应商权限。",
+    "en": ": check the API key and provider permissions."
+  },
+  "text.207": {
+    "zh": "：请检查 API 地址或稍后重试。",
+    "en": ": check the API URL or try again later."
+  },
+  "text.208": {
+    "zh": "未找到模型列表接口。",
+    "en": "Model list endpoint not found."
+  },
+  "text.209": {
+    "zh": "OpenCodex 未运行或健康检查未通过。",
+    "en": "OpenCodex is not running or failed its health check."
+  },
+  "text.210": {
+    "zh": "OpenCodex 管理接口返回 HTTP ",
+    "en": "OpenCodex management API returned HTTP "
+  },
+  "text.211": {
+    "zh": "OpenCodex 数据接口返回 HTTP ",
+    "en": "OpenCodex data API returned HTTP "
+  },
+  "text.212": {
+    "zh": "未找到 codex.exe",
+    "en": "codex.exe not found"
+  },
+  "text.213": {
+    "zh": "PATH 中未找到 Claude Code CLI",
+    "en": "Claude Code CLI not found in PATH"
+  },
+  "text.214": {
+    "zh": "OpenCodex 未就绪，无法执行强制启动。",
+    "en": "OpenCodex is not ready for force launch."
+  },
+  "text.215": {
+    "zh": "OpenCodex 当前目录中不存在所选模型：",
+    "en": "Selected model is not in the current OpenCodex catalog: "
+  },
+  "text.216": {
+    "zh": "无法验证所选模型：",
+    "en": "Cannot verify the selected model: "
+  },
+  "text.217": {
+    "zh": "运行时候选模型发生变化。",
+    "en": "Runtime candidate model changed."
+  },
+  "text.218": {
+    "zh": "运行时不可用。",
+    "en": "Runtime is unavailable."
+  },
+  "text.219": {
+    "zh": "该模式没有可用运行时。",
+    "en": "No runtime is available for this mode."
+  },
+  "text.220": {
+    "zh": "无法启动所选模型 ",
+    "en": "Cannot launch selected model "
+  },
+  "text.221": {
+    "zh": "。已尝试运行时：",
+    "en": ". Runtimes attempted: "
+  },
+  "text.222": {
+    "zh": "。未回退到其他模型。\n",
+    "en": ". No fallback to another model.\n"
+  },
+  "text.224": {
+    "zh": "欢迎使用 OpenCodex Launcher",
+    "en": "Welcome to OpenCodex Launcher"
+  },
+  "text.225": {
+    "zh": "这是空白工作区。供应商、模型、密钥和自定义路径均未导入。请选择检测本机配置并确认关联，或手动配置独立环境。",
+    "en": "This is an empty workspace. No providers, models, keys or custom paths have been imported. Detect local configuration and confirm linking it, or configure an independent environment manually."
+  },
+  "text.226": {
+    "zh": "确认导入",
+    "en": "Confirm import"
+  },
+  "text.227": {
+    "zh": "检测并导入本机配置",
+    "en": "Detect local configuration"
+  },
+  "text.228": {
+    "zh": "手动配置",
+    "en": "Manual setup"
+  },
+  "text.229": {
+    "zh": "配置需要修复",
+    "en": "Configuration needs repair"
+  },
+  "text.230": {
+    "zh": "原文件已保留。修复配置后重试；程序不会用空配置覆盖损坏文件。",
+    "en": "Original files are preserved. Repair the configuration and retry. Damaged files will not be replaced with empty settings."
+  },
+  "text.231": {
+    "zh": "打开配置目录",
+    "en": "Open configuration folder"
+  },
+  "text.232": {
+    "zh": "重试",
+    "en": "Retry"
+  },
+  "setup.preview": {
+    "zh": "检测结果（配置路径及供应商数量；尚未建立关联）：",
+    "en": "Detected paths and provider count (not linked yet):"
+  },
+  "reserve.recovery": {
+    "zh": "恢复因外部修改而停止。请参照恢复记录：",
+    "en": "Recovery stopped to preserve external changes. See journal: "
+  },
+  "reserve.rolledBack": {
+    "zh": "文件已恢复。代理状态需要手动检查；恢复记录：",
+    "en": "Files restored. Check the proxy state manually. Recovery journal: "
+  },
+  "selected.model": {
+    "zh": "选中模型",
+    "en": "Selected model"
+  },
+  "compat.missing": {
+    "zh": "未找到上游 router.ts，无法应用补丁。",
+    "en": "Upstream router.ts was not found; patch cannot be applied."
+  },
+  "compat.ready": {
+    "zh": "上游已包含 Reserve Force 补丁。",
+    "en": "Upstream already includes the Reserve Force patch."
+  },
+  "compat.unsupported": {
+    "zh": "上游路由入口不兼容，补丁未应用。",
+    "en": "Upstream routing entry is incompatible; patch was not applied."
+  },
+  "settings.invalid": {
+    "zh": "启动器设置无效。",
+    "en": "Invalid launcher settings."
+  },
+  "settings.newer": {
+    "zh": "配置由更高版本的启动器创建。",
+    "en": "Configuration was created by a newer launcher."
+  },
+  "recovery.external": {
+    "zh": "文件已被外部修改。已停止恢复以保留外部变更。恢复记录：",
+    "en": "Files changed externally. Recovery stopped to preserve external changes. Journal: "
+  },
+  "alias.missing": {
+    "zh": "找不到所选供应商与模型的精确路由：",
+    "en": "No exact route for the selected provider and model: "
+  },
+  "reserve.observation": {
+    "zh": "\n服务范围观察（非当前会话验证）\n请求模型：{0}\n预路由目标：{1}\n实际供应商：{2}\n实际模型：{3}\n状态：{4}\n结果：{5}",
+    "en": "\nService-wide observation (not session verification)\nRequested: {0}\nPre-route target: {1}\nProvider: {2}\nModel: {3}\nStatus: {4}\nResult: {5}"
+  },
+  "quota.label": {
+    "zh": "\n原生 Codex 额度：",
+    "en": "\nNative Codex quota: "
+  },
+  "install.title": {
+    "zh": "安装与更新 OpenCodex",
+    "en": "Install and update OpenCodex"
+  },
+  "install.intro": {
+    "zh": "一键下载最新版 OpenCodex 和独立的 Node.js/Bun 环境，无需管理员权限。需要联网，可能耗时数分钟；完成后进入空白配置，API 和供应商由你填写。",
+    "en": "Download the latest stable OpenCodex with a private Node.js/Bun runtime. No administrator rights needed. Requires internet and may take several minutes. Then configure your own providers and API credentials."
+  },
+  "install.existing": {
+    "zh": "安装最新稳定版到启动器的独立目录，保留配置和旧版本。现有服务继续运行；新版本在你手动停止旧代理并用启动器启动后生效。系统服务、托盘和外部命令仍指向原安装。",
+    "en": "Install the latest stable release in a launcher-managed directory, preserving configuration and the previous version. Stop the old proxy yourself and start it from this launcher to use the new version. Services, tray entries and external commands keep their original installation."
+  },
+  "install.idle": {
+    "zh": "尚未安装；点击下方按钮开始。",
+    "en": "Not installed. Use the button below to begin."
+  },
+  "install.oneClick": {
+    "zh": "一键安装并开始配置",
+    "en": "Install and start setup"
+  },
+  "install.check": {
+    "zh": "检查更新",
+    "en": "Check for updates"
+  },
+  "install.update": {
+    "zh": "安装 / 更新到最新稳定版",
+    "en": "Install / update to latest stable"
+  },
+  "install.cancel": {
+    "zh": "取消安装 / 检查",
+    "en": "Cancel install / check"
+  },
+  "install.checking": {
+    "zh": "正在查询 npm 最新稳定版…",
+    "en": "Checking npm for the latest stable release…"
+  },
+  "install.installed": {
+    "zh": "当前选用版本：",
+    "en": "Selected version: "
+  },
+  "install.unknown": {
+    "zh": "未安装或版本未知",
+    "en": "Not installed or unknown"
+  },
+  "install.latest": {
+    "zh": "最新稳定版：{0}",
+    "en": "Latest stable: {0}"
+  },
+  "install.available": {
+    "zh": "可安装最新稳定版。",
+    "en": "A stable release is available to install."
+  },
+  "install.current": {
+    "zh": "当前版本已是最新或更高版本。",
+    "en": "The selected version is current or newer."
+  },
+  "install.confirm": {
+    "zh": "安装 OpenCodex {0} 并切换启动器使用的路径？\n配置与旧安装将保留，当前代理不会重启。外部命令、系统服务和托盘入口不会自动迁移。",
+    "en": "Install OpenCodex {0} and switch the launcher to it?\nConfiguration and the old installation will be retained. The running proxy will not restart. External commands, system services and tray entries will not be migrated."
+  },
+  "install.node": {
+    "zh": "正在准备独立的 Node.js LTS 环境…",
+    "en": "Preparing a private Node.js LTS runtime…"
+  },
+  "install.package": {
+    "zh": "正在下载并校验 OpenCodex…",
+    "en": "Downloading and verifying OpenCodex…"
+  },
+  "install.dependencies": {
+    "zh": "正在安装依赖和 Bun 运行时，可能需要数分钟…",
+    "en": "Installing dependencies and the Bun runtime. This may take several minutes…"
+  },
+  "install.verify": {
+    "zh": "正在使用空白测试配置验证新版本…",
+    "en": "Verifying the new version with empty test configuration…"
+  },
+  "install.done": {
+    "zh": "OpenCodex {0} 安装完成。配置已保留；新用户请添加供应商。已有代理需手动停止后从启动器启动，新版本才会生效。",
+    "en": "OpenCodex {0} installed. Configuration preserved; new users can add providers. Stop any old proxy yourself, then start from this launcher to activate the new version."
+  },
+  "install.cancelled": {
+    "zh": "操作已取消，原配置和所选版本未变。",
+    "en": "Cancelled. Configuration and selected version are unchanged."
+  },
+  "install.failed": {
+    "zh": "安装 / 检查失败，原配置和所选版本未变。可重试；失败详情保留在本地 runtimes 目录。",
+    "en": "Install / check failed. Configuration and selected version are unchanged. Retry when ready; installation failure details are retained in the local runtimes directory."
+  },
+  "install.reserve": {
+    "zh": "请先在高级设置中关闭 Reserve Force，再安装或切换版本。新版本需要重新检查补丁兼容性。",
+    "en": "Disable Reserve Force in advanced settings before installing or switching versions. Patch compatibility must be checked again on the new version."
+  },
+  "install.rollback": {
+    "zh": "切回上一版本",
+    "en": "Switch to previous version"
+  },
+  "install.rollbackConfirm": {
+    "zh": "切回上次使用的 OpenCodex 路径？配置保持不变，当前代理不会重启。",
+    "en": "Switch to the previous OpenCodex path? Configuration will be preserved and the running proxy will not restart."
+  },
+  "install.noPrevious": {
+    "zh": "没有可用的上一版本。",
+    "en": "No previous installation is available."
+  },
+  "install.restart": {
+    "zh": "下次手动停止旧代理并从启动器启动时生效。",
+    "en": "Takes effect after you stop the old proxy and start it from this launcher."
+  },
+  "install.metadata": {
+    "zh": "官方安装元数据无效或不受支持。",
+    "en": "Official installation metadata is invalid or unsupported."
+  },
+  "install.size": {
+    "zh": "下载文件超出大小限制。",
+    "en": "Download exceeds the size limit."
+  },
+  "install.timeout": {
+    "zh": "安装命令超时，请检查网络后重试。",
+    "en": "Installation command timed out. Check your connection and retry."
+  },
+  "install.process": {
+    "zh": "安装命令失败，退出码：",
+    "en": "Installation command failed, exit code: "
+  },
+  "install.job": {
+    "zh": "无法建立可取消的安装进程组。",
+    "en": "Could not create a cancellable installation process group."
+  },
+  "install.hash": {
+    "zh": "下载完整性校验失败，未安装该文件。",
+    "en": "Download integrity check failed. The file was not installed."
+  },
+  "install.archive": {
+    "zh": "Node.js 压缩包内容无效。",
+    "en": "Invalid Node.js archive contents."
+  },
+  "install.versionMismatch": {
+    "zh": "新运行时的版本验证失败。",
+    "en": "The new runtime failed version verification."
+  }
+}
