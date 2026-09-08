@@ -27,6 +27,7 @@ namespace OpenCodexLauncherV2
         public Func<string, string> Read;
         public Func<CancellationToken, Task<DesktopProcessEvidence>> Processes;
         public Func<int, CancellationToken, Task<bool>> Health;
+        public TransportProbeInputs Transport;
         public static DesktopDiagnosticInputs Local()
         {
             var env = LocalEnvironment.Current;
@@ -34,7 +35,8 @@ namespace OpenCodexLauncherV2
                 DefaultHome = Path.Combine(env.UserDirectory, ".codex"), EnvironmentHome = env.Variable("CODEX_HOME"),
                 Read = ReadLocal,
                 Processes = env.IsIsolated ? (Func<CancellationToken, Task<DesktopProcessEvidence>>)(t => Task.FromResult(new DesktopProcessEvidence())) : ReadProcesses,
-                Health = env.IsIsolated ? (Func<int, CancellationToken, Task<bool>>)((p,t) => Task.FromResult(false)) : ProbeHealth
+                Health = env.IsIsolated ? (Func<int, CancellationToken, Task<bool>>)((p,t) => Task.FromResult(false)) : ProbeHealth,
+                Transport = env.IsIsolated ? null : TransportProbeInputs.Local()
             };
         }
         public static string ReadLocal(string path)
@@ -225,7 +227,7 @@ namespace OpenCodexLauncherV2
             var routePorts = new Dictionary<int, int>();
             var homes = new[] { paths.CodexHome, input.DefaultHome, input.EnvironmentHome };
             var roles = new[] { "launcher-target", "default-home", "launcher-environment-home" };
-            bool targetHasModels = false, alternativeMissing = false;
+            bool targetHasModels = false, alternativeMissing = false; string targetRoute = null;
             for (int i = 0; i < homes.Length; i++)
             {
                 token.ThrowIfCancellationRequested(); if (String.IsNullOrWhiteSpace(homes[i])) continue;
@@ -244,6 +246,7 @@ namespace OpenCodexLauncherV2
                 if (!supported) { findings.Add("config-syntax-unknown"); continue; }
                 string reference, route;
                 keys.TryGetValue("model_catalog_json", out reference); keys.TryGetValue("openai_base_url", out route);
+                if (i == 0) targetRoute = route;
                 row["catalogReferencePresent"] = !String.IsNullOrWhiteSpace(reference);
                 Uri uri; bool loopback = Uri.TryCreate(route, UriKind.Absolute, out uri) && (uri.Scheme == "http" || uri.Scheme == "https") && uri.IsLoopback;
                 row["route"] = String.IsNullOrWhiteSpace(route) ? "absent" : loopback ? "loopback" : "other";
@@ -293,6 +296,12 @@ namespace OpenCodexLauncherV2
                 if (rows[i].ContainsKey("route")) rows[i]["routeMatchesHealthyProxy"] = healthyPort.HasValue ? (object)(routePorts.ContainsKey(i) && routePorts[i] == healthyPort.Value) : null;
             if (healthyPort.HasValue && rows.Count > 0 && rows[0].ContainsKey("route") && (!routePorts.ContainsKey(0) || routePorts[0] != healthyPort.Value)) findings.Add("target-route-differs");
             if (!healthyPort.HasValue) findings.Add("proxy-unavailable");
+            if (input.Transport != null)
+            {
+                report["transport"] = await TransportDiagnostics.CollectAsync(targetRoute, input.Transport, token).ConfigureAwait(false);
+                findings.Add("transport-get-only");
+            }
+            else report["transport"] = new { status = "not-collected" };
             DesktopProcessEvidence processes;
             try { processes = await processTask.ConfigureAwait(false); }
             catch (OperationCanceledException) { throw; } catch { processes = new DesktopProcessEvidence(); }
@@ -310,7 +319,7 @@ namespace OpenCodexLauncherV2
         }
         static DesktopDiagnosticReport Finish(Dictionary<string, object> data, List<string> findings)
         {
-            data["reportVersion"] = 1; data["launcherVersion"] = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            data["reportVersion"] = 2; data["launcherVersion"] = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             data["capturedAtUtc"] = DateTime.UtcNow.ToString("o"); data["findings"] = findings.Distinct().ToArray();
             return new DesktopDiagnosticReport { Json = JsonData.Serializer().Serialize(data), Findings = findings.Distinct().ToArray() };
         }

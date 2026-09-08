@@ -139,7 +139,7 @@ class UiChecks
             int diagnosticRuns=0;var diagnosticPause=new TaskCompletionSource<bool>();
             reopened.DiagnosticInputsFactory=()=> {diagnosticRuns++;return new DesktopDiagnosticInputs {
                 Read=p=>null, Processes=t=>Task.FromResult(new DesktopProcessEvidence()),
-                Health=async(p,t)=> {await diagnosticPause.Task;return false;}
+                Health=async(p,t)=> {await diagnosticPause.Task;return false;}, Transport=new TransportProbeInputs()
             };};
             var diagnose=Find<Button>(reopened).Single(b=>Convert.ToString(b.Content)=="Diagnose Desktop");
             Check(diagnosticRuns==0,"Desktop diagnostic factory is not accessed while viewing pages");
@@ -149,11 +149,13 @@ class UiChecks
             var diagnosticWindow=reopened.OwnedWindows.Cast<Window>().Single();
             var diagnosticText=Find<TextBox>(diagnosticWindow).Single();
             Check(diagnosticText.IsReadOnly&&diagnosticText.Text.Contains("reportVersion")&&diagnosticText.Text.Contains("homes"),"one-click Desktop diagnostics opens a read-only structured report");
+            Check(diagnosticText.Text.Contains("POST authentication and inference are untested")&&diagnosticText.Text.Contains("target-route-unsupported"),"English report displays transport limits without probing an absent target");
             Check(Find<Button>(diagnosticWindow).Any(b=>Convert.ToString(b.Content)=="Copy report")&&Find<Button>(diagnosticWindow).Any(b=>Convert.ToString(b.Content)=="Save diagnostic log…"),"diagnostic report exposes copy and save actions");
             diagnosticWindow.Width=540;diagnosticWindow.Height=400;diagnosticWindow.UpdateLayout();
             foreach(var scale in new[]{1.0,1.5,2.0})Render(diagnosticWindow,Path.Combine(output,"en-diagnostic-"+(int)(scale*100)+".png"),scale);
             L.SetLanguage("zh");Pump();
             Check(diagnosticWindow.Title=="Desktop 诊断报告"&&Find<Button>(diagnosticWindow).Any(b=>Convert.ToString(b.Content)=="复制报告")&&diagnosticText.Text.Contains("本机候选端口"),"open diagnostic report and actions switch language without re-running inspection");
+            Check(diagnosticText.Text.Contains("本地鉴权和模型推理未测试"),"transport explanation switches to Chinese without repeating probes");
             foreach(var scale in new[]{1.0,1.5,2.0})Render(diagnosticWindow,Path.Combine(output,"zh-diagnostic-"+(int)(scale*100)+".png"),scale);
             diagnosticWindow.Close();
             Check(diagnosticRuns==1&&File.ReadAllText(desktopConfig)=="# desktop fixture\n","report inspection and language switching preserve associated configuration");

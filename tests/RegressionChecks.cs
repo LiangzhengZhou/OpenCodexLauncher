@@ -128,6 +128,7 @@ class RegressionChecks
         await InstallerChecks.Run(root, Check);
         await UpdaterChecks.Run(root, Check);
         await DesktopDiagnosticChecks.Run(root, Check);
+        await TransportDiagnosticChecks.Run(Check);
         await DesktopSyncChecks.Run(root, Check);
     }
     static async Task HttpCheck()

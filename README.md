@@ -1,8 +1,14 @@
-# OpenCodex Launcher 2.6.4
+# OpenCodex Launcher 2.6.5
+
+## Diagnose message connection failures
+
+Version 2.6.5 extends **Diagnose Desktop** for models that are visible but fail when sending a message. Update using the built-in launcher updater, then collect and copy a report while the fault is present. Report format 2 adds transport results: target loopback TCP, health GET, responses-address GET, and the presence (never values) of proxy environment settings inherited by the launcher. System-proxy applicability describes the launcher only; Desktop may have different settings. A localhost target is probed as IPv4 and explicitly marked.
+
+These are bounded, credential-free GET/TCP checks, not a message test. GET 404/405 does not mean POST is broken; local POST authentication, Desktop-process connectivity and upstream inference remain unverified. Empty recent-request logs do not prove requests never arrived: upstream may reject a request before recording it. No bodies, cookies, credentials, provider URLs or raw error text enter the report. Unsupported or non-loopback targets are reported without probing. Normal Start OpenCodex health checks now bypass system proxies and refuse redirects.
 
 ## Associate and verify Desktop synchronization
 
-Version 2.6.4 adds **Associate and sync Desktop** to Overview, Models, Codex routing and the diagnostic report. It lists readable configuration candidates; review the displayed paths and confirm the one used by Desktop. Candidate discovery alone does not change settings. Standard installations usually use the default user home; a custom installation may use another home. Existing explicit associations remain first. If the correct file is not listed, use **Associate Desktop config…** on Codex routing.
+Version 2.6.4 added **Associate and sync Desktop** to Overview, Models, Codex routing and the diagnostic report. It lists readable configuration candidates; review the displayed paths and confirm the one used by Desktop. Candidate discovery alone does not change settings. Standard installations usually use the default user home; a custom installation may use another home. Existing explicit associations remain first. If the correct file is not listed, use **Associate Desktop config…** on Codex routing.
 
 Confirmation saves the association, keeps the OpenCodex provider store and selected models, creates a private pre-sync snapshot and runs upstream sync once. It may contact model metadata services but sends no inference request and does not restart Desktop. The snapshot is for recovery, not an atomic rollback: upstream can partially modify files; do not restore over subsequent edits. Never share recovery directories.
 
@@ -17,9 +23,9 @@ When Desktop's bottom-right model picker is missing third-party models, click **
 
 The report compares the launcher target with the default and launcher-environment Codex homes; inspects root catalog/proxy references, selected model counts and full-route catalog coverage; queries Codex process candidates; and checks local health endpoints. Findings distinguish a possible home mismatch, absent references, missing selected models, unreadable files, unavailable proxy and unknown process state. Candidate homes and running processes do not prove which configuration Desktop loaded. No inference request is sent.
 
-Checks begin only after setup and an explicit click. They do not edit configuration, import credentials, run CLI commands, stop services or restart Desktop. Network checks are GET /healthz on numeric loopback candidate ports only, without credentials, system proxy, response-body logging or redirects. File reads are bounded to 2 MiB each and local fixed drives; linked files, network paths, relative catalog references and unsupported TOML syntax remain unverified. The overall inspection deadline is 12 seconds; closing the launcher cancels active checks. If a system call remains blocked, the deadline returns a timeout report and ignores late results.
+Checks begin only after setup and an explicit click. They do not edit configuration, import credentials, run CLI commands, stop services or restart Desktop. Network checks use GET /healthz on numeric loopback candidate ports plus one TCP attempt and GET of the configured standard responses path on the target loopback port only, without credentials, system proxy, response-body logging or redirects. File reads are bounded to 2 MiB each and local fixed drives; linked files, network paths, relative catalog references and unsupported TOML syntax remain unverified. The overall inspection deadline is 12 seconds; closing the launcher cancels active checks. If a system call remains blocked, the deadline returns a timeout report and ignores late results.
 
-Reports contain fixed finding codes, counts, relationships, timestamp and launcher version. They exclude raw configuration, application/request logs, command lines, keys, account data, provider/model names, URLs and absolute paths. Copy/save is explicit; nothing is uploaded automatically. The report helps select the next fix but does not claim to test remote model availability or verify Desktop's loaded model list.
+Reports contain fixed finding codes, counts, relationships, timestamp, launcher version and allowlisted transport statuses, local ports, fixed route paths and proxy-presence flags. They exclude raw configuration, application/request logs, command lines, keys, account data, provider/model names, URLs and absolute paths. Copy/save is explicit; nothing is uploaded automatically. The report helps select the next fix but does not claim to test remote model availability or verify Desktop's loaded model list.
 
 
 [简体中文](README.zh-CN.md)
@@ -38,7 +44,7 @@ Use the persistent **中文 / EN** button to change language. The initial langua
 
 ## Update the launcher
 
-In 2.6.0+, use the built-in updater to install 2.6.4. For Codex Desktop's model picker, follow the Desktop association steps below.
+In 2.6.0+, use the built-in updater to install 2.6.5. For Codex Desktop's model picker, follow the Desktop association steps below.
 
 In **Settings**, use **Check launcher updates**, then **Update and restart**. The panel is also available on onboarding and recovery pages. Save form edits before confirming. Only an explicit click contacts the public GitHub Releases API; no GitHub login is needed. Updates verify GitHub's SHA-256 digest, internal file checksums and executable version. Rate limits, missing digests and network restrictions stop the update. Access to api.github.com, github.com and GitHub's release CDN is required.
 
@@ -112,7 +118,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.4.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.5.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

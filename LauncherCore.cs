@@ -1028,8 +1028,9 @@ namespace OpenCodexLauncherV2
                 token.ThrowIfCancellationRequested();
                 try
                 {
-                    using (var client = new HttpClient { Timeout = TimeSpan.FromSeconds(1) })
-                    using (var response = await client.GetAsync("http://127.0.0.1:" + port + "/healthz", token).ConfigureAwait(false))
+                    using (var handler = new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false, UseCookies = false })
+                    using (var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(1) })
+                    using (var response = await client.GetAsync("http://127.0.0.1:" + port + "/healthz", HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false))
                     if (response.IsSuccessStatusCode) return new OpenCodexEndpoint { BaseUrl = "http://127.0.0.1:" + port, Port = port };
                 }
                 catch (OperationCanceledException) { token.ThrowIfCancellationRequested(); }

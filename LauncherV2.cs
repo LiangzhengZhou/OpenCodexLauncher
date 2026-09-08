@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("2.6.4.0")]
-[assembly: AssemblyFileVersion("2.6.4.0")]
+[assembly: AssemblyVersion("2.6.5.0")]
+[assembly: AssemblyFileVersion("2.6.5.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -69,7 +69,7 @@ namespace OpenCodexLauncherV2
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 2.6.4"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher 2.6.5"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = new SolidColorBrush(Color.FromRgb(245, 247, 251)); FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("OpenCodexLauncher.icon.png"))

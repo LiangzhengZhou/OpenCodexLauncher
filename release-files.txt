@@ -46,3 +46,5 @@ tests/DesktopDiagnosticChecks.cs
 DesktopSync.cs
 DesktopRepairWindow.cs
 tests/DesktopSyncChecks.cs
+TransportDiagnostics.cs
+tests/TransportDiagnosticChecks.cs

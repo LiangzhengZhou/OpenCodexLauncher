@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.6.4",
-    "en": "Models, providers and routing console · v2.6.4"
+    "zh": "模型、供应商与路由控制台  ·  v2.6.5",
+    "en": "Models, providers and routing console · v2.6.5"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -1360,8 +1360,8 @@
     "zh": "目标模型目录缺少部分已选第三方模型，请检查同步结果。"
   },
   "diag.explain": {
-    "en": "Copy or save this report for the maintainer. Checks configuration structure, model counts, processes and local health endpoints. Excludes keys, provider/model names, paths and raw logs. Does not edit configuration, restart services or send inference requests.",
-    "zh": "将此报告复制或保存后发给维护者。检查配置结构、模型数量、进程和本机健康端点；不含密钥、供应商名、模型名、路径或原始日志。不改配置、不重启、不发送推理请求。"
+    "en": "Copy or save this report for the maintainer. Checks configuration, model counts, processes and local TCP/GET connectivity. Excludes keys, provider/model names, private paths and raw logs. Does not edit configuration, restart services or send inference requests.",
+    "zh": "将此报告复制或保存后发给维护者。检查配置结构、模型数量、进程及本机 TCP/GET 连接；不含密钥、供应商名、模型名、私人路径或原始日志。不改配置、不重启、不发送推理请求。"
   },
   "diag.copied": {
     "en": "Report copied",
@@ -1506,5 +1506,10 @@
   "repair.discovery-timeout": {
     "zh": "配置候选检测超时，未保存关联。请稍后重试。",
     "en": "Configuration candidate discovery timed out. No association saved; retry later."
+  }
+,
+  "diag.transport-get-only": {
+    "zh": "连接检查来自启动器进程，仅使用 TCP 和无凭据 GET。消息地址的 GET 返回 404/405 不代表 POST 失败；本地鉴权和模型推理未测试。空请求日志也不能排除日志写入前的拒绝。",
+    "en": "Connectivity checks run in the launcher using TCP and credential-free GET only. GET 404/405 at the responses address does not establish POST failure. POST authentication and inference are untested; empty request logs do not exclude rejection before logging."
   }
 }

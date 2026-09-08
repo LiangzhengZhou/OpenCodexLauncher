@@ -29,8 +29,18 @@ static class DesktopDiagnosticChecks
             Health=(p,t)=> { probes.Add(p); return Task.FromResult(p==14567); }
         };
         var fresh = await DesktopDiagnostics.CollectAsync(paths,new LauncherSettings(),input,CancellationToken.None);
+        int transportCalls = 0;
+        input.Transport = new TransportProbeInputs {
+            Tcp = (u,t) => { transportCalls++; return Task.FromResult(new TransportProbeResult { State=TransportProbeState.Connected }); },
+            Get = (u,t) => { transportCalls++; return Task.FromResult(new TransportProbeResult { State=TransportProbeState.HttpResponse,Status=404 }); },
+            Variable = n => null, SystemProxyApplies = u => false
+        };
+        await DesktopDiagnostics.CollectAsync(paths,new LauncherSettings(),input,CancellationToken.None);
+        check(transportCalls==0,"onboarding also blocks newly injected transport probes");
         check(fresh.Findings.Contains("setup-required")&&reads.Count==0&&probes.Count==0&&processReads==0,"desktop diagnostics before onboarding perform zero file, process and network access");
         var report = await DesktopDiagnostics.CollectAsync(paths,settings,input,CancellationToken.None);
+        check(transportCalls==3&&report.Json.Contains("responsesGet")&&report.Findings.Contains("transport-get-only"),"one-click Desktop diagnostics integrate the transport report at the configured target");
+        input.Transport = null;
         check(report.Findings.Contains("possible-home-mismatch"),"desktop diagnostics reproduce populated manual home versus default home without root catalog reference");
         check(report.Findings.Contains("app-server-active")&&!report.Findings.Contains("target-models-missing"),"running app-server is reported without misclassifying successful catalog writing");
         check(report.Json.Contains("candidates-only")&&report.Json.Contains("unverified"),"candidate directory and process observations never claim Desktop loaded the catalog");
@@ -96,6 +106,20 @@ static class DesktopDiagnosticChecks
             request=listener.GetContextAsync();pending=DesktopDiagnosticInputs.ProbeHealth(port,CancellationToken.None);
             ctx=await request;ctx.Response.StatusCode=200;ctx.Response.ContentLength64=0;ctx.Response.Close();
             check(await pending,"real loopback health response succeeds without consuming service logs");
+            var runtimeHome=Path.Combine(root,"transport-runtime");Directory.CreateDirectory(runtimeHome);
+            var runtimeConfig=Path.Combine(runtimeHome,"config.json");File.WriteAllText(runtimeConfig,"{\"port\":"+port+"}");
+            var previousProxy=WebRequest.DefaultWebProxy;
+            try
+            {
+                WebRequest.DefaultWebProxy=new WebProxy("http://example.invalid:14567",false);
+                request=listener.GetContextAsync();var runtime=OpenCodexEndpointResolver.ResolveAsync(runtimeConfig,CancellationToken.None);
+                ctx=await request;ctx.Response.StatusCode=200;ctx.Response.ContentLength64=0;ctx.Response.Close();
+                check((await runtime).Port==port,"runtime health bypasses the process proxy just like diagnostic health");
+                request=listener.GetContextAsync();runtime=OpenCodexEndpointResolver.ResolveAsync(runtimeConfig,CancellationToken.None);
+                ctx=await request;ctx.Response.StatusCode=302;ctx.Response.RedirectLocation="https://example.invalid/never-follow";ctx.Response.Close();
+                bool rejected=false;try { await runtime; } catch(OpenCodexUnavailableError){rejected=true;}
+                check(rejected,"runtime health refuses redirects instead of reporting a different service as healthy");
+            } finally { WebRequest.DefaultWebProxy=previousProxy; }
             listener.Stop();
         }
         var large=Path.Combine(root,"diagnostic-too-large.txt");File.WriteAllBytes(large,new byte[2*1024*1024+1]);

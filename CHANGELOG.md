@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 2.6.5 — 2026-09-08
+
+- Extend one-click Desktop diagnostics with bounded, direct-loopback TCP/GET evidence for message connection failures. Export only status codes, fixed paths and proxy-presence flags.
+- Keep POST authentication, Desktop connectivity and inference explicitly untested. Do not infer POST failure from GET 404/405 or infer no arrivals from empty request logs.
+- Align runtime health with diagnostics: bypass system proxies, refuse redirects and read headers without buffering bodies.
+- Add isolated tests for connection failures, timeouts, redirects, HTTP errors, IPv6, unsafe targets, cancellation, privacy and onboarding isolation.
+- 扩展一键诊断以排查“模型可见但发送失败”；只检查连接，不发送推理、不读取凭据、不重启 Desktop。统一启动时健康检查，避免系统代理和重定向干扰。
 ## 2.6.4 — 2026-09-08
 
 - Add confirmed candidate selection and one-step Desktop association/sync with private recovery snapshots; preserve providers and avoid automatic Desktop restarts.
