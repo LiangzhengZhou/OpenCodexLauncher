@@ -157,6 +157,50 @@ class UiChecks
             foreach(var scale in new[]{1.0,1.5,2.0})Render(diagnosticWindow,Path.Combine(output,"zh-diagnostic-"+(int)(scale*100)+".png"),scale);
             diagnosticWindow.Close();
             Check(diagnosticRuns==1&&File.ReadAllText(desktopConfig)=="# desktop fixture\n","report inspection and language switching preserve associated configuration");
+            // Test the same candidate/confirmation/sync path with isolated disk and a fake CLI.
+            L.SetLanguage("en");Pump();
+            reopened.DiagnosticInputsFactory=()=>new DesktopDiagnosticInputs {DefaultHome=desktopHome,Read=DesktopDiagnosticInputs.ReadLocal,
+                Processes=t=>Task.FromResult(new DesktopProcessEvidence()),Health=(p,t)=>Task.FromResult(false)};
+            var candidateList=DesktopCandidates.Find(Field<LauncherSettings>(reopened,"settings"),Field<PathSet>(reopened,"paths"),reopened.DiagnosticInputsFactory());
+            var pickerArgs=new object[]{candidateList,null};
+            var picker=(Window)reopened.GetType().GetMethod("CreateDesktopCandidateWindow",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(reopened,pickerArgs);
+            picker.Show();picker.Width=540;picker.Height=420;Pump();
+            foreach(var language in new[]{"en","zh"})
+            {
+                L.SetLanguage(language);Pump();
+                foreach(var scale in new[]{1.0,1.5,2.0})Render(picker,Path.Combine(output,language+"-repair-"+(int)(scale*100)+".png"),scale);
+                Check(Find<Button>(picker).All(b=>b.ActualHeight>0)&&Find<TextBlock>(picker).All(b=>b.ActualWidth<=504),language+" candidate dialog wraps at minimum width");
+            }
+            Check(((ListBoxItem)((ListBox)pickerArgs[1]).SelectedItem).Tag==candidateList[0],"candidate selection retains the actual candidate object");picker.Close();
+            L.SetLanguage("en");Pump();
+            int syncCalls=0;reopened.DesktopSyncCommand=(p,t)=>{syncCalls++;return Task.FromResult(new CommandResult());};
+            reopened.DesktopCandidatePicker=c=>null;
+            var repair=Find<Button>(reopened).Single(b=>Convert.ToString(b.Content)=="Associate and sync Desktop");
+            var cancelHash=FileTransaction.Hash(PathResolver.SettingsPath());Click(repair);Until(()=>routedNav.IsEnabled);
+            Check(syncCalls==0&&FileTransaction.Hash(PathResolver.SettingsPath())==cancelHash&&File.ReadAllText(desktopConfig)=="# desktop fixture\n","cancelling candidate confirmation preserves settings and files without invoking sync");
+            reopened.DesktopCandidatePicker=c=>c[0];
+            var syncPause=new TaskCompletionSource<bool>();
+            reopened.DesktopSyncCommand=async(p,t)=> {syncCalls++;await syncPause.Task;
+                File.WriteAllText(p.Catalog,"{\"models\":[{\"slug\":\"demo-provider/fixture-model\"},{\"slug\":\"demo-provider/second-model\"}]}");
+                File.WriteAllText(p.CodexConfig,"openai_base_url='http://127.0.0.1:14567/v1'\nmodel_catalog_json='"+p.Catalog+"'\n");
+                return new CommandResult();};
+            // Match fixture route to the isolated provider port.
+            var repairPaths=Field<PathSet>(reopened,"paths");
+            var repairProviders=JsonData.Parse(File.ReadAllText(repairPaths.OcxConfig));repairProviders["port"]=14567;
+            File.WriteAllText(repairPaths.OcxConfig,JsonData.Serializer().Serialize(repairProviders));
+            Click(repair);Until(()=>syncCalls==1);Click(repair);
+            Check(syncCalls==1&&!routedNav.IsEnabled,"double-click association and sync starts only one command");
+            syncPause.SetResult(true);Until(()=>routedNav.IsEnabled&&reopened.OwnedWindows.Count==1);
+            var syncReport=reopened.OwnedWindows.Cast<Window>().Single();var syncText=Find<TextBox>(syncReport).Single().Text;
+            Check(syncText.Contains("\"result\":\"verified\"")&&syncText.Contains("lastSyncAttempt")&&syncText.Contains("\"desktopLoaded\":\"unverified\""),"confirmed sync auto-opens a report with verified disk result and unverified Desktop loading");
+            Check(!syncText.Contains("demo-provider")&&!syncText.Contains(output)&&Field<ComboBox>(reopened,"modelBox").Items.Count==2,"sync report excludes provider names and local paths while keeping selected models");
+            syncReport.Close();
+            reopened.DesktopSyncCommand=(p,t)=> {syncCalls++;File.Delete(p.Catalog);File.WriteAllText(p.CodexConfig,"openai_base_url='http://127.0.0.1:14567/v1'\n");
+                return Task.FromResult(new CommandResult {Output="catalog sync skipped: no Codex catalog source found; dummy-private-key"});};
+            Click(repair);Until(()=>routedNav.IsEnabled&&reopened.OwnedWindows.Count==1);
+            syncReport=reopened.OwnedWindows.Cast<Window>().Single();syncText=Find<TextBox>(syncReport).Single().Text;
+            Check(syncText.Contains("catalog-reference-missing")&&syncText.Contains("no-catalog-source")&&!syncText.Contains("dummy-private-key"),"zero-exit missing-source sync automatically reports safe failure categories");
+            Check(Field<TextBlock>(reopened,"operation").Text.StartsWith("Sync did not pass")&&syncCalls==2,"incomplete sync is never labelled completed and does not retry");syncReport.Close();
             var closingStarted=new TaskCompletionSource<bool>();var closingStopped=new TaskCompletionSource<bool>();
             reopened.DiagnosticInputsFactory=()=>new DesktopDiagnosticInputs {Read=p=>null,Processes=t=>Task.FromResult(new DesktopProcessEvidence()),Health=async(p,t)=>{
                 closingStarted.TrySetResult(true);try{await Task.Delay(30000,t);return false;}catch(OperationCanceledException){closingStopped.TrySetResult(true);throw;}

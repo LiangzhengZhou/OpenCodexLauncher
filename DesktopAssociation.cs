@@ -43,6 +43,7 @@ namespace OpenCodexLauncherV2
             panel.Children.Add(Text(L.M("desktop.explain")));
             desktopTarget = Text(""); panel.Children.Add(desktopTarget); UpdateDesktopTarget();
             panel.Children.Add(Btn(L.M("desktop.select"), PickDesktopConfig));
+            panel.Children.Add(AsyncBtn(L.M("repair.button"), AssociateAndSyncDesktop));
             panel.Children.Add(AsyncBtn(L.M("diag.button"), DiagnoseDesktop));
             return panel;
         }
@@ -63,11 +64,16 @@ namespace OpenCodexLauncherV2
         void ApplyDesktopAssociation(LauncherSettings next)
         {
             if (gate.CurrentCount == 0) throw new InvalidOperationException(L.M("desktop.busy"));
+            ApplyDesktopAssociationCore(next);
+        }
+        void ApplyDesktopAssociationCore(LauncherSettings next)
+        {
             // Revalidate after the confirmation, before saving a new association.
             next = DesktopAssociation.Preview(next, next.DesktopConfigPath);
             var resolved = PathResolver.Resolve(next); SetupService.Validate(resolved);
             PathResolver.Save(next);
             settings = next; paths = resolved; native.Clear(); catalogCache.Clear();
+            lastDesktopSync = null;
             nativeRefreshState = "not-requested";
             UpdateDesktopTarget(); LoadModels(); Log(L.M("desktop.saved"));
         }

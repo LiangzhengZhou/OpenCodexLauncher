@@ -235,6 +235,10 @@ namespace OpenCodexLauncherV2
                 try { text = Read(input, i == 0 ? paths.CodexConfig : Path.Combine(homes[i], "config.toml"), out state); }
                 catch { text = null; state = "unreadable-or-unsupported"; }
                 row["config"] = state; if (text == null) continue;
+                string cacheState;
+                var cache = Catalog(input, Path.Combine(homes[i], "models_cache.json"), out cacheState);
+                row["nativeCache"] = cacheState;
+                row["nativeCacheModels"] = cache == null ? null : (object)cache.Count(m => m.IsNative);
                 bool supported; var keys = RootKeys(text, out supported);
                 row["rootKeys"] = supported ? "inspected" : "unsupported";
                 if (!supported) { findings.Add("config-syntax-unknown"); continue; }
@@ -269,6 +273,7 @@ namespace OpenCodexLauncherV2
             report["homes"] = rows;
             var generated = Catalog(input, paths.Catalog, out state); report["generatedCatalog"] = state;
             report["generatedThirdPartyModels"] = generated == null ? null : (object)generated.Count(m => m.IsRouted);
+            if (expected.Count > 0 && state == "missing") findings.Add("generated-catalog-missing");
             if (targetHasModels && alternativeMissing) findings.Add("possible-home-mismatch");
             if (String.IsNullOrWhiteSpace(settings.DesktopConfigPath)) findings.Add("desktop-home-unconfirmed");
             token.ThrowIfCancellationRequested();

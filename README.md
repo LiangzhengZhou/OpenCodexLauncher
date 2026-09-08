@@ -1,4 +1,15 @@
-# OpenCodex Launcher 2.6.3
+# OpenCodex Launcher 2.6.4
+
+## Associate and verify Desktop synchronization
+
+Version 2.6.4 adds **Associate and sync Desktop** to Overview, Models, Codex routing and the diagnostic report. It lists readable configuration candidates; review the displayed paths and confirm the one used by Desktop. Candidate discovery alone does not change settings. Standard installations usually use the default user home; a custom installation may use another home. Existing explicit associations remain first. If the correct file is not listed, use **Associate Desktop config…** on Codex routing.
+
+Confirmation saves the association, keeps the OpenCodex provider store and selected models, creates a private pre-sync snapshot and runs upstream sync once. It may contact model metadata services but sends no inference request and does not restart Desktop. The snapshot is for recovery, not an atomic rollback: upstream can partially modify files; do not restore over subsequent edits. Never share recovery directories.
+
+Every normal sync now reads back the root catalog reference, the actual catalog, each selected full provider/model route and the configured proxy port. A zero CLI exit alone no longer means success. Missing sources/references/files or models produce an incomplete result and automatically open the sanitized diagnostic report. Confirmed association and sync opens a report on success too. **Copy report** is sufficient for feedback; no configuration upload is needed. The report includes the last attempt's fixed result/upstream codes and time, plus current native-cache availability and counts. Raw upstream output remains in local application logs only.
+
+A missing native catalog source can still require an OpenCodex update or investigation; this release does not fabricate catalog metadata. A valid disk result is useful even when process detection or explicit association is unavailable. Neither result proves that Desktop loaded the catalog; inspect the picker after safely restarting Desktop yourself if needed. Read-only **Diagnose Desktop** remains separate from this confirmed write operation.
+
 
 ## One-click Desktop diagnostics
 
@@ -27,7 +38,7 @@ Use the persistent **中文 / EN** button to change language. The initial langua
 
 ## Update the launcher
 
-In 2.6.0+, use the built-in updater to install 2.6.3. For Codex Desktop's model picker, follow the Desktop association steps below.
+In 2.6.0+, use the built-in updater to install 2.6.4. For Codex Desktop's model picker, follow the Desktop association steps below.
 
 In **Settings**, use **Check launcher updates**, then **Update and restart**. The panel is also available on onboarding and recovery pages. Save form edits before confirming. Only an explicit click contacts the public GitHub Releases API; no GitHub login is needed. Updates verify GitHub's SHA-256 digest, internal file checksums and executable version. Rate limits, missing digests and network restrictions stop the update. Access to api.github.com, github.com and GitHub's release CDN is required.
 
@@ -101,7 +112,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.3.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 2.6.4.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 2.6.4 — 2026-09-08
+
+- Add confirmed candidate selection and one-step Desktop association/sync with private recovery snapshots; preserve providers and avoid automatic Desktop restarts.
+- Verify actual root references, referenced catalog, selected full routes and proxy port after normal sync. Do not treat zero exit as proof of successful catalog generation.
+- Automatically open a sanitized report on incomplete sync; include fixed upstream skip categories and the last attempt time. Report native-cache availability without exporting content.
+- Test missing-source zero exits, cross-provider collisions, disk corruption, changed selections, cancelled candidates, operation gating and bilingual confirmation/report UI.
+- 新增“关联并同步 Desktop”，确认目标后备份并同步；回读真实文件判断完成，失败自动生成脱敏报告。不以主进程未检测到作为同步失败判据，不自动重启。
+
 ## 2.6.3 — 2026-09-08
 
 - Add explicit, bounded, cancellable one-click Desktop diagnostics with bilingual copy/save reports on Overview, Models and Codex routing.

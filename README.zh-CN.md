@@ -1,4 +1,15 @@
-# OpenCodex Launcher 2.6.3
+# OpenCodex Launcher 2.6.4
+
+## 关联并验证 Desktop 同步
+
+2.6.4 在“概览”“模型管理”“Codex 路由”和诊断报告内增加 **关联并同步 Desktop**。按钮列出可读取的配置候选；核对显示的路径，确认 Desktop 使用的那一项。仅检测候选不会改设置。标准安装通常使用默认用户目录，自定义安装可能使用其他目录；既有关联优先保留。如果正确文件不在列表，仍可在路由页使用“关联 Desktop 配置…”。
+
+确认后保留供应商与模型选择，保存目标关联，创建本机同步前快照，再执行一次上游同步。可能访问模型元数据服务，不发送模型推理，也不自动重启 Desktop。快照用于恢复，不代表多文件原子回滚；上游失败可能留下部分修改，恢复时不得覆盖后续编辑。不要分享恢复目录。
+
+常规同步现在会回读根级目录引用、实际目录文件、每个已选完整供应商/模型及代理端口。CLI 退出码为 0 不再直接代表成功。缺少来源、引用、文件或模型时，显示未完成并自动打开脱敏诊断报告；“关联并同步”成功后也自动显示报告。点击 **复制报告** 发回即可，无需上传配置。报告增加最近同步的固定结果码、上游类别和时间，以及当前官方目录缓存的可读状态与数量；原始上游输出仅留在本机程序日志。
+
+缺少基础目录来源仍可能需要更新 OpenCodex 或继续排查；本版不会凭空生成模型元数据。即使没有检测到 Desktop 主进程或没有显式关联，有效的磁盘校验仍然有意义。校验通过不等于 Desktop 已加载，必要时由用户结束工作并自行安全重启 Desktop 后查看选择器。“一键诊断 Desktop”仍为独立的只读操作。
+
 
 ## 一键诊断 Desktop
 
@@ -99,7 +110,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.6.3.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 2.6.4.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

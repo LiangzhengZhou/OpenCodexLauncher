@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("2.6.3.0")]
-[assembly: AssemblyFileVersion("2.6.3.0")]
+[assembly: AssemblyVersion("2.6.4.0")]
+[assembly: AssemblyFileVersion("2.6.4.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -69,7 +69,7 @@ namespace OpenCodexLauncherV2
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 2.6.3"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher 2.6.4"; Width = 1180; Height = 850; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = new SolidColorBrush(Color.FromRgb(245, 247, 251)); FontFamily = new FontFamily("Segoe UI"); FontSize = 13;
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("OpenCodexLauncher.icon.png"))
@@ -133,6 +133,7 @@ namespace OpenCodexLauncherV2
             var buttons = new WrapPanel(); buttons.Children.Add(AsyncBtn(L.M("text.014"), StartProxy)); buttons.Children.Add(AsyncBtn(L.M("text.015"), Sync));
             buttons.Children.Add(AsyncBtn(L.M("text.016"), async delegate { await RefreshModels(); await RefreshState(); })); buttons.Children.Add(AsyncBtn(L.M("text.017"), async () => Open((await OpenCodexEndpointResolver.ResolveAsync(paths.OcxConfig, life.Token)).BaseUrl))); panel.Children.Add(buttons);
             buttons.Children.Add(AsyncBtn(L.M("diag.button"), DiagnoseDesktop));
+            buttons.Children.Add(AsyncBtn(L.M("repair.button"), AssociateAndSyncDesktop));
             status = Text(L.M("text.018"), 14); panel.Children.Add(Card(status)); return panel;
         }
         UIElement Providers()
@@ -224,6 +225,7 @@ namespace OpenCodexLauncherV2
             var actions = new WrapPanel(); actions.Children.Add(AsyncBtn(L.M("text.049"), RefreshModels));
             actions.Children.Add(Btn(L.M("models.configure"), () => navigation.SelectedItem = navigation.Items.Cast<ListBoxItem>().Single(x => (string)x.Tag == "providers")));
             actions.Children.Add(AsyncBtn(L.M("diag.button"), DiagnoseDesktop));
+            actions.Children.Add(AsyncBtn(L.M("repair.button"), AssociateAndSyncDesktop));
             actions.Children.Add(Btn(L.M("text.050"), () => { var id = Selected(); ModelNames.ValidateId(id); var cwd = Directory.Exists(settings.WorkingDirectory) ? settings.WorkingDirectory : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); AsyncProcessRunner.StartVisible(paths.Codex, "-m " + Commands.Quote(id), cwd, paths); }));
             actions.Children.Add(AsyncBtn(L.M("text.051"), async delegate { var id = Selected(); if (Confirm(L.M("text.052") + id + "？")) { await EnsureProxyRoute(); await config.SetDefaultModelAsync(paths.CodexConfig, id); await Sync(); await RefreshState(); } }));
             actions.Children.Add(AsyncBtn(L.M("text.053"), async delegate {
@@ -450,8 +452,24 @@ namespace OpenCodexLauncherV2
         }
         async Task Sync()
         {
-            await EnsureProxyRoute();
-            await Ocx(new [] { "sync" }); await RefreshModels();
+            try
+            {
+                DesktopSync.Selected(DesktopDiagnosticInputs.ReadLocal(paths.OcxConfig));
+                await EnsureProxyRoute();
+                lastDesktopSync = await DesktopSync.RunAsync(paths, RunDesktopSyncCommand, life.Token);
+            }
+            catch (OperationCanceledException) { throw; }
+            catch { lastDesktopSync = new DesktopSyncResult { Code = "preparation-or-read-failed", Upstream = "unverified" }; }
+            lastDesktopSyncUtc = DateTime.UtcNow.ToString("o");
+            life.Token.ThrowIfCancellationRequested();
+            if (!lastDesktopSync.Succeeded)
+            {
+                SetText(providerStatus, L.M("repair.incomplete"));
+                Log(L.M("repair.incomplete") + " [" + lastDesktopSync.Code + "; " + lastDesktopSync.Upstream + "]");
+                await DiagnoseDesktop();
+                throw new DesktopSyncIncomplete();
+            }
+            LoadModels();
             SetText(providerStatus, L.M("text.152")); Log(L.M("text.153"));
         }
         async Task EnsureProxyRoute()
@@ -507,6 +525,7 @@ namespace OpenCodexLauncherV2
             if (navigation != null) navigation.IsEnabled = false; SetText(operation, label + "…");
             try { await action(); if (!life.IsCancellationRequested) SetText(operation, label + L.M("text.165")); }
             catch (OperationCanceledException) { if (!life.IsCancellationRequested) SetText(operation, label + L.M("text.166")); }
+            catch (DesktopSyncIncomplete) { if (!life.IsCancellationRequested) SetText(operation, L.M("repair.incomplete")); }
             catch (Exception e) { if (!life.IsCancellationRequested) { SetText(operation, label + L.M("text.167")); Error(e.Message); } }
             finally { gate.Release(); if (navigation != null && !life.IsCancellationRequested) navigation.IsEnabled = true; }
         }

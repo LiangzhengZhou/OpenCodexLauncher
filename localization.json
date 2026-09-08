@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  v2.6.3",
-    "en": "Models, providers and routing console · v2.6.3"
+    "zh": "模型、供应商与路由控制台  ·  v2.6.4",
+    "en": "Models, providers and routing console · v2.6.4"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -1332,12 +1332,12 @@
     "en": "Sync/restart command returned. Check its log for the restart outcome, then verify the Desktop model picker; exit status does not prove Desktop loaded the target home."
   },
   "text.152": {
-    "zh": "目标目录文件已更新；Desktop 加载状态尚未确认。",
-    "en": "Target catalog files updated; Desktop loading is not verified."
+    "zh": "目录引用、所选模型和代理路由已回读验证；Desktop 加载状态尚未验证。",
+    "en": "Catalog reference, selected models and proxy route verified on disk; Desktop loading remains unverified."
   },
   "text.153": {
-    "zh": "目标目录文件已更新。请核对“Codex 路由”中的 Desktop 配置目标；代理运行和 Desktop 加载状态须另行确认。",
-    "en": "Target catalog files updated. Verify the Desktop config target on Codex routing; proxy availability and Desktop loading require separate checks."
+    "zh": "同步文件回读校验通过。Desktop 加载状态仍需确认；配置尚未关联时可点击“关联并同步 Desktop”。",
+    "en": "Sync passed file read-back verification. Desktop loading remains unverified; use Associate and sync Desktop if the target is not associated."
   },
   "diag.target-route-differs": {
     "en": "The target proxy URL differs from local candidate ports. Review the routing target.",
@@ -1438,5 +1438,73 @@
   "diag.processes-unknown": {
     "en": "Codex process information could not be fully inspected. Desktop running state is unknown.",
     "zh": "无法完整读取 Codex 进程信息，不能判断 Desktop 是否运行。"
+  },
+  "repair.backup": {
+    "zh": "同步前快照（仅本机）：",
+    "en": "Pre-sync snapshot (local only): "
+  },
+  "repair.provider-invalid": {
+    "zh": "供应商模型配置无效，已停止同步。",
+    "en": "Provider model configuration is invalid. Sync stopped."
+  },
+  "repair.role-target": {
+    "zh": "启动器当前目标（可能是独立的手动目录）",
+    "en": "Current launcher target (may be an isolated manual home)"
+  },
+  "repair.role-environment": {
+    "zh": "启动器环境 CODEX_HOME 候选",
+    "en": "Launcher environment CODEX_HOME candidate"
+  },
+  "repair.explain": {
+    "zh": "以下是检测到的配置候选，不能证明 Desktop 正在使用哪一个。标准安装通常使用默认用户目录；如果使用过自定义 CODEX_HOME，请选择对应目录。确认后将保留供应商设置、保存关联、备份并更新所选 Codex 配置及模型目录；不会自动重启 Desktop，也不发送模型推理。同步可能访问模型元数据服务。",
+    "en": "These are configuration candidates, not proof of the home used by Desktop. Standard installations usually use the default user home; choose your custom CODEX_HOME if applicable. Confirming keeps providers, saves the association, backs up and updates the selected Codex config/catalog. Desktop is not restarted and no inference is sent. Sync may contact model metadata services."
+  },
+  "diag.last-sync-incomplete": {
+    "zh": "本次启动器会话的最近同步未完成。报告 lastSyncAttempt 记录当时的失败类别与时间；它不等于本次采集时的文件状态。",
+    "en": "The last sync attempt in this launcher session did not complete. lastSyncAttempt records its category and time, separately from the current file inspection."
+  },
+  "repair.no-candidate": {
+    "zh": "没有可读取且支持的配置候选。请先打开 Desktop 完成初始化；自定义安装可在 Codex 路由页使用“关联 Desktop 配置…”。",
+    "en": "No readable supported config candidate was found. Open Desktop and finish setup first; custom installations can use Associate Desktop config… on Codex routing."
+  },
+  "repair.button": {
+    "zh": "关联并同步 Desktop",
+    "en": "Associate and sync Desktop"
+  },
+  "repair.cancel": {
+    "zh": "取消",
+    "en": "Cancel"
+  },
+  "repair.confirm": {
+    "zh": "确认目标并同步",
+    "en": "Confirm target and sync"
+  },
+  "repair.changed": {
+    "zh": "候选配置在确认期间发生变化，已停止。请重新检测后确认。",
+    "en": "The candidate changed during confirmation. Stopped; detect and confirm again."
+  },
+  "diag.generated-catalog-missing": {
+    "zh": "预期的生成模型目录文件不存在。保存模型选择后仍需要向正确的 Desktop 目标同步。",
+    "en": "The expected generated catalog is missing. Saved model selections still need synchronization to the correct Desktop target."
+  },
+  "repair.incomplete": {
+    "zh": "同步未通过回读校验，请复制本次诊断报告。",
+    "en": "Sync did not pass read-back verification. Copy the diagnostic report."
+  },
+  "diag.sync-no-catalog-source": {
+    "zh": "最近同步报告找不到 Codex 基础模型目录。先确认关联目标；若仍出现此项，请通过内置 OpenCodex 更新后重试，并发送报告。",
+    "en": "The last sync reported no Codex base catalog source. Confirm the associated target; if this persists, update OpenCodex using the built-in installer, retry and share the report."
+  },
+  "repair.role-associated": {
+    "zh": "已关联的配置",
+    "en": "Previously associated config"
+  },
+  "repair.role-default": {
+    "zh": "默认用户目录候选（标准安装）",
+    "en": "Default user home candidate (standard installation)"
+  },
+  "repair.discovery-timeout": {
+    "zh": "配置候选检测超时，未保存关联。请稍后重试。",
+    "en": "Configuration candidate discovery timed out. No association saved; retry later."
   }
 }

@@ -43,3 +43,6 @@ tests/UpdaterChecks.cs
 DesktopDiagnostics.cs
 DesktopDiagnosticWindow.cs
 tests/DesktopDiagnosticChecks.cs
+DesktopSync.cs
+DesktopRepairWindow.cs
+tests/DesktopSyncChecks.cs
