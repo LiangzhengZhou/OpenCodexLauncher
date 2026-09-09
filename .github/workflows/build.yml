@@ -29,17 +29,21 @@ jobs:
       - name: WPF localization and onboarding checks
         shell: pwsh
         run: ./tests/run-ui-tests.ps1 -OutputDirectory ./artifacts/native
+      - name: Confirmed milestone rollback and recovery checks
+        shell: pwsh
+        run: ./tests/run-rollback-tests.ps1 -OutputDirectory ./artifacts/native
       - name: Allowlisted release and extracted archive checks
         shell: pwsh
         run: |
           ./create-release.ps1 -OutputDirectory ./release-output -Executable ./artifacts/native/OpenCodexLauncher.exe
-          Expand-Archive ./release-output/OpenCodexLauncher-2.6.5-source.zip ./artifacts/extracted-source
-          Expand-Archive ./release-output/OpenCodexLauncher-2.6.5-windows-x64.zip ./artifacts/extracted-binary
+          $version = [Diagnostics.FileVersionInfo]::GetVersionInfo((Resolve-Path ./artifacts/native/OpenCodexLauncher.exe)).FileVersion -replace "\.0$", ""
+          Expand-Archive "./release-output/OpenCodexLauncher-$version-source.zip" ./artifacts/extracted-source
+          Expand-Archive "./release-output/OpenCodexLauncher-$version-windows-x64.zip" ./artifacts/extracted-binary
           ./release-check.ps1 -Directory ./artifacts/extracted-source -Kind source
           ./release-check.ps1 -Directory ./artifacts/extracted-binary -Kind binary
       - uses: actions/upload-artifact@v4
         with:
-          name: OpenCodexLauncher-2.6.5
+          name: OpenCodexLauncher-release
           path: |
             release-output/*.zip
             release-output/SHA256SUMS.txt

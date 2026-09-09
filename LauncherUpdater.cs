@@ -28,11 +28,14 @@ namespace OpenCodexLauncherV2
         public LauncherRelease Release { get; set; }
         public string Target { get; set; }
         public string DataDirectory { get; set; }
+        public string UserDirectory { get; set; }
+        public bool IsIsolated { get; set; }
         public string Language { get; set; }
         public string CurrentVersion { get; set; }
         public int ParentId { get; set; }
         public long ParentStart { get; set; }
         public Dictionary<string,string> Before { get; set; }
+        public bool IsRollback { get; set; }
     }
     // Explicit, unauthenticated requests only. No configuration or credentials are sent.
     public sealed class LauncherUpdater
@@ -180,21 +183,45 @@ namespace OpenCodexLauncherV2
             try { using(var file=new FileStream(probe,FileMode.CreateNew,FileAccess.Write,FileShare.None,1,FileOptions.DeleteOnClose)){file.WriteByte(0);} }
             catch(Exception e){throw new IOException(L.M("update.writable"),e);}
         }
-        public async Task<string> StageAsync(LauncherRelease release, string target, CancellationToken token)
+        public Task<string> StageAsync(LauncherRelease release, string target, CancellationToken token)
+        { return StageCoreAsync(release,target,false,token); }
+        public Task<string> StageRollbackAsync(string version, string target, CancellationToken token)
+        { return StageCoreAsync(CriticalVersions.Find(version),target,true,token); }
+        public static void ValidateTransition(LauncherRelease release, string current, bool rollback)
+        {
+            ValidateRelease(release);
+            if(rollback) { CriticalVersions.Validate(release,current); CriticalVersions.CheckConfiguration(); }
+            else if(ParseVersion(release.Version)<=ParseVersion(current))throw Invalid();
+        }
+        async Task<string> StageCoreAsync(LauncherRelease release, string target, bool rollback, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-            ValidateRelease(release); if(ParseVersion(release.Version)<=ParseVersion(CurrentVersion))throw Invalid();
+            ValidateTransition(release,CurrentVersion,rollback);
             CheckTarget(target);
             var before=Files.ToDictionary(x=>x,x=>FileHash(Path.Combine(target,x)));
             var root=Path.Combine(LocalEnvironment.Current.DataDirectory,"updates",Guid.NewGuid().ToString("N"));
             NoLinks(root); Directory.CreateDirectory(root);
-            var bytes=await download(new Uri(release.Url),MaxZip,token); token.ThrowIfCancellationRequested();
+            var cached=rollback && CriticalVersions.HasCache(release);
+            var bytes=cached ? File.ReadAllBytes(CriticalVersions.CachePath(release)) : await download(new Uri(release.Url),MaxZip,token); token.ThrowIfCancellationRequested();
             if(bytes.LongLength!=release.Size || Hash(bytes)!=release.Sha256)throw Invalid();
             var zip=Path.Combine(root,"package.zip");File.WriteAllBytes(zip,bytes);
             await Task.Run(()=>VerifyPackage(zip,Path.Combine(root,"payload"),release),token);
             token.ThrowIfCancellationRequested();
+            ValidateTransition(release,CurrentVersion,rollback);
+            if(rollback && !cached)
+            {
+                var cache=CriticalVersions.CachePath(release);NoLinks(cache);Directory.CreateDirectory(Path.GetDirectoryName(cache));
+                if(!File.Exists(cache))
+                {
+                    var temporary=cache+"."+Guid.NewGuid().ToString("N");
+                    try { File.Copy(zip,temporary);File.Move(temporary,cache); }
+                    finally { if(File.Exists(temporary))File.Delete(temporary); }
+                }
+            }
             var process=Process.GetCurrentProcess();
             var plan=new LauncherUpdatePlan { Release=release,Target=Path.GetFullPath(target),DataDirectory=LocalEnvironment.Current.DataDirectory,Language=L.Language,CurrentVersion=CurrentVersion,ParentId=process.Id,ParentStart=process.StartTime.ToUniversalTime().Ticks,Before=before };
+            plan.IsRollback=rollback;
+            plan.UserDirectory=LocalEnvironment.Current.UserDirectory;plan.IsIsolated=LocalEnvironment.Current.IsIsolated;
             var planPath=Path.Combine(root,"plan.json");File.WriteAllText(planPath,JsonData.Serializer().Serialize(plan),new UTF8Encoding(false));
             File.Copy(Assembly.GetExecutingAssembly().Location,Path.Combine(root,"update-helper.exe"));
             File.Copy(Assembly.GetExecutingAssembly().Location+".config",Path.Combine(root,"update-helper.exe.config"));
@@ -212,10 +239,11 @@ namespace OpenCodexLauncherV2
             }
             catch { File.WriteAllText(Path.Combine(root,"cancel"),"");helper.Dispose();throw; }
         }
-        public static async Task<string> ApplyAsync(LauncherUpdatePlan plan, string payload, Action<int> afterWrite)
+        public static async Task<string> ApplyAsync(LauncherUpdatePlan plan, string payload, Action<int> afterWrite, Action startInstalled = null)
         {
             ValidateRelease(plan.Release); VerifyStage(payload,plan.Release.Version); CheckTarget(plan.Target);
-            if(ParseVersion(plan.Release.Version)<=ParseVersion(plan.CurrentVersion) || plan.Before==null || plan.Before.Count!=Files.Length)throw Invalid();
+            ValidateTransition(plan.Release,plan.CurrentVersion,plan.IsRollback);
+            if(plan.Before==null || plan.Before.Count!=Files.Length)throw Invalid();
             foreach(var name in Files)if(!plan.Before.ContainsKey(name)||FileHash(Path.Combine(plan.Target,name))!=plan.Before[name])throw new IOException(L.M("update.changed"));
             var transaction=new FileTransaction(Files.Select(x=>Path.Combine(plan.Target,x)));
             try
@@ -233,6 +261,7 @@ namespace OpenCodexLauncherV2
                     }
                     VerifyStageFiles(plan.Target,payload);return Task.FromResult(0);
                 });
+                if(startInstalled!=null)startInstalled();
                 transaction.Commit();return transaction.DirectoryPath;
             }
             catch(Exception failure)
@@ -255,7 +284,8 @@ namespace OpenCodexLauncherV2
                 var plan=JsonData.Serializer().Deserialize<LauncherUpdatePlan>(File.ReadAllText(planPath));
                 L.SetLanguage(plan.Language);ValidateRelease(plan.Release);
                 if(plan.CurrentVersion!=CurrentVersion || !String.Equals(Path.GetDirectoryName(root),Path.Combine(Path.GetFullPath(plan.DataDirectory),"updates"),StringComparison.OrdinalIgnoreCase) || Path.GetFullPath(plan.Target)==root)throw Invalid();
-                LocalEnvironment.Current=new LocalEnvironment(plan.DataDirectory,Path.Combine(root,"unused-user"),true);
+                if(String.IsNullOrWhiteSpace(plan.UserDirectory) || !Path.IsPathRooted(plan.UserDirectory))throw Invalid();
+                LocalEnvironment.Current=new LocalEnvironment(plan.DataDirectory,plan.UserDirectory,plan.IsIsolated);
                 CheckTarget(plan.Target);
                 // A per-installation mutex serializes helpers across launcher windows.
                 using(var mutex=new Mutex(false,"Local\\OpenCodexLauncher.Update."+Hash(Encoding.UTF8.GetBytes(Path.GetFullPath(plan.Target).ToUpperInvariant()))))
@@ -273,9 +303,12 @@ namespace OpenCodexLauncherV2
                             var deadline=DateTime.UtcNow.AddSeconds(90);
                             while(!parent.WaitForExit(200)) {if(File.Exists(Path.Combine(root,"cancel"))||DateTime.UtcNow>deadline)throw new IOException(L.M("update.cancelled"));}
                             if(File.Exists(Path.Combine(root,"cancel")))throw new IOException(L.M("update.cancelled"));
-                            ApplyAsync(plan,payload,null).GetAwaiter().GetResult();
+                            ValidateTransition(plan.Release,plan.CurrentVersion,plan.IsRollback);
+                            ApplyAsync(plan,payload,null,()=> {
+                                using(var started=Process.Start(new ProcessStartInfo(Path.Combine(plan.Target,Files[0])){UseShellExecute=false,WorkingDirectory=plan.Target}))
+                                { if(started==null)throw new IOException(L.M("update.helper")); }
+                            }).GetAwaiter().GetResult();
                             File.WriteAllText(Path.Combine(root,"result.txt"),"Updated to "+plan.Release.Version);
-                            Process.Start(new ProcessStartInfo(Path.Combine(plan.Target,Files[0])){UseShellExecute=false,WorkingDirectory=plan.Target});
                         }
                     }
                     finally {if(held)mutex.ReleaseMutex();}

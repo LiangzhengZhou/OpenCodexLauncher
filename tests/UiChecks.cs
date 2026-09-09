@@ -121,6 +121,12 @@ partial class UiChecks
                 for(int index=0;index<nav.Items.Count;index++)
                 {
                     nav.SelectedIndex=index;Pump();w.UpdateLayout();
+                    if((string)((ListBoxItem)nav.Items[index]).Tag=="settings")
+                    {
+                        var milestone=Find<ComboBox>(w).Single(x=>x.Name=="CriticalVersionSelector");
+                        Check((string)milestone.SelectedItem=="2.6.5" && milestone.Items.Count==1,language+" milestone selector retains the confirmed version");
+                        Check(Find<Button>(w).Any(x=>x.Name=="RollbackSelectedVersion" && x.IsEnabled && Convert.ToString(x.Content)==L.M("rollback.action").ToString()),language+" executable rollback action is visible and localized");
+                    }
                     foreach(var scale in new[]{1.0,1.5,2.0})Render(w,Path.Combine(output,language+"-"+((ListBoxItem)nav.Items[index]).Tag+"-"+(int)(scale*100)+".png"),scale);
                     Check(Find<ScrollViewer>(Field<ContentControl>(w,"content")).All(s=>s.ExtentWidth<=s.ViewportWidth+1),language+" page "+index+" fits minimum width");
                 }

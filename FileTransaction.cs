@@ -71,7 +71,13 @@ namespace OpenCodexLauncherV2
             foreach (var item in files.AsEnumerable().Reverse())
             {
                 if (item.BeforeFile == null) { if (File.Exists(item.Path)) File.Delete(item.Path); }
-                else AtomicBytes(item.Path, File.ReadAllBytes(Path.Combine(DirectoryPath, item.BeforeFile)));
+                else
+                {
+                    var original=Path.Combine(DirectoryPath,item.BeforeFile);
+                    // A failed write may leave its destination untouched and locked.
+                    // Do not rewrite that file and prevent other changed files restoring.
+                    if(Hash(item.Path)!=Hash(original))AtomicBytes(item.Path,File.ReadAllBytes(original));
+                }
                 item.ExpectedHash = Hash(item.Path);
             }
             Save("rolled-back");

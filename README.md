@@ -1,7 +1,19 @@
-# OpenCodex Launcher 3.0.1
-This is the 3.0.1 stable release, correcting preview labels left in 3.0.0. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
+# OpenCodex Launcher 3.0.2
+This stable release adds a confirmed-version selector and an executable rollback action. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
 
-The existing installation is not replaced. Version 2.6.5 is the confirmed critical rollback target, but the historical-version workflow and a real round-trip upgrade remain unverified. The historical rollback feature is not advertised as verified. The 2.6.x sections below document retained functionality.
+Version 2.6.5 is the first confirmed launcher rollback milestone. The 2.6.x sections below document retained functionality.
+
+## Choose a rollback version
+
+1. Save your edits, close other launcher windows and open **Settings → Version management**.
+2. Select **2.6.5** in the confirmed-version list, then click **Roll back to selected version**.
+3. Review the target and compatibility result, and confirm. The launcher verifies the package, backs up its program files, closes and reopens at the selected version.
+
+Only explicitly confirmed milestones appear; arbitrary GitHub releases are not added automatically. Settings schema v1, providers, API keys, model choices, Desktop association and runtime paths are preserved. The actual 2.6.5 settings reader and DPAPI credential reader are covered by isolated compatibility checks. Rollback does not replace your configuration with a historical snapshot or restart Desktop/OpenCodex. Version 2.6.5 uses its older interface and has no version selector; use **Check launcher updates** to return to the latest stable release.
+
+The package is pinned by size and SHA-256 and its contents and executable version are verified. After a successful package download and verification, its private cache can be used offline. A damaged cache stops rollback; move the damaged package out of the local updates/critical-cache directory before retrying. Reserve Force or incompatible configuration blocks the operation. Program files are backed up under the private recovery directory; write or launch-command failures attempt restoration. External edits stop overwriting and retain recovery records. A successful process launch does not verify every application feature.
+
+This selector changes **the launcher only**. OpenCodex runtime rollback milestones have not yet been confirmed.
 
 
 ## Diagnose message connection failures
@@ -48,11 +60,11 @@ Use the persistent **中文 / EN** button to change language. The initial langua
 
 ## Update the launcher
 
-In 2.6.0+, use the built-in updater to install 2.6.5. For Codex Desktop's model picker, follow the Desktop association steps below.
+In 2.6.0+, use the built-in updater to install the latest stable release. For Codex Desktop's model picker, follow the Desktop association steps below.
 
 In **Settings**, use **Check launcher updates**, then **Update and restart**. The panel is also available on onboarding and recovery pages. Save form edits before confirming. Only an explicit click contacts the public GitHub Releases API; no GitHub login is needed. Updates verify GitHub's SHA-256 digest, internal file checksums and executable version. Rate limits, missing digests and network restrictions stop the update. Access to api.github.com, github.com and GitHub's release CDN is required.
 
-The helper waits for this launcher to close, backs up release files, replaces them and starts the new launcher. OpenCodex services, settings, credentials, runtime selection and unrelated files are preserved. Close other launcher windows first. Write failures attempt rollback; external changes stop restoration and retain backups. The installation must be writable; there is no automatic administrator elevation. Cancelled downloads leave installed files unchanged. There are no background update checks or downgrades.
+The helper waits for this launcher to close, backs up release files, replaces them and starts the new launcher. OpenCodex services, settings, credentials, runtime selection and unrelated files are preserved. Close other launcher windows first. Write failures attempt rollback; external changes stop restoration and retain backups. The installation must be writable; there is no automatic administrator elevation. Cancelled downloads leave installed files unchanged. There are no background update checks. Normal updates accept higher versions only; downgrades require the separate confirmed-version rollback action.
 
 Versions before 2.6.0 need one final manual Windows ZIP upgrade to acquire this feature. Close the launcher and extract the entire package into its application directory. Subsequent releases can be installed through this panel. OpenCodex runtime updates remain separate.
 
@@ -122,7 +134,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.0.1.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.0.2.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

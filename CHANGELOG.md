@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 3.0.2 — 2026-09-09
+
+- 新增已确认关键版本选择列表及“一键回退到所选版本”，首个目标为 2.6.5；与普通向上更新入口分开。
+- 固定发布包 SHA-256，验证配置、文件清单与 EXE 版本，支持已校验缓存离线回退；保留供应商、凭据、模型及 Desktop 关联。
+- Reserve Force、损坏缓存或不兼容配置阻止回退；程序文件切换失败尝试恢复，外部修改停止覆盖。修复未改动文件被占用时阻断恢复的问题。
+- 使用真实 2.6.5 发布包验证往返文件切换、旧版配置读取和 DPAPI 解密；添加中英文列表与按钮检查，修正 CI 发布包版本硬编码。
+- Add confirmed launcher milestone selection, guarded rollback, verified offline caching and recovery tests using the actual 2.6.5 package. OpenCodex runtime milestones remain unconfirmed.
+
 ## 3.0.1 — 2026-09-09
 
 - 修正窗口标题、中英文副标题、版本管理和发布文档中的预览版标识；界面版本统一读取程序集版本。

@@ -1,4 +1,17 @@
 {
+  "version.runtime": {"zh":"OpenCodex：{0}","en":"OpenCodex: {0}"},
+  "version.notInstalled": {"zh":"未安装","en":"not installed"},
+  "version.unknown": {"zh":"版本未知","en":"unknown version"},
+  "rollback.description": {"zh":"选择已确认的启动器关键版本，回退前将校验兼容性并备份程序文件。","en":"Choose a confirmed launcher milestone. Compatibility is checked and application files are backed up before switching."},
+  "rollback.idle": {"zh":"可回退：2.6.5 · 配置格式 v1 · 下载包已固定 SHA-256。","en":"Available: 2.6.5 · settings schema v1 · pinned SHA-256."},
+  "rollback.action": {"zh":"一键回退到所选版本","en":"Roll back to selected version"},
+  "rollback.confirm": {"zh":"从 {0} 回退到 {1}？\n兼容检查通过（配置格式 v1）。将关闭并重开启动器，保留供应商、API Key、模型选择、Desktop 关联及运行时路径。程序文件会备份到本机 recovery 目录；替换失败自动恢复。\n不会重启 Desktop 或 OpenCodex。2.6.5 不含 3.0 新界面与版本选择器，可通过检查更新再次升级。","en":"Roll back from {0} to {1}?\nCompatibility check passed (settings schema v1). The launcher will close and reopen. Providers, API keys, model selections, Desktop association and runtime paths are preserved. Application files are backed up in the local recovery folder; replacement failures restore them.\nDesktop and OpenCodex will not restart. Version 2.6.5 has no 3.0 UI or version selector; use Check updates to upgrade again."},
+  "rollback.cached": {"zh":"正在校验并使用本机缓存版本…","en":"Verifying and using the cached version…"},
+  "rollback.cacheInvalid": {"zh":"关键版本缓存已损坏，回退已停止。请在本机 updates/critical-cache 目录移走损坏包后重试。","en":"The milestone cache is damaged. Rollback stopped. Move the damaged package out of the local updates/critical-cache folder and retry."},
+  "rollback.incompatible": {"zh":"当前配置格式不兼容目标版本，已停止回退；不会重置配置。","en":"The settings schema is incompatible with the target. Rollback stopped without resetting settings."},
+  "rollback.unconfirmed": {"zh":"该版本未确认、校验信息不匹配，或不是更早的版本。","en":"The version is unconfirmed, its checksum metadata does not match, or it is not an older version."},
+  "rollback.failed": {"zh":"回退未完成，请查看错误详情和本机恢复记录。","en":"Rollback did not complete. Check the error details and local recovery records."},
+  "rollback.runtimePending": {"zh":"OpenCodex：尚未确认关键回退版本，当前列表仅切换启动器。","en":"OpenCodex: no rollback milestones confirmed yet. This list switches only the launcher."},
   "text.000": {
     "zh": "模型、供应商与路由控制台  ·  {0} 正式版",
     "en": "Models, providers and routing console · {0} Stable"
@@ -552,8 +565,8 @@
     "en": "Credential fields are redacted. Review request bodies and personal paths before sharing."
   },
   "text.138": {
-    "zh": "启动器 2.6.3。路径配置保存到 Windows 当前用户目录。",
-    "en": "Launcher 2.6.3. Paths are stored in the current Windows user's data directory."
+    "zh": "路径配置保存在 Windows 当前用户目录。",
+    "en": "Paths are stored in the current Windows user's data directory."
   },
   "text.139": {
     "zh": "选择 OpenCodex 入口",
@@ -1524,8 +1537,8 @@
     "en": "Critical version notes"
   },
   "version.historyText": {
-    "zh": "2.6.5 已确认为首个关键回退版本。历史版本选择和双向回退尚未完成验证，当前不提供已验证的指定版本回退。",
-    "en": "2.6.5 is confirmed as the first critical rollback version. Historical version selection and round-trip rollback remain unverified; validated historical version switching is not currently available."
+    "zh": "2.6.5 已确认为首个关键回退版本，可在版本管理列表中选择并回退。",
+    "en": "2.6.5 is the first confirmed rollback milestone. Select it in version management to roll back."
   },
   "workspace.providers": {
     "zh": "供应商工作台",

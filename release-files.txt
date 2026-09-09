@@ -40,6 +40,8 @@ App.config
 LauncherUpdater.cs
 LauncherUpdateWindow.cs
 tests/UpdaterChecks.cs
+tests/RollbackChecks.cs
+tests/run-rollback-tests.ps1
 DesktopDiagnostics.cs
 DesktopDiagnosticWindow.cs
 tests/DesktopDiagnosticChecks.cs
@@ -50,6 +52,7 @@ TransportDiagnostics.cs
 tests/TransportDiagnosticChecks.cs
 ModernTheme.cs
 VersionManagementPanel.cs
+CriticalVersions.cs
 ModernWorkspace.cs
 tests/WorkspaceUiChecks.cs
 ModernDialog.cs
