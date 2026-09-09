@@ -42,6 +42,7 @@ partial class UiChecks
             var app=new Application {ShutdownMode=ShutdownMode.OnExplicitShutdown};
             SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext(Dispatcher.CurrentDispatcher));
             var w=new MainWindow {Width=980,Height=700};w.Show();Pump();
+            Check(w.Title == "OpenCodex Launcher " + LauncherUpdater.CurrentVersion, "window title matches stable assembly version");
             Check(!Field<LauncherSettings>(w,"settings").SetupCompleted && Field<PathSet>(w,"paths").OcxConfig==null,"fresh UI ignores existing malformed ambient files");
             Check(Field<Dictionary<string,UIElement>>(w,"pages").Count==0,"fresh UI does not build provider or model pages");
             L.SetLanguage("en");Pump();Render(w,Path.Combine(output,"setup-en.png"),1);
@@ -59,6 +60,12 @@ partial class UiChecks
             Check(Field<IList>(w,"models").Count==0 && Field<ComboBox>(w,"providerBox").Items.Count==0,"manual UI starts without providers or preset models");
             Check(Directory.Exists(Field<PathSet>(w,"paths").CodexHome),"manual onboarding creates the empty Codex home before returning to the UI");
             var nav=Field<ListBox>(w,"navigation");nav.SelectedIndex=1;Pump();
+            foreach(var language in new[]{"zh","en"})
+            {
+                L.SetLanguage(language);Pump();
+                var label=Convert.ToString(L.F("text.000", LauncherUpdater.CurrentVersion));
+                Check(label.Contains(LauncherUpdater.CurrentVersion) && !label.Contains("{0}") && !label.Contains("Preview") && !label.Contains("预览") && Find<TextBlock>(w).Any(b=>b.Text==label), language+" rendered subtitle matches stable assembly version");
+            }
             var id=Field<TextBox>(w,"providerId");var key=Field<PasswordBox>(w,"providerKey");id.Text="draft-provider";key.Password="dummy-draft-key";
             var choices=Field<System.Collections.ObjectModel.ObservableCollection<ProviderModelChoice>>(w,"choices");var choice=new ProviderModelChoice{Id="draft-model",DisplayName="draft-model",Selected=true};choices.Add(choice);
             var englishTexts=Find<TextBlock>(w).Select(b=>b.Text).ToArray();

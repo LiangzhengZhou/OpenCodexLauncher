@@ -1,7 +1,7 @@
 {
   "text.000": {
-    "zh": "模型、供应商与路由控制台  ·  3.0 预览版",
-    "en": "Models, providers and routing console · 3.0 Preview"
+    "zh": "模型、供应商与路由控制台  ·  {0} 正式版",
+    "en": "Models, providers and routing console · {0} Stable"
   },
   "text.001": {
     "zh": "● 检查中",
@@ -1524,8 +1524,8 @@
     "en": "Critical version notes"
   },
   "version.historyText": {
-    "zh": "2.6.5 已确认为首个关键回退版本。3.0 当前为界面预览版；版本回退发布包将在正式发布前完成验证。",
-    "en": "2.6.5 is confirmed as the first critical rollback version. This 3.0 build is a UI preview; rollback release artifacts require validation before publication."
+    "zh": "2.6.5 已确认为首个关键回退版本。历史版本选择和双向回退尚未完成验证，当前不提供已验证的指定版本回退。",
+    "en": "2.6.5 is confirmed as the first critical rollback version. Historical version selection and round-trip rollback remain unverified; validated historical version switching is not currently available."
   },
   "workspace.providers": {
     "zh": "供应商工作台",

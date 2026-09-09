@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.0.1 — 2026-09-09
+
+- 修正窗口标题、中英文副标题、版本管理和发布文档中的预览版标识；界面版本统一读取程序集版本。
+- 打包脚本直接生成正式文件名，3.0.0 用户可通过内置更新器升级。
+- Correct release labels and derive UI version labels from assembly metadata. Generate stable asset names for the existing updater.
+- 保留历史版本回退尚未完成验证的说明；本次不变更配置格式和业务行为。
+
 ## 3.0.0 Preview — 2026-09-09
 
 - 深度重设计供应商与模型管理界面：当前供应商概览、连接/API、模型状态卡片、按供应商隔离模型、搜索与全部/已选筛选。

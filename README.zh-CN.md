@@ -1,7 +1,7 @@
-# OpenCodex Launcher 3.0 Preview
-本工作目录为 3.0 界面预览，尚未发布。供应商采用概览、连接与 API、模型状态三张卡片；模型管理按供应商显示缓存模型与勾选。密钥默认隐藏，点击显示后可编辑；切换页面或窗口失焦会隐藏。默认模型 ID 已从供应商编辑器移除，旧字段保留。
+# OpenCodex Launcher 3.0.1
+本版为 3.0.1 正式版，修正 3.0.0 遗留的预览版标识。供应商采用概览、连接与 API、模型状态三张卡片；模型管理按供应商显示缓存模型与勾选。密钥默认隐藏，点击显示后可编辑；切换页面或窗口失焦会隐藏。默认模型 ID 已从供应商编辑器移除，旧字段保留。
 
-本次不覆盖既有安装。2.6.5 已确认为关键回退版本；完整指定版本回退与实际双向升级验证尚未完成，不能把此预览当作正式版。以下 2.6.x 文档仍作为保留功能的使用说明。
+本次不覆盖既有安装。2.6.5 已确认为关键回退版本；完整指定版本回退与实际双向升级验证尚未完成，暂不宣称已支持经过验证的历史版本回退。以下 2.6.x 文档仍作为保留功能的使用说明。
 
 
 ## 排查模型可见但消息发送失败
@@ -120,7 +120,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.0.0.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.0.1.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

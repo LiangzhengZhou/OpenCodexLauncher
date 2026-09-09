@@ -1,27 +1,19 @@
-# OpenCodex Launcher 3.0.0 Preview
-
-本预览以 2.6.5 为兼容基线，包含供应商页和模型管理页的深度重设计。2.6.5 已确认列入关键回退版本；指定版本回退工作流仍待后续验证，暂不作为正式发布承诺。
-
-This preview keeps the 2.6.5 compatibility baseline and ships the redesigned provider and model workspaces. Version 2.6.5 is confirmed as the first critical rollback target; the selectable historical rollback workflow remains pending validation.
+# OpenCodex Launcher 3.0.1
 
 ## 中文
 
-本版增加消息连接诊断，不宣称已修复所有 stream disconnected 问题。
+修正 3.0.0 发布后仍显示“3.0 预览版”的遗漏。窗口标题、版本管理和中英文副标题统一读取程序集版本；本版显示 3.0.1 正式版。打包脚本直接生成正式 ZIP 文件名，保持旧版内置更新器兼容。
 
-通过启动器内的一键更新升级后，在报错时点击 **一键诊断 Desktop → 复制报告**。新报告包含目标端口 TCP 连接、健康接口和消息地址的 GET 状态，以及启动器代理设置的有无，帮助区分连接不可达和 HTTP 已返回等情况。无需手动运行命令或上传配置。
+在设置中检查启动器更新即可从 2.6.5 或 3.0.0 升级。本次不变更供应商、密钥、模型选择、Desktop 关联或运行时路径的配置格式与业务逻辑。沿用 3.0 UI、粉色云朵图标和渐变配色。
 
-检查不发送推理、不读凭据、不改配置、不重启服务。GET 404/405 不代表 POST 失败；本地鉴权、Desktop 进程连接及供应商推理仍需进一步证据。空请求日志也不能排除记录前的拒绝。报告只导出固定状态与有无标志，不导出代理值、响应体或原始日志。
-
-启动 OpenCodex 的健康检查现在直连本机并拒绝重定向，与诊断保持一致。模型关联与供应商配置保留。
+2.6.5 保留为确认的关键回退目标，但历史版本选择与实际双向回退尚未完成验证，当前不宣称提供已验证的指定版本回退。诊断不发送推理，健康检查不等于模型推理成功。
 
 ## English
 
-This release adds message transport diagnostics; it does not claim to fix every stream-disconnected failure.
+Fix the preview labels accidentally retained in the published 3.0.0 executable. The title, bilingual subtitle and version panel now use the assembly version. Packaging creates the exact stable asset filenames required by the existing updater.
 
-Use the built-in launcher updater, then **Diagnose Desktop → Copy report** while the fault is present. Report format 2 adds loopback TCP, health GET and responses-address GET results plus launcher proxy-presence flags. No manual commands or configuration uploads are needed.
+Use Check launcher updates in Settings to upgrade from 2.6.5 or 3.0.0. Provider settings, credentials, model selections, Desktop association and runtime paths retain their existing format and behavior. The 3.0 UI, cloud icon and gradients are retained.
 
-Checks send no inference, read no credentials, edit no configuration and restart no services. GET 404/405 does not establish POST failure. POST authentication, Desktop-process connectivity and upstream inference remain untested. Empty request logs do not rule out rejection before logging. Reports contain only allowlisted statuses/flags; no proxy values, response bodies or raw logs.
-
-Runtime health now bypasses system proxies and refuses redirects, matching diagnostic behavior. Existing associations and provider settings are retained.
+2.6.5 remains the confirmed critical rollback target. Historical version selection and real round-trip rollback remain unverified; this release does not claim that workflow is complete. Diagnostics do not send inference requests.
 
 Windows x64 · .NET Framework 4.8 · MIT

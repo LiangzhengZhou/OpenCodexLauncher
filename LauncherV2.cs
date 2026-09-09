@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.0.0.0")]
-[assembly: AssemblyFileVersion("3.0.0.0")]
+[assembly: AssemblyVersion("3.0.1.0")]
+[assembly: AssemblyFileVersion("3.0.1.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -70,7 +70,7 @@ namespace OpenCodexLauncherV2
             try { settings = PathResolver.Load(); } catch (Exception e) { startupError = Redactor.Apply(e.Message); settings = SetupService.Normalize(new LauncherSettings(), false); }
             L.SetLanguage(settings.Language); paths = PathResolver.Empty();
             if (startupError == null && settings.SetupCompleted) { try { paths = PathResolver.Resolve(settings); SetupService.Validate(paths); } catch (Exception e) { startupError = Redactor.Apply(e.Message); } }
-            Title = "OpenCodex Launcher 3.0.0 Preview"; Width = 1320; Height = 900; MinWidth = 980; MinHeight = 700;
+            Title = "OpenCodex Launcher " + LauncherUpdater.CurrentVersion; Width = 1320; Height = 900; MinWidth = 980; MinHeight = 700;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             Background = page; FontFamily = new FontFamily("DengXian, Segoe UI"); FontSize = 14; FontWeight = FontWeights.SemiBold; UseLayoutRounding = true;
             Deactivated += delegate { HideProviderKey(); };
@@ -124,7 +124,7 @@ namespace OpenCodexLauncherV2
             Grid.SetRow(atmosphere, 2); root.Children.Add(atmosphere);
             var header = new Border { Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(Color.FromArgb(215, 255, 221, 241), 0), new GradientStop(Color.FromArgb(175, 218, 232, 255), 0.48), new GradientStop(Color.FromArgb(235, 255, 255, 255), 1) }, new Point(0, 0), new Point(1, 0)), BorderBrush = line, BorderThickness = new Thickness(0, 0, 0, 1), Padding = new Thickness(26, 14, 30, 14) }; Grid.SetRow(header, 0); root.Children.Add(header);
             var headerGrid = new Grid(); headerGrid.ColumnDefinitions.Add(new ColumnDefinition()); headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            var brand = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center }; if (Icon != null) brand.Children.Add(new Image { Source = Icon, Width = 58, Height = 58, Stretch = Stretch.Uniform, Margin = new Thickness(-4, 0, 11, 0) }); var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; title.Children.Add(new TextBlock { Text = "OpenCodex Launcher", Foreground = ink, FontSize = 22, Margin = new Thickness(0, 0, 0, 4) }); title.Children.Add(Text(L.M("text.000"), 12)); brand.Children.Add(title); headerGrid.Children.Add(brand);
+            var brand = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center }; if (Icon != null) brand.Children.Add(new Image { Source = Icon, Width = 58, Height = 58, Stretch = Stretch.Uniform, Margin = new Thickness(-4, 0, 11, 0) }); var title = new StackPanel { VerticalAlignment = VerticalAlignment.Center }; title.Children.Add(new TextBlock { Text = "OpenCodex Launcher", Foreground = ink, FontSize = 22, Margin = new Thickness(0, 0, 0, 4) }); title.Children.Add(Text(L.F("text.000", LauncherUpdater.CurrentVersion), 12)); brand.Children.Add(title); headerGrid.Children.Add(brand);
             var health = new Border { Background = new SolidColorBrush(Color.FromRgb(236, 253, 245)), BorderBrush = new SolidColorBrush(Color.FromRgb(167, 243, 208)), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(16), Padding = new Thickness(13, 7, 13, 7), VerticalAlignment = VerticalAlignment.Center }; healthText = Text(L.M("text.001")); health.Child = healthText; Grid.SetColumn(health, 1); var headerActions = new StackPanel { Orientation = Orientation.Horizontal }; headerActions.Children.Add(LanguageButton()); headerActions.Children.Add(health); Grid.SetColumn(headerActions, 1); headerGrid.Children.Add(headerActions); header.Child = headerGrid;
             var body = new Grid(); body.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(218) }); body.ColumnDefinitions.Add(new ColumnDefinition()); Grid.SetRow(body, 2); root.Children.Add(body);
             var side = new Border { Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(Color.FromArgb(180, 255, 225, 244), 0), new GradientStop(Color.FromArgb(135, 255, 232, 201), 0.42), new GradientStop(Color.FromArgb(210, 255, 255, 255), 1) }, new Point(0, 0), new Point(0, 1)), BorderBrush = line, BorderThickness = new Thickness(0,0,1,0), Padding = new Thickness(16, 24, 16, 18) }; Grid.SetColumn(side, 0); body.Children.Add(side); var sidePanel = new DockPanel(); var sideNote = Text(L.M("text.002"), 12); sideNote.Foreground = muted; DockPanel.SetDock(sideNote, Dock.Bottom); sidePanel.Children.Add(sideNote); navigation = new ListBox { BorderThickness = new Thickness(0), Background = Brushes.Transparent, Foreground = ink, FontSize = 14, FontWeight = FontWeights.SemiBold, ItemContainerStyle = NavigationStyle() }; navigation.SelectionChanged += delegate { if (navigation.SelectedItem != null) { var pageId = (string)((ListBoxItem)navigation.SelectedItem).Tag; HideProviderKey(); content.Content = pages[pageId]; if (pageId == "models") { try { LoadModels(); } catch (Exception) { SetText(modelSummary, L.M("models.configError")); } } } }; sidePanel.Children.Add(navigation); side.Child = sidePanel;
