@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 3.0.3 — 2026-09-11
+
+- 更换为已确认的粉色图标，裁剪透明留白并保留安全边距，使窗口、任务栏和 EXE 图标主体更清晰。
+- 生成 16–256 像素多尺寸图标，保持素材比例；保留现有配置和 2.6.5 关键版本回退功能。
+- Replace the icon with approved pink artwork, trim transparent margins and preserve aspect ratio across Windows icon sizes. No configuration or business logic changes.
+
 ## 3.0.2 — 2026-09-09
 
 - 新增已确认关键版本选择列表及“一键回退到所选版本”，首个目标为 2.6.5；与普通向上更新入口分开。

@@ -13,7 +13,11 @@ try {
         try {
             $graphics.Clear([Drawing.Color]::Transparent)
             $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
-            $graphics.DrawImage($sourceImage,0,0,$size,$size)
+            $scale = [Math]::Min($size / [double]$sourceImage.Width, $size / [double]$sourceImage.Height)
+            $width = [single]($sourceImage.Width * $scale)
+            $height = [single]($sourceImage.Height * $scale)
+            $bounds = [Drawing.RectangleF]::new([single](($size - $width) / 2), [single](($size - $height) / 2), $width, $height)
+            $graphics.DrawImage($sourceImage, $bounds)
             $bitmap.Save($stream,[Drawing.Imaging.ImageFormat]::Png)
             $frames += ,$stream.ToArray()
         } finally { $graphics.Dispose(); $bitmap.Dispose(); $stream.Dispose() }
