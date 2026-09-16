@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.0.4 — 2026-09-16
+
+- 新增系统托盘常驻，关闭或最小化隐藏主窗口，点击图标恢复；右键提供随语言切换的“显示主窗口”和“退出启动器”。
+- 隐藏时保留后台操作和窗口草稿，真正退出时取消操作并释放托盘图标；更新、回退和 Windows 会话结束使用退出流程。
+- 复用已确认的粉色多尺寸图标，保留配置格式和 2.6.5 关键版本回退。
+- Add a Windows tray icon, close/minimize to tray, restore and explicit exit. Preserve background work while hidden and release resources on exit; update and rollback still close the launcher before replacement.
+
 ## 3.0.3 — 2026-09-11
 
 - 更换为已确认的粉色图标，裁剪透明留白并保留安全边距，使窗口、任务栏和 EXE 图标主体更清晰。

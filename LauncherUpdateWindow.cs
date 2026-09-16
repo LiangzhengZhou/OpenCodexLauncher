@@ -33,7 +33,7 @@ namespace OpenCodexLauncherV2
                         updateCancellation.Token.ThrowIfCancellationRequested();
                         SetText(state,L.M("update.restarting"));
                         using(var helper=await LauncherUpdater.StartHelperAsync(plan,updateCancellation.Token))
-                        { Close(); if(IsVisible)File.WriteAllText(Path.Combine(Path.GetDirectoryName(plan),"cancel"),""); }
+                        { if(!ExitLauncher())File.WriteAllText(Path.Combine(Path.GetDirectoryName(plan),"cancel"),""); }
                     }
                     catch(OperationCanceledException){SetText(state,L.M("update.cancelled"));throw;}
                     catch {SetText(state,L.M("update.failed"));throw;}

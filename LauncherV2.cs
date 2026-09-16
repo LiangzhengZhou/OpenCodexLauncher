@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.0.3.0")]
-[assembly: AssemblyFileVersion("3.0.3.0")]
+[assembly: AssemblyVersion("3.0.4.0")]
+[assembly: AssemblyFileVersion("3.0.4.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -80,7 +80,8 @@ namespace OpenCodexLauncherV2
             timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
             timer.Tick += async delegate { if (gate.CurrentCount == 0 || LocalEnvironment.Current.IsIsolated || recoveryMode || !settings.SetupCompleted || life.IsCancellationRequested || Interlocked.Exchange(ref polling, 1) != 0) return; try { await RefreshState(); await RefreshReserveStatus(); if (activeSession != null) await RefreshDiagnostics(); } catch (OperationCanceledException) { } catch (Exception e) { Log(e.Message); } finally { Interlocked.Exchange(ref polling, 0); } };
             Loaded += async delegate { if (startupError != null || !settings.SetupCompleted) return; LoadModels(); if (LocalEnvironment.Current.IsIsolated) return; await RefreshState(); await RefreshReserveStatus(); timer.Start(); };
-            Closing += delegate { timer.Stop(); life.Cancel(); };
+            Closing += HandleWindowClosing;
+            Closed += HandleWindowClosed;
         }
         TextBlock Text(string value, int size = 13) { return new TextBlock { Text = value, TextWrapping = TextWrapping.Wrap, Foreground = ink, FontSize = size, Margin = new Thickness(0, 5, 0, 10) }; }
         Button Btn(string label, Action action)
@@ -476,7 +477,22 @@ namespace OpenCodexLauncherV2
             if (args.Length == 2 && args[0] == "--apply-launcher-update") { Environment.ExitCode = LauncherUpdater.RunHelper(args[1]); return; }
             if (args.Length == 2 && args[0] == "--isolated") LocalEnvironment.UseIsolated(args[1]);
             var app = new Application { ShutdownMode = ShutdownMode.OnMainWindowClose };
-            try { app.Run(new MainWindow()); }
+            try
+            {
+                var window = new MainWindow();
+                if (!LocalEnvironment.Current.IsIsolated)
+                {
+                    RoutedEventHandler initializeTray = null;
+                    initializeTray = delegate
+                    {
+                        window.Loaded -= initializeTray;
+                        try { window.EnableSystemTray(); }
+                        catch (Exception) { ModernDialog.Show(window, L.M("tray.unavailable"), "OpenCodex Launcher"); }
+                    };
+                    window.Loaded += initializeTray;
+                }
+                app.Run(window);
+            }
             catch (Exception e) { MessageBox.Show(Redactor.Apply(e.Message), L.M("text.169")); }
         }
     }

@@ -1,4 +1,8 @@
 {
+  "tray.show": {"zh":"显示主窗口","en":"Show main window"},
+  "tray.exit": {"zh":"退出启动器","en":"Exit launcher"},
+  "tray.hidden": {"zh":"启动器仍在后台运行。点击托盘图标可恢复窗口，右键选择“退出启动器”可完全退出。","en":"The launcher is still running. Click the tray icon to restore the window, or right-click and choose Exit launcher to quit."},
+  "tray.unavailable": {"zh":"系统托盘暂不可用，本次关闭窗口将直接退出启动器。","en":"The system tray is unavailable. Closing the window will exit the launcher this time."},
   "version.runtime": {"zh":"OpenCodex：{0}","en":"OpenCodex: {0}"},
   "version.notInstalled": {"zh":"未安装","en":"not installed"},
   "version.unknown": {"zh":"版本未知","en":"unknown version"},

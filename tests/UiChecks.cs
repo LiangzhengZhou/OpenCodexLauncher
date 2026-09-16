@@ -258,7 +258,7 @@ partial class UiChecks
             Until(()=>Find<TextBlock>(cancelWindow).Any(b=>b.Text.StartsWith("Cancelled.")));
             Check(!PathResolver.Load().SetupCompleted&&Field<PathSet>(cancelWindow,"paths").OcxConfig==null,"cancel button leaves onboarding and account paths unlinked");
             Check(!Find<Button>(cancelWindow).Single(b=>Convert.ToString(b.Content)=="Confirm import").IsEnabled,"cancel restores the original disabled import confirmation");
-            cancelWindow.Close();WorkspaceChecks(output);app.Shutdown();
+            cancelWindow.Close();WorkspaceChecks(output);TrayChecks(output);app.Shutdown();
             Console.WriteLine("ALL "+passed+" UI CHECKS PASSED; "+Directory.GetFiles(output,"*.png").Length+" renders generated");return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e);return 1;}

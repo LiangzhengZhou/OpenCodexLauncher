@@ -23,8 +23,11 @@
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Security" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
     <Compile Include="*.cs" />
     <EmbeddedResource Include="localization.json" LogicalName="OpenCodexLauncher.localization.json" />
     <EmbeddedResource Include="assets\launcher.png" LogicalName="OpenCodexLauncher.icon.png" />
+    <EmbeddedResource Include="assets\launcher.ico" LogicalName="OpenCodexLauncher.icon.ico" />
   </ItemGroup>
 </Project>

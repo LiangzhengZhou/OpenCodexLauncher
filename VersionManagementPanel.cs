@@ -39,7 +39,7 @@ namespace OpenCodexLauncherV2
                         var plan=await LauncherUpdaterFactory().StageRollbackAsync(version,AppDomain.CurrentDomain.BaseDirectory,cancellation.Token);
                         cancellation.Token.ThrowIfCancellationRequested();SetText(state,L.M("update.restarting"));
                         using(var helper=await LauncherUpdater.StartHelperAsync(plan,cancellation.Token))
-                        { Close();if(IsVisible)File.WriteAllText(Path.Combine(Path.GetDirectoryName(plan),"cancel"),""); }
+                        { if(!ExitLauncher())File.WriteAllText(Path.Combine(Path.GetDirectoryName(plan),"cancel"),""); }
                     }
                     catch(OperationCanceledException){SetText(state,L.M("update.cancelled"));throw;}
                     catch {SetText(state,L.M("rollback.failed"));throw;}

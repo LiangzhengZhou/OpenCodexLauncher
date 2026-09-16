@@ -16,6 +16,7 @@ LauncherCore.cs
 ModelDiagnostics.cs
 DesktopAssociation.cs
 LauncherV2.cs
+SystemTray.cs
 LocalEnvironment.cs
 Localization.cs
 SessionEvidence.cs
@@ -25,6 +26,7 @@ localization.json
 tests/RegressionChecks.cs
 tests/ReleaseChecks.cs
 tests/UiChecks.cs
+tests/TrayUiChecks.cs
 tests/run-tests.ps1
 tests/run-ui-tests.ps1
 README.md

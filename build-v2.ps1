@@ -22,6 +22,7 @@ $refs = @(
   (Join-Path $framework 'System.IO.Compression.FileSystem.dll'),
   (Join-Path $framework 'System.Data.dll'),
   (Join-Path $framework 'System.Drawing.dll'),
+  (Join-Path $framework 'System.Windows.Forms.dll'),
   (Join-Path $framework 'System.Net.Http.dll'),
   (Join-Path $framework 'System.Management.dll'),
   (Join-Path $framework 'System.Security.dll'),
@@ -36,6 +37,7 @@ if (-not (Test-Path -LiteralPath $icon)) { throw 'Missing assets/launcher.ico.' 
 $cscArgs += ('/win32icon:' + $icon)
 $cscArgs += ('/win32manifest:' + (Join-Path $root 'app.manifest'))
 $cscArgs += ('/resource:' + $iconPng + ',OpenCodexLauncher.icon.png')
+$cscArgs += ('/resource:' + $icon + ',OpenCodexLauncher.icon.ico')
 foreach ($ref in $refs) { $cscArgs += ('/reference:' + $ref) }
 $cscArgs += (Get-ChildItem -LiteralPath $root -Filter *.cs | ForEach-Object { $_.FullName })
 $cscArgs += ('/resource:' + (Join-Path $root 'localization.json') + ',OpenCodexLauncher.localization.json')

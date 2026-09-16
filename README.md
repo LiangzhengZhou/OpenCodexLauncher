@@ -1,7 +1,13 @@
-# OpenCodex Launcher 3.0.3
-This stable release adds a confirmed-version selector and an executable rollback action. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
+# OpenCodex Launcher 3.0.4
+This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
 
 Version 2.6.5 is the first confirmed launcher rollback milestone. The 2.6.x sections below document retained functionality.
+
+## Keep the launcher in the system tray
+
+The launcher adds its pink icon to the Windows notification area when opened. Close (×), Alt+F4 and Minimize hide the main window while background work continues. Left-click the tray icon, or right-click and choose **Show main window**, to return to the same window and drafts. Right-click **Exit launcher** to fully exit and cancel launcher operations. Exiting does not explicitly stop the separately running OpenCodex proxy or Desktop.
+
+Windows may put the icon under the **^** overflow panel; you can drag it to the visible notification area. Tray support does not enable startup with Windows. Updates and rollbacks still fully exit the launcher before replacing its files. When manually replacing files, use **Exit launcher**, not just the window's × button. If tray initialization fails, a message explains that closing the window will exit normally.
 
 ## Choose a rollback version
 
@@ -39,7 +45,7 @@ When Desktop's bottom-right model picker is missing third-party models, click **
 
 The report compares the launcher target with the default and launcher-environment Codex homes; inspects root catalog/proxy references, selected model counts and full-route catalog coverage; queries Codex process candidates; and checks local health endpoints. Findings distinguish a possible home mismatch, absent references, missing selected models, unreadable files, unavailable proxy and unknown process state. Candidate homes and running processes do not prove which configuration Desktop loaded. No inference request is sent.
 
-Checks begin only after setup and an explicit click. They do not edit configuration, import credentials, run CLI commands, stop services or restart Desktop. Network checks use GET /healthz on numeric loopback candidate ports plus one TCP attempt and GET of the configured standard responses path on the target loopback port only, without credentials, system proxy, response-body logging or redirects. File reads are bounded to 2 MiB each and local fixed drives; linked files, network paths, relative catalog references and unsupported TOML syntax remain unverified. The overall inspection deadline is 12 seconds; closing the launcher cancels active checks. If a system call remains blocked, the deadline returns a timeout report and ignores late results.
+Checks begin only after setup and an explicit click. They do not edit configuration, import credentials, run CLI commands, stop services or restart Desktop. Network checks use GET /healthz on numeric loopback candidate ports plus one TCP attempt and GET of the configured standard responses path on the target loopback port only, without credentials, system proxy, response-body logging or redirects. File reads are bounded to 2 MiB each and local fixed drives; linked files, network paths, relative catalog references and unsupported TOML syntax remain unverified. The overall inspection deadline is 12 seconds; choosing Exit launcher from the tray cancels active checks. If a system call remains blocked, the deadline returns a timeout report and ignores late results.
 
 Reports contain fixed finding codes, counts, relationships, timestamp, launcher version and allowlisted transport statuses, local ports, fixed route paths and proxy-presence flags. They exclude raw configuration, application/request logs, command lines, keys, account data, provider/model names, URLs and absolute paths. Copy/save is explicit; nothing is uploaded automatically. The report helps select the next fix but does not claim to test remote model availability or verify Desktop's loaded model list.
 
@@ -100,7 +106,7 @@ Choose **Install and start setup** on the first-use page to install OpenCodex wi
 
 The installer downloads Node LTS from nodejs.org and checks its published SHA-256. It downloads the pinned @bitkyc08/opencodex package from registry.npmjs.org and verifies SHA-512 integrity. HTTPS metadata and hashes detect transfer corruption; they cannot protect against a compromised upstream publisher. npm verifies dependency integrity and engine compatibility. Dependency lifecycle scripts are disabled; only Bun's required runtime installer runs. npm uses empty user/global configuration and a private cache without inherited npm tokens, provider credentials or Node preload options. CLI verification uses temporary empty account homes.
 
-Downloads require access to nodejs.org and registry.npmjs.org and may take several minutes. There is no offline runtime bundle. Each installation uses a unique directory under %LOCALAPPDATA%/OpenCodexLauncher/runtimes. The new executable is selected only after package and CLI verification. Failure/cancellation leaves previous settings and configuration intact. Cancel/close terminates the install process group. Failed staging and previous generations are retained for diagnosis/rollback and may occupy hundreds of MB each. Remove unused generations only after confirming no proxy, service or saved path uses them. Retain the selected and previous generation. Never publish this private directory.
+Downloads require access to nodejs.org and registry.npmjs.org and may take several minutes. There is no offline runtime bundle. Each installation uses a unique directory under %LOCALAPPDATA%/OpenCodexLauncher/runtimes. The new executable is selected only after package and CLI verification. Failure/cancellation leaves previous settings and configuration intact. Cancel or Exit launcher terminates the install process group; hiding the window does not. Failed staging and previous generations are retained for diagnosis/rollback and may occupy hundreds of MB each. Remove unused generations only after confirming no proxy, service or saved path uses them. Retain the selected and previous generation. Never publish this private directory.
 
 Only the launcher's executable selection changes. External commands, Windows services and tray entries retain their original installation; existing proxies are not restarted. Stop the old proxy yourself through its existing management controls, then start it from this launcher to use the new version. Disable Reserve Force before switching; re-enabling requires new source compatibility checks. This updates OpenCodex, not the launcher itself or Codex CLI.
 
@@ -134,7 +140,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.0.3.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.0.4.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
