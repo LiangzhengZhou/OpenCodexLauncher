@@ -1,4 +1,4 @@
-# OpenCodex Launcher 3.0.4
+# OpenCodex Launcher 3.1.0
 本正式版新增 Windows 系统托盘常驻。供应商采用概览、连接与 API、模型状态三张卡片；模型管理按供应商显示缓存模型与勾选。密钥默认隐藏，点击显示后可编辑；切换页面或窗口失焦会隐藏。默认模型 ID 已从供应商编辑器移除，旧字段保留。
 
 2.6.5 为首个已确认的启动器关键回退版本。以下 2.6.x 文档仍作为保留功能的使用说明。
@@ -138,7 +138,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.0.4.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.0.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
@@ -159,3 +159,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 ### 同步时提示缺少 config.toml
 
 2.6.0 在明确配置或执行 CLI 命令时，为启动器管理的手动 Codex 目录补建缺失的空 config.toml；保留已有文件内容。升级后重试同步即可。Codex 仍需单独安装：缺少可用模型目录时，OpenCodex 2.47.0 可能同步成功但仍报告代理未就绪。请安装并配置 Codex，再通过配置引导明确关联有效目录；启动器不会自动导入账号或伪造原生模型来隐藏警告。
+
+## 3.1.0 Native 直连
+在供应商页勾选 Native 直连，保存并选择模型，然后在 Native 页启用日常接入。首次启用后完全退出并重新打开 Desktop；以后从原快捷方式打开即可。不同新会话可同时绑定不同供应商，已有会话不能原地跨供应商切换。请求由 Codex 直连，密钥仍使用 DPAPI。详见 [Native 指南](docs/native-provider.zh-CN.md)。
+版本管理支持回退至 3.0.4（3.0 最后公开版）或 2.6.5；回退前关闭 Native 日常接入并重开 Desktop。

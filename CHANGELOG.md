@@ -1,5 +1,16 @@
 # Changelog / 更新记录
 
+## 3.1.0 — 2026-09-18
+
+- 新增一次启用的日常 Native 接入：固定目录安装桥接程序、注册当前用户启动环境并通知 Windows，之后可从原快捷方式启动。提供关闭恢复、环境冲突保护及中断恢复记录；首次启用或更新后需要完全重开 Desktop，日常快捷方式接入已通过用户验收。
+- 修复 Desktop 在 turn/start.collaborationMode.settings.model 再次携带 Native 别名时未转换的问题；仅在真实 app-server 已确认会话供应商后转换，未知或跨供应商请求在本地拒绝。
+- 供应商统一在原供应商页面管理，勾选 Native 直连即可复用地址、DPAPI 密钥和模型选择；Native 页面仅保留准备及启动入口。Native 推理由真实 Codex 发送，不经过 OpenCodex HTTP relay。
+- 新增带确认的删除供应商操作，清理配置、模型和有效凭据；默认路由或 Reserve Force 冲突时阻止删除，失败时恢复本次修改并保留外部编辑。
+- 保留现有代理配置，准备 Native 配置时采用恢复快照和受管 TOML 区域校验。Reserve Force 启用时拒绝准备。
+- 新会话绑定供应商；不实现 thread ID virtualization。已识别的跨供应商模型变更返回明确错误。
+- 本地真实 app-server 模拟验证通过；用户已确认真实 Desktop Packy 请求通过，日常启用已通过用户验收。新增 3.0.4 关键版本回退并保留 2.6.5；回退前须关闭日常 Native 接入。
+- Add persistent per-user Native activation, a stable helper and reversible environment registration. Packy requests passed user testing; everyday activation passed user acceptance. Add confirmed 3.0.4 rollback alongside 2.6.5.
+
 ## 3.0.4 — 2026-09-16
 
 - 新增系统托盘常驻，关闭或最小化隐藏主窗口，点击图标恢复；右键提供随语言切换的“显示主窗口”和“退出启动器”。

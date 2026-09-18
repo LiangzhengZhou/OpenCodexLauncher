@@ -71,11 +71,15 @@ namespace OpenCodexLauncherV2
         public string ReserveForceArmedAtUtc { get; set; }
     }
 
+    public enum ProviderRouteMode { OpenCodexProxy, NativeCodex }
     public enum LaunchStrategy { Force, Auto, FollowCodex }
     public enum RuntimeKind { CodexCli, ClaudeCode, CodexDesktop, Direct }
 
     public sealed class LauncherModel
     {
+        public ProviderRouteMode RouteMode { get; set; }
+        public string NativeProviderId { get; set; }
+        public string UpstreamModelId { get; set; }
         public string Id { get; set; }
         public string RouteId { get; set; }
         public string ProviderId { get; set; }
@@ -189,6 +193,7 @@ namespace OpenCodexLauncherV2
 
     public sealed class ProviderOption
     {
+        public ProviderRouteMode RouteMode { get; set; }
         public string Id { get; set; }
         public string DisplayName { get; set; }
         public string BaseUrl { get; set; }
@@ -343,7 +348,9 @@ namespace OpenCodexLauncherV2
         {
             var path = PathFor(id); Directory.CreateDirectory(Path.GetDirectoryName(path));
             var bytes = ProtectedData.Protect(Encoding.UTF8.GetBytes(key), Encoding.UTF8.GetBytes("OpenCodexLauncher"), DataProtectionScope.CurrentUser);
+            FileTransaction.BeforeWrite(path);
             File.WriteAllBytes(path, bytes);
+            FileTransaction.AfterWrite(path, FileTransaction.Hash(path));
         }
         public static string Load(string id)
         {
@@ -793,6 +800,23 @@ namespace OpenCodexLauncherV2
         }
         public Task<string> MarkProviderModelsStaleAsync(string path, string id)
         { return UpdateAsync(path, root => { var p = JsonData.Object(JsonData.Value(JsonData.Object(JsonData.Value(root, "providers")), id)); if (p == null) throw new InvalidOperationException("Provider missing."); p["launcherModelsConnection"] = ""; }); }
+        public Task<string> RemoveProviderAsync(string path, string id)
+        {
+            ModelNames.ValidateProvider(id);
+            if (id.Equals("openai", StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException(L.M("text.192"));
+            return UpdateAsync(path, root => {
+                if (JsonData.Text(root, "defaultProvider") == id) throw new InvalidOperationException(L.M("provider.defaultInUse"));
+                var reserve = JsonData.Object(JsonData.Value(root, "reserveForce"));
+                if (JsonData.Text(reserve, "targetRoute").StartsWith(id + "/", StringComparison.Ordinal)) throw new InvalidOperationException(L.M("provider.forceInUse"));
+                var providers = JsonData.Object(JsonData.Value(root, "providers"));
+                if (providers != null) providers.Remove(id);
+                root["customModels"] = JsonData.Array(JsonData.Value(root, "customModels")).Where(x => JsonData.Text(JsonData.Object(x), "provider") != id).ToArray();
+                root["disabledModels"] = JsonData.Array(JsonData.Value(root, "disabledModels")).Where(x => !(x is string) || !((string)x).StartsWith(id + "/", StringComparison.Ordinal)).ToArray();
+                var redirects = JsonData.Object(JsonData.Value(root, "blockedModelRedirects"));
+                if (redirects != null) foreach (var key in redirects.Keys.ToArray())
+                    if (key.StartsWith(id + "/", StringComparison.Ordinal) || Convert.ToString(redirects[key]).StartsWith(id + "/", StringComparison.Ordinal)) redirects.Remove(key);
+            });
+        }
         public Task<string> RecordProviderModelsAsync(string path, string id, IEnumerable<string> models, string fingerprint, string time)
         {
             ModelNames.ValidateProvider(id); var ids = models.Distinct(StringComparer.Ordinal).ToArray(); foreach (var model in ids) ModelNames.ValidateId(model);

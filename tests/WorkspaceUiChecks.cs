@@ -72,6 +72,17 @@ partial class UiChecks
         // Render a realistic populated workspace using only fictitious provider data.
         Invoke(w,"SwitchProvider",q);Invoke(w,"SwitchProvider",p);
         foreach(var language in new[]{"en","zh"}) { L.SetLanguage(language);foreach(int index in new[]{1,2}) {nav.SelectedIndex=index;Pump();foreach(var width in new[]{980.0,1320.0}) {w.Width=width;w.Height=900;Pump();foreach(var scale in new[]{1.0,1.5,2.0})Render(w,Path.Combine(output,language+"-workspace-"+index+"-"+width+"-"+(int)(scale*100)+".png"),scale);Check(Find<ScrollViewer>(Field<ContentControl>(w,"content")).All(s=>s.ExtentWidth<=s.ViewportWidth+1),language+" populated workspace "+index+" fits width "+width);}}}
+        Invoke(w,"SwitchProvider",q);nav.SelectedIndex=1;Pump();
+        Field<CheckBox>(w,"nativeRouteBox").IsChecked=true;
+        Await((Task)Invoke(w,"SaveProvider"));
+        Check(NativeProviders.Read().Any(x=>x.Provider.Id==q.Id)&&CredentialStore.Load(NativeProviders.CredentialId(q.Id))=="dummy-workspace-beta","Native checkbox reuses existing provider credentials");
+        Check(rows.Count==2&&rows.Count(r=>r.Selected)==1&&rows.All(r=>r.Route.StartsWith("launcher-native-")),"Native checkbox preserves fetched models and selection with native aliases");
+        w.Dispatcher.BeginInvoke(new Action(()=>{var dialog=w.OwnedWindows.Cast<Window>().Single();Click(Find<Button>(dialog).Single(b=>b.IsCancel));}));
+        Await((Task)Invoke(w,"DeleteSelectedProvider"));
+        Check(NativeProviders.Read().Any(x=>x.Provider.Id==q.Id),"cancelled provider deletion preserves native record");
+        w.Dispatcher.BeginInvoke(new Action(()=>{var dialog=w.OwnedWindows.Cast<Window>().Single();Click(Find<Button>(dialog).Single(b=>b.IsDefault));}));
+        Await((Task)Invoke(w,"DeleteSelectedProvider"));
+        Check(!ProviderManagement.List(path).Any(x=>x.Id==q.Id)&&ProviderManagement.List(path).Any(x=>x.Id==p.Id)&&!CredentialStore.Exists(NativeProviders.CredentialId(q.Id)),"confirmed native deletion removes key and retains other provider");
         w.Close();Pump();
     }
 }

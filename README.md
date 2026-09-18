@@ -1,4 +1,4 @@
-# OpenCodex Launcher 3.0.4
+# OpenCodex Launcher 3.1.0
 This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
 
 Version 2.6.5 is the first confirmed launcher rollback milestone. The 2.6.x sections below document retained functionality.
@@ -140,7 +140,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.0.4.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.0.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
@@ -164,3 +164,7 @@ If you saw this failure in 2.5.1, close the launcher and extract the entire 2.6.
 ### Sync reports missing config.toml
 
 Version 2.6.0 also creates an empty config.toml if it is missing from the launcher-managed manual Codex home, during explicit setup or CLI actions. Existing file contents are preserved. Retry sync after upgrading. Codex remains a separate installation: without an available Codex model catalog, OpenCodex 2.47.0 may complete sync but report that the proxy is not ready. Install/configure Codex and explicitly associate its valid home/catalog through setup. The launcher does not import accounts or invent native models to suppress this warning.
+
+## 3.1.0 Native providers
+Manage providers on the existing Providers page and enable Native direct routing per provider. Enable everyday activation once, fully close and reopen Desktop, then use your usual shortcut. Different new conversations can use different providers concurrently. Existing conversations cannot switch provider in place. Codex sends Native HTTP requests directly; credentials remain DPAPI-protected. See the [Native guide](docs/native-provider.zh-CN.md).
+Version management offers confirmed 3.0.4 and 2.6.5 rollback. Disable Native activation and reopen Desktop before downgrading.

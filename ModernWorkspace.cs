@@ -26,6 +26,7 @@ namespace OpenCodexLauncherV2
         TextBox providerKeyVisible;
         Button providerKeyToggle, allModelsButton, selectedModelsButton;
         ComboBox modelProviderBox;
+        CheckBox nativeRouteBox;
         TextBlock providerHeading, providerMeta, modelCounts, modelWorkspaceHeading, modelWorkspaceStatus, modelEmpty;
         ListBox modelChoiceList;
         public Func<ProviderOption, string, CancellationToken, Task<List<string>>> ModelFetch = ProviderClient.FetchModelsAsync;
@@ -54,6 +55,12 @@ namespace OpenCodexLauncherV2
             var summary = CardBody("01 / PROVIDER", "workspace.current");
             var selector = new DockPanel(); var add = Btn(L.M("text.020"), () => SwitchProvider(null), true); DockPanel.SetDock(add, Dock.Right); selector.Children.Add(add);
             providerBox = ProviderSelector(); selector.Children.Add(providerBox); summary.Children.Add(selector);
+            nativeRouteBox = new CheckBox { Content = L.M("provider.nativeRoute"), Margin = new Thickness(0, 4, 0, 12) };
+            L.Bind(nativeRouteBox, ContentControl.ContentProperty, L.M("provider.nativeRoute"));
+            nativeRouteBox.Checked += delegate { if (!populating) { adapterBox.SelectedItem = "openai-responses"; Invalidate(); } };
+            nativeRouteBox.Unchecked += delegate { Invalidate(); };
+            summary.Children.Add(nativeRouteBox); summary.Children.Add(Text(L.M("provider.routeNote")));
+            summary.Children.Add(AsyncBtn(L.M("provider.delete"), DeleteSelectedProvider));
             providerHeading = Text("", 23); providerHeading.FontWeight = FontWeights.Bold;
             providerMeta = Text(""); providerMeta.Foreground = muted; summary.Children.Add(providerMeta); pagePanel.Children.Add(Card(summary));
 
@@ -92,7 +99,7 @@ namespace OpenCodexLauncherV2
             providerKeyVisible.TextChanged += delegate { if (populating || keySyncing || providerKeyVisible.Visibility != Visibility.Visible) return; keySyncing = true; providerKey.Password = providerKeyVisible.Text; keySyncing = false; keyEdited = true; Redactor.RegisterSecret(providerKey.Password); Invalidate(); };
             choices.CollectionChanged += delegate { UpdateWorkspaceState(); };
             populating = false; workspaceReady = true; RefreshProviderSelectors(null);
-            Populate(config.Providers(paths.OcxConfig).FirstOrDefault(p => p.Id == config.Provider(paths.OcxConfig) && p.Id != "openai") ?? config.Providers(paths.OcxConfig).FirstOrDefault(p => p.Id != "openai"));
+            Populate(config.Providers(paths.OcxConfig).FirstOrDefault(p => p.Id == config.Provider(paths.OcxConfig) && p.Id != "openai") ?? ProviderManagement.List(paths.OcxConfig).FirstOrDefault());
             return pagePanel;
         }
         void Secondary(Button b) { b.Background = Brushes.White; b.Foreground = ink; b.BorderBrush = line; }
@@ -102,12 +109,12 @@ namespace OpenCodexLauncherV2
             if (!workspaceReady) return;
             providerDrafts[editingProvider ?? ""] = new ProviderDraft { Provider = DraftForm(), Key = providerKey.Password, KeyEdited = keyEdited, Fingerprint = fetchedFor, Stale = modelStale, FetchFailed = fetchFailed, LastFetch = lastFetch, Rows = choices.ToList(), SelectionDirty = selectionDirty, Query = search == null ? "" : search.Text, OnlySelected = onlySelected };
         }
-        ProviderOption DraftForm() { return new ProviderOption { Id = providerId.Text.Trim(), DisplayName = providerName.Text.Trim(), BaseUrl = providerUrl.Text.Trim(), Adapter = Convert.ToString(adapterBox.SelectedItem) }; }
+        ProviderOption DraftForm() { return new ProviderOption { Id = providerId.Text.Trim(), DisplayName = providerName.Text.Trim(), BaseUrl = providerUrl.Text.Trim(), Adapter = Convert.ToString(adapterBox.SelectedItem), RouteMode = nativeRouteBox.IsChecked == true ? ProviderRouteMode.NativeCodex : ProviderRouteMode.OpenCodexProxy }; }
         void SwitchProvider(ProviderOption p) { RememberDraft(); Populate(p); }
         void RefreshProviderSelectors(string id)
         {
             bool was = populating; populating = true;
-            var items = config.Providers(paths.OcxConfig).Where(p => p.Id != "openai").ToList();
+            var items = ProviderManagement.List(paths.OcxConfig);
             providerBox.ItemsSource = items; providerBox.SelectedItem = items.FirstOrDefault(p => p.Id == id);
             if (modelProviderBox != null) { modelProviderBox.ItemsSource = items; modelProviderBox.SelectedItem = items.FirstOrDefault(p => p.Id == id); }
             populating = was;
@@ -123,10 +130,16 @@ namespace OpenCodexLauncherV2
                 // Existing IDs identify storage and routes; create a new provider to use another ID.
                 providerId.IsReadOnly = editingProvider != null;
                 adapterBox.SelectedItem = form == null || String.IsNullOrEmpty(form.Adapter) ? "openai-responses" : form.Adapter;
-                providerKey.Password = draft != null ? draft.Key : p == null ? "" : CredentialStore.ForProvider(paths.OcxConfig, p.Id); Redactor.RegisterSecret(providerKey.Password);
+                nativeRouteBox.IsChecked = form != null && form.RouteMode == ProviderRouteMode.NativeCodex;
+                providerKey.Password = draft != null ? draft.Key : p == null ? "" : ProviderManagement.Key(paths.OcxConfig, p); Redactor.RegisterSecret(providerKey.Password);
                 keyEdited = draft != null && draft.KeyEdited; modelStale = draft != null && draft.Stale; fetchFailed = draft != null && draft.FetchFailed; selectionDirty = draft != null && draft.SelectionDirty; lastFetch = draft == null ? null : draft.LastFetch; fetchedFor = draft == null ? null : draft.Fingerprint;
                 choices.Clear();
                 if (draft != null) { foreach (var row in draft.Rows) choices.Add(row); }
+                else if (p != null && p.RouteMode == ProviderRouteMode.NativeCodex) {
+                    var record = NativeProviders.Read().Single(x => x.Provider.Id == p.Id);
+                    foreach (var id in (record.DiscoveredModels ?? record.Models).Concat(record.Models).Distinct().OrderBy(x => x)) choices.Add(Choice(p, id, record.Models.Contains(id)));
+                    lastFetch = record.LastFetch; fetchedFor = record.ConnectionFingerprint; modelStale = choices.Count > 0 && fetchedFor != Fingerprint(p);
+                }
                 else if (p != null) {
                     var root = config.ReadOcx(paths.OcxConfig); var raw = JsonData.Object(JsonData.Value(JsonData.Object(JsonData.Value(root, "providers")), p.Id));
                     var selected = config.SelectedModels(paths.OcxConfig, p.Id);
@@ -144,7 +157,7 @@ namespace OpenCodexLauncherV2
         }
         ProviderModelChoice Choice(ProviderOption p, string id, bool selected)
         {
-            var row = new ProviderModelChoice { Id = id, DisplayName = ModelNames.Display(p.Id, p.DisplayName, id), Route = ModelNames.Slug(p.Id, id), Selected = selected };
+            var row = new ProviderModelChoice { Id = id, DisplayName = ModelNames.Display(p.Id, p.DisplayName, id), Route = p.RouteMode == ProviderRouteMode.NativeCodex ? NativeProviders.Alias(p.Id, id) : ModelNames.Slug(p.Id, id), Selected = selected };
             row.PropertyChanged += delegate { if (populating) return; selectionDirty = true; UpdateWorkspaceState(); if (onlySelected) Dispatcher.BeginInvoke(new Action(ApplyModelFilter)); }; return row;
         }
         void Invalidate() { if (populating) return; modelStale = true; fetchedFor = null; UpdateWorkspaceState(); }
@@ -153,9 +166,10 @@ namespace OpenCodexLauncherV2
         async Task SaveProvider()
         {
             var p = Form();
-            await config.UpsertProviderAsync(paths.OcxConfig, p, keyEdited ? providerKey.Password : null);
-            if (modelStale) await config.MarkProviderModelsStaleAsync(paths.OcxConfig, p.Id);
-            populating = true; providerUrl.Text = p.BaseUrl; providerKey.Password = CredentialStore.ForProvider(paths.OcxConfig, p.Id);
+            await ProviderManagement.Save(paths, p, keyEdited ? providerKey.Password : null, choices.Where(x => x.Selected).Select(x => x.Id).ToArray(), choices.Select(x => x.Id).ToArray(), settings.ReserveForceEnabled, System.Reflection.Assembly.GetExecutingAssembly().Location);
+            if (modelStale && p.RouteMode == ProviderRouteMode.OpenCodexProxy) await config.MarkProviderModelsStaleAsync(paths.OcxConfig, p.Id);
+            populating = true; providerUrl.Text = p.BaseUrl; providerKey.Password = ProviderManagement.Key(paths.OcxConfig, p);
+            foreach (var row in choices) row.Route = p.RouteMode == ProviderRouteMode.NativeCodex ? NativeProviders.Alias(p.Id, row.Id) : ModelNames.Slug(p.Id, row.Id);
             if (providerKeyVisible.Visibility == Visibility.Visible) providerKeyVisible.Text = providerKey.Password;
             populating = false; keyEdited = false;
             if (editingProvider == null) providerDrafts.Remove(""); editingProvider = p.Id; providerId.IsReadOnly = true;
@@ -166,10 +180,10 @@ namespace OpenCodexLauncherV2
         {
             await SaveProvider(); var p = Form(); var selected = new HashSet<string>(choices.Where(x => x.Selected).Select(x => x.Id), StringComparer.Ordinal);
             try {
-                var fetched = await ModelFetch(p, CredentialStore.ForProvider(paths.OcxConfig, p.Id), life.Token);
+                var fetched = await ModelFetch(p, ProviderManagement.Key(paths.OcxConfig, p), life.Token);
                 life.Token.ThrowIfCancellationRequested(); var time = DateTime.UtcNow.ToString("o");
                 var all = fetched.Concat(choices.Select(x => x.Id)).Concat(selected).Distinct(StringComparer.Ordinal).OrderBy(x => x).ToList();
-                await config.RecordProviderModelsAsync(paths.OcxConfig, p.Id, all, Fingerprint(p), time);
+                await ProviderManagement.RecordModels(paths, p, all, Fingerprint(p), time);
                 populating = true; choices.Clear(); foreach (var id in all) choices.Add(Choice(p, id, selected.Contains(id))); populating = false;
                 fetchedFor = Fingerprint(p); modelStale = false; fetchFailed = false; lastFetch = time; RememberDraft(); UpdateWorkspaceState(); ApplyModelFilter();
             } catch { populating = false; fetchFailed = true; RememberDraft(); UpdateWorkspaceState(); throw; }
@@ -177,11 +191,12 @@ namespace OpenCodexLauncherV2
         async Task Import(bool sync)
         {
             if (editingProvider == null) throw new InvalidOperationException(L.M("workspace.saveFirst"));
-            var p = config.Providers(paths.OcxConfig).Single(x => x.Id == editingProvider);
+            var p = ProviderManagement.List(paths.OcxConfig).Single(x => x.Id == editingProvider);
             var selected = choices.Where(x => x.Selected).Select(x => x.Id).ToArray();
             if (selected.Length == 0 && !Confirm(L.M("text.045"))) return;
-            await config.SelectProviderModelsAsync(paths.OcxConfig, p.Id, p.DisplayName, selected, choices.Select(x => x.Id));
-            if (!config.SelectedModels(paths.OcxConfig, p.Id).SetEquals(selected)) throw new System.IO.IOException(L.M("models.saveMismatch"));
+            await ProviderManagement.Select(paths, p, selected, choices.Select(x => x.Id).ToArray(), settings.ReserveForceEnabled, System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var saved = p.RouteMode == ProviderRouteMode.NativeCodex ? new HashSet<string>(NativeProviders.Read().Single(x => x.Provider.Id == p.Id).Models) : config.SelectedModels(paths.OcxConfig, p.Id);
+            if (!saved.SetEquals(selected)) throw new System.IO.IOException(L.M("models.saveMismatch"));
             selectionDirty = false; RememberDraft(); LoadModels(); UpdateWorkspaceState();
             SetText(providerStatus, L.F("models.saved", selected.Length)); Log(L.F("models.saved", selected.Length)); if (sync) await Sync();
         }
@@ -198,8 +213,22 @@ namespace OpenCodexLauncherV2
         async Task ClearProviderKey()
         {
             HideProviderKey(); if (!Confirm(L.M("workspace.clearConfirm"))) return;
-            if (editingProvider != null) await config.ClearProviderKeyAsync(paths.OcxConfig, editingProvider);
+            if (editingProvider != null) {
+                var saved = ProviderManagement.List(paths.OcxConfig).Single(x => x.Id == editingProvider);
+                if (saved.RouteMode == ProviderRouteMode.NativeCodex) CredentialStore.Save(NativeProviders.CredentialId(editingProvider), "");
+                else await config.ClearProviderKeyAsync(paths.OcxConfig, editingProvider);
+            }
             populating = true; providerKey.Clear(); populating = false; keyEdited = false; Invalidate(); RememberDraft();
+        }
+        async Task DeleteSelectedProvider()
+        {
+            if (editingProvider == null) throw new InvalidOperationException(L.M("workspace.saveFirst"));
+            var id = editingProvider;
+            if (!Confirm(L.F("provider.deleteConfirm", id))) return;
+            await ProviderManagement.Delete(paths, id, settings.ReserveForceEnabled, System.Reflection.Assembly.GetExecutingAssembly().Location);
+            providerDrafts.Remove(id); editingProvider = null;
+            Populate(ProviderManagement.List(paths.OcxConfig).FirstOrDefault()); LoadModels();
+            Log(L.M("provider.deleted"));
         }
         void UpdateWorkspaceState()
         {

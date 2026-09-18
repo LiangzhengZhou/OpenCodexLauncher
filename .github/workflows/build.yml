@@ -26,6 +26,11 @@ jobs:
           dotnet build OpenCodexLauncher.csproj -c Release -o ./artifacts/sdk
           if ($LASTEXITCODE -ne 0) { throw 'SDK build failed' }
           ./tests/run-tests.ps1 -OutputDirectory ./artifacts/sdk -SkipBuild
+      - name: Native provider and activation regressions
+        shell: pwsh
+        run: |
+          ./tests/run-native-tests.ps1 -OutputDirectory ./artifacts/native
+          ./tests/run-native-tests.ps1 -OutputDirectory ./artifacts/sdk
       - name: WPF localization and onboarding checks
         shell: pwsh
         run: ./tests/run-ui-tests.ps1 -OutputDirectory ./artifacts/native

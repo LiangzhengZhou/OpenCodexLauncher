@@ -79,6 +79,7 @@ partial class UiChecks
             // Exercise the real provider editor and selection-save button with no runtime.
             id.Text="demo-provider";Field<TextBox>(w,"providerName").Text="Demo Provider";
             Field<TextBox>(w,"providerUrl").Text="https://example.invalid/v1";
+            w.UpdateLayout(); Pump();
             Click(Find<Button>(w).Single(b=>Convert.ToString(b.Content)=="Save provider"));
             Until(()=>Field<SemaphoreSlim>(w,"gate").CurrentCount==1);
             var provider=Field<ConfigStore>(w,"config").Providers(Field<PathSet>(w,"paths").OcxConfig).Single();
@@ -124,7 +125,7 @@ partial class UiChecks
                     if((string)((ListBoxItem)nav.Items[index]).Tag=="settings")
                     {
                         var milestone=Find<ComboBox>(w).Single(x=>x.Name=="CriticalVersionSelector");
-                        Check((string)milestone.SelectedItem=="2.6.5" && milestone.Items.Count==1,language+" milestone selector retains the confirmed version");
+                        Check((string)milestone.SelectedItem=="2.6.5" && milestone.Items.Count==2 && milestone.Items.Contains("3.0.4"),language+" milestone selector retains the confirmed version");
                         Check(Find<Button>(w).Any(x=>x.Name=="RollbackSelectedVersion" && x.IsEnabled && Convert.ToString(x.Content)==L.M("rollback.action").ToString()),language+" executable rollback action is visible and localized");
                     }
                     foreach(var scale in new[]{1.0,1.5,2.0})Render(w,Path.Combine(output,language+"-"+((ListBoxItem)nav.Items[index]).Tag+"-"+(int)(scale*100)+".png"),scale);

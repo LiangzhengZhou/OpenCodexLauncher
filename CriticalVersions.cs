@@ -12,7 +12,10 @@ namespace OpenCodexLauncherV2
         {
             return new[] { new LauncherRelease { Version="2.6.5", Size=850118,
                 Sha256="700a5eb7514079dfeefc3671bcd81386022bfb7d7c42795e365654face7dc566",
-                Url="https://github.com/LiangzhengZhou/OpenCodexLauncher/releases/download/v2.6.5/OpenCodexLauncher-2.6.5-windows-x64.zip" } };
+                Url="https://github.com/LiangzhengZhou/OpenCodexLauncher/releases/download/v2.6.5/OpenCodexLauncher-2.6.5-windows-x64.zip" },
+                new LauncherRelease { Version="3.0.4", Size=840877,
+                Sha256="57daf27d1f810c9d7d3f548545ea1b6e40bb89a0b053ec2a12e7701c555ea39f",
+                Url="https://github.com/LiangzhengZhou/OpenCodexLauncher/releases/download/v3.0.4/OpenCodexLauncher-3.0.4-windows-x64.zip" } };
         }
         public static LauncherRelease Find(string version)
         {
@@ -32,6 +35,7 @@ namespace OpenCodexLauncherV2
         {
             // Reading does not migrate or rewrite the on-disk settings. Version 2.6.5
             // supports schema 1, the same provider storage and DPAPI credential store.
+            if(NativeActivation.Current.RegisteredHelper!=null)throw new InvalidOperationException(L.M("rollback.nativeActive"));
             var settings=PathResolver.Load();
             if(settings.SettingsVersion!=1)throw new InvalidDataException(L.M("rollback.incompatible"));
             if(settings.ReserveForceEnabled || settings.ReserveForceOwned)

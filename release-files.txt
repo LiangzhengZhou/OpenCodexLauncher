@@ -58,3 +58,12 @@ CriticalVersions.cs
 ModernWorkspace.cs
 tests/WorkspaceUiChecks.cs
 ModernDialog.cs
+NativeActivation.cs
+NativeControlBridge.cs
+NativeProviderPanel.cs
+NativeProviders.cs
+ProviderManagement.cs
+tests/NativeChecks.cs
+tests/run-native-tests.ps1
+tests/check-gui-entry.ps1
+docs/native-provider.zh-CN.md
