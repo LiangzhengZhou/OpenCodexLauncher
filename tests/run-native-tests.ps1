@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
+$OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 $root = Split-Path -Parent $PSScriptRoot
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $exe = Join-Path $OutputDirectory 'OpenCodexLauncher.exe'
