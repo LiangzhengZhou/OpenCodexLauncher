@@ -120,17 +120,21 @@ namespace OpenCodexLauncherV2
         public static int Run(string manifest, string[] args)
         {
             try { return RunAsync(manifest, args).GetAwaiter().GetResult(); }
-            catch { return 2; } // Never print protocol payloads or exception details.
+            catch { Console.Error.WriteLine("Native bridge startup or control-plane failure. Verify the complete Codex runtime and Native configuration."); return 2; } // No payloads or exception details.
         }
         static async Task<int> RunAsync(string manifest, string[] args)
         {
             var settings = JsonData.Serializer().Deserialize<NativeBridgeSettings>(TextFile.Read(manifest));
+            // Resolve here, not in the GUI: daily activation works while Launcher is closed.
+            // Keep the manifest read-only to avoid racing Prepare/rollback or external edits.
+            var executable = CodexRuntime.ResolveNative(settings, CodexRuntime.DesktopRoot, CodexRuntime.FindUsable);
             var own = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            if (settings == null || !File.Exists(settings.RealCodex) || Path.GetFullPath(settings.RealCodex).Equals(own, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException();
+            if (Path.GetFullPath(executable).Equals(own, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException();
             var bridge = new NativeControlBridge(() => JsonData.Serializer().Deserialize<Dictionary<string, NativeRoute>>(TextFile.Read(settings.RoutesPath)));
-            var start = new ProcessStartInfo(settings.RealCodex, String.Join(" ", args.Select(Quote))) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
+            var start = new ProcessStartInfo(executable, String.Join(" ", args.Select(Quote))) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
             if (String.IsNullOrWhiteSpace(settings.CodexHome) || !Directory.Exists(settings.CodexHome)) throw new InvalidDataException();
             start.EnvironmentVariables["CODEX_HOME"] = settings.CodexHome;
+            if (!CodexRuntime.IsUsable(executable)) throw new InvalidDataException("Codex runtime changed before launch. Retry after the Desktop update.");
             using (var child = Process.Start(start))
             using (var outputLock = new System.Threading.SemaphoreSlim(1))
             {

@@ -26,7 +26,10 @@ namespace OpenCodexLauncherV2
             panel.Children.Add(Card(body));
             var integration = new StackPanel(); integration.Children.Add(Text(L.M("native.enableNote")));
             var activationStatus = Text("");
-            Action updateActivation = () => activationStatus.Text = L.M(NativeActivation.Current.Enabled ? "native.enabled" : "native.disabled");
+            Action updateActivation = () => {
+                var activation = NativeActivation.Current;
+                activationStatus.Text = L.M(activation.Enabled ? "native.enabled" : "native.disabled") + "\n" + L.M("native.runtime." + activation.RuntimeHealth);
+            };
             updateActivation(); integration.Children.Add(activationStatus);
             integration.Children.Add(AsyncBtn(L.M("native.enablePersistent"), async () => {
                 var helper = NativeActivation.InstallHelper(Assembly.GetExecutingAssembly().Location);

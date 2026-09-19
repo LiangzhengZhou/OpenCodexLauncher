@@ -37,7 +37,9 @@ namespace OpenCodexLauncherV2
             var confirm = Btn(L.M("text.226"), () => {
                 if (detected == null) return;
                 SetupService.Validate(detected);
-                settings.OcxPath = detected.Ocx; settings.CodexPath = detected.Codex;
+                settings.OcxPath = detected.Ocx;
+                // Do not turn automatic discovery into a permanently pinned hash.
+                settings.CodexPath = detected.AutomaticCodexRuntime ? null : detected.Codex;
                 settings.ConfigurationMode = "imported";
                 CompleteSetup();
             });

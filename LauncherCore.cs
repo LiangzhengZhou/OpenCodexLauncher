@@ -41,6 +41,7 @@ namespace OpenCodexLauncherV2
     {
         public string Ocx { get; set; }
         public string Codex { get; set; }
+        public bool AutomaticCodexRuntime { get; set; }
         public string CodexHome { get; set; }
         public string OcxConfig { get; set; }
         public string CodexConfig { get; set; }
@@ -428,7 +429,8 @@ namespace OpenCodexLauncherV2
             var ocxHome = manual ? Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "opencodex") : Home("OPENCODEX_HOME", Path.Combine(profile, ".opencodex"));
             return new PathSet {
                 Ocx = Existing(settings.OcxPath) ?? (LocalEnvironment.Current.IsIsolated || manual ? null : FromPath("ocx.cmd") ?? Find(Path.Combine(local, "Programs"), "ocx.cmd")),
-                Codex = Existing(settings.CodexPath) ?? (LocalEnvironment.Current.IsIsolated || manual ? null : Find(Path.Combine(local, "OpenAI", "Codex", "bin"), "codex.exe") ?? FromPath("codex.exe")),
+                Codex = !String.IsNullOrWhiteSpace(settings.CodexPath) ? Existing(settings.CodexPath) : (LocalEnvironment.Current.IsIsolated || manual ? null : CodexRuntime.FindUsable(CodexRuntime.DesktopRoot)),
+                AutomaticCodexRuntime = String.IsNullOrWhiteSpace(settings.CodexPath) && !LocalEnvironment.Current.IsIsolated && !manual,
                 CodexHome = codexHome, OcxConfig = Path.Combine(ocxHome, "config.json"), CodexConfig = Path.Combine(codexHome, "config.toml"), Catalog = Path.Combine(codexHome, "opencodex-catalog.json")
             };
         }

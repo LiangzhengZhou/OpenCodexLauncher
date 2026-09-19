@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.1 — 2026-09-19
+
+- 修复 Desktop 更新后 Native helper 使用残缺旧 runtime 的问题，自动模式无需 Launcher GUI 即可解析完整 bundle。
+- 共享 runtime 校验，保留显式路径优先级和失败保护；新增独立 runtime 健康状态。
+- 新增 rollover 回归测试，覆盖旧 EXE 留存但 host 消失、并发解析及手动路径。升级后需更新日常 Native 接入并重开 Desktop 一次以部署新版 helper。
+- Recover stale Native runtime paths after Desktop updates; preserve credentials, provider isolation and rollback compatibility.
+
 ## 3.1.0 — 2026-09-18
 
 - 新增一次启用的日常 Native 接入：固定目录安装桥接程序、注册当前用户启动环境并通知 Windows，之后可从原快捷方式启动。提供关闭恢复、环境冲突保护及中断恢复记录；首次启用或更新后需要完全重开 Desktop，日常快捷方式接入已通过用户验收。

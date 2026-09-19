@@ -1,4 +1,8 @@
 {
+  "native.runtime.healthy": {"zh":"已记录的 CLI runtime：完整。","en":"Recorded CLI runtime: complete."},
+  "native.runtime.stale": {"zh":"已记录的 CLI runtime：不完整。自动模式会在启动时重新查找；手动指定的路径需重新配置。","en":"Recorded CLI runtime: incomplete. Automatic mode resolves again at startup; explicit paths require reconfiguration."},
+  "native.runtime.missing": {"zh":"已记录的 CLI runtime 或清单缺失。自动模式仅能恢复 Desktop 管理目录内的旧 runtime。","en":"Recorded CLI runtime or manifest is missing. Automatic recovery applies only to old Desktop-managed runtimes."},
+  "native.runtime.unverified": {"zh":"已记录的 CLI runtime：未验证。","en":"Recorded CLI runtime: unverified."},
   "native.enablePersistent": {"zh":"启用 / 更新日常 Native 接入","en":"Enable / update Native for everyday launch"},
   "native.disablePersistent": {"zh":"关闭日常接入并恢复启动环境","en":"Disable and restore launch environment"},
   "native.enabled": {"zh":"已启用。首次启用或更新后，请完全退出 Desktop，再从原快捷方式打开。","en":"Enabled. After enabling or updating, fully exit Desktop and reopen from your usual shortcut."},

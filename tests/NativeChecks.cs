@@ -8,10 +8,67 @@ class NativeChecks
 {
     static int count;
     static void Check(bool ok, string name) { if (!ok) throw new Exception(name); Console.WriteLine("PASS: " + name); count++; }
+    static string Bundle(string root, string name)
+    {
+        var directory = Path.Combine(root, name); Directory.CreateDirectory(directory);
+        File.WriteAllText(Path.Combine(directory, "codex.exe"), "fixture only");
+        File.WriteAllText(Path.Combine(directory, "codex-code-mode-host.exe"), "fixture only");
+        return Path.Combine(directory, "codex.exe");
+    }
+    static void RuntimeChecks(string directory)
+    {
+        var root = Path.Combine(directory, "runtime-fixtures");
+        var a = Bundle(root, "A"); var b = Bundle(root, "B");
+        var manifest = new NativeBridgeSettings { RealCodex = a, CodexHome = "fixture-home", RoutesPath = "fixture-routes" };
+        var manifestPath = Path.Combine(directory, "rollover-manifest.json");
+        File.WriteAllText(manifestPath, JsonData.Serializer().Serialize(manifest));
+        var activation = new NativeActivation(Path.Combine(directory, "rollover-activation.json"), key => key == "CODEX_CLI_PATH" ? b : manifestPath, (key, value) => { throw new Exception(); }, () => { });
+        File.WriteAllText(Path.Combine(directory, "rollover-activation.json"), JsonData.Serializer().Serialize(new NativeActivationState { Helper = b, Manifest = manifestPath }));
+        Check(activation.Enabled && activation.RuntimeHealth == "healthy", "activation registration and runtime health independently available");
+        int scans = 0; Func<string,string> discover = r => { scans++; return CodexRuntime.FindUsable(r); };
+        Check(CodexRuntime.ResolveNative(manifest, root, discover) == a && scans == 0, "complete manifest runtime does not scan or switch");
+        File.Delete(Path.Combine(Path.GetDirectoryName(a), "codex-code-mode-host.exe"));
+        File.SetLastWriteTimeUtc(a, DateTime.UtcNow.AddHours(1));
+        Check(File.Exists(a) && !CodexRuntime.IsUsable(a) && CodexRuntime.IsUsable(b), "rollover leaves executable but removes required host");
+        Check(activation.Enabled && activation.RuntimeHealth == "stale", "stale runtime does not erase activation registration");
+        Check(CodexRuntime.FindUsable(root) == b, "newest incomplete executable excluded before ordering");
+        Check(CodexRuntime.ResolveNative(manifest, root, discover) == b, "bridge startup resolution replaces stale A with complete B");
+        var persisted = File.ReadAllText(manifestPath);
+        Check(CodexRuntime.ResolveNative(JsonData.Serializer().Deserialize<NativeBridgeSettings>(persisted), root, discover) == b && File.ReadAllText(manifestPath) == persisted, "persisted stale manifest resolves without disk mutation");
+        Check(JsonData.Serializer().Deserialize<NativeBridgeSettings>("{\"RealCodex\":\"fixture\",\"CodexHome\":\"home\",\"RoutesPath\":\"routes\"}").AutomaticRuntime == null, "3.1.0 manifest without provenance remains readable");
+        Check(manifest.RealCodex == a && manifest.CodexHome == "fixture-home" && manifest.RoutesPath == "fixture-routes", "resolution leaves manifest and routing configuration untouched");
+        File.Delete(a);
+        Check(activation.RuntimeHealth == "missing", "missing runtime health is an allowlisted state");
+        Check(CodexRuntime.ResolveNative(manifest, root, discover) == b, "missing executable also recovers");
+        manifest.AutomaticRuntime = false; bool rejected = false;
+        try { CodexRuntime.ResolveNative(manifest, root, discover); } catch (InvalidDataException) { rejected = true; }
+        Check(rejected, "incomplete explicit runtime fails closed");
+        manifest.RealCodex = b;
+        Check(CodexRuntime.ResolveNative(manifest, root, r => { throw new Exception(); }) == b, "complete explicit runtime respected without discovery");
+        var manual = Bundle(directory, "manual-runtime");
+        manifest.RealCodex = manual; manifest.AutomaticRuntime = null;
+        File.Delete(Path.Combine(Path.GetDirectoryName(manual), "codex-code-mode-host.exe"));
+        rejected = false; try { CodexRuntime.ResolveNative(manifest, root, discover); } catch (InvalidDataException) { rejected = true; }
+        Check(rejected, "legacy manual runtime outside managed root never substituted");
+        manifest.RealCodex = a;
+        File.Delete(Path.Combine(Path.GetDirectoryName(b), "codex-code-mode-host.exe"));
+        rejected = false; try { CodexRuntime.ResolveNative(manifest, root, discover); } catch (InvalidDataException) { rejected = true; }
+        Check(rejected, "no complete runtime fails closed without starting stale executable");
+        b = Bundle(root, "B"); var c = Bundle(root, "C");
+        var stamp = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        File.SetLastWriteTimeUtc(b, stamp); File.SetLastWriteTimeUtc(c, stamp);
+        Check(CodexRuntime.FindUsable(root) == b, "equal timestamp selection is deterministic");
+        System.Threading.Tasks.Parallel.For(0, 12, i => { if (CodexRuntime.ResolveNative(manifest, root, CodexRuntime.FindUsable) != b) throw new Exception(); });
+        Check(manifest.RealCodex == a, "concurrent startup resolution has no manifest writes");
+        var selected = PathResolver.Resolve(new LauncherSettings { CodexPath = b, ConfigurationMode = "manual" });
+        Check(selected.Codex == b && !selected.AutomaticCodexRuntime, "manual configured path priority preserved");
+        Check(PathResolver.Resolve(new LauncherSettings()).Codex == null, "isolated discovery never scans real Desktop or PATH");
+    }
     static int Main(string[] args)
     {
         try {
             Directory.CreateDirectory(args[0]); LocalEnvironment.UseIsolated(args[0]);
+            RuntimeChecks(args[0]);
             var exe = typeof(NativeProviders).Assembly.Location;
             var environment=new Dictionary<string,string>(); int broadcasts=0;
             var activation=new NativeActivation(Path.Combine(args[0],"activation.json"),
@@ -78,7 +135,7 @@ class NativeChecks
             File.WriteAllText(catalog,"{\"models\":[{\"slug\":\"gpt-5.5\",\"display_name\":\"Official\",\"visibility\":\"list\"}]}");
             var config=Path.Combine(home,"config.toml");
             File.WriteAllText(config,"model_catalog_json = '"+catalog+"'\nopenai_base_url = 'http://127.0.0.1:10100/v1'\n");
-            var paths=new PathSet{Codex=System.Reflection.Assembly.GetExecutingAssembly().Location,CodexHome=home,CodexConfig=config};
+            var paths=new PathSet{Codex=Bundle(args[0],"prepare-runtime"),CodexHome=home,CodexConfig=config};
             NativeProviders.Prepare(paths,exe,false).GetAwaiter().GetResult();
             var first=File.ReadAllText(config);
             NativeProviders.Prepare(paths,exe,false).GetAwaiter().GetResult();

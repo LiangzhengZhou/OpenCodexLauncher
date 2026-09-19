@@ -28,6 +28,7 @@ namespace OpenCodexLauncherV2
         public string RealCodex { get; set; }
         public string CodexHome { get; set; }
         public string RoutesPath { get; set; }
+        public bool? AutomaticRuntime { get; set; }
     }
     public static class NativeProviders
     {
@@ -134,7 +135,7 @@ namespace OpenCodexLauncherV2
         internal static async Task PrepareCore(PathSet paths, string helper, bool reserveForce, FileTransaction shared = null)
         {
             if (reserveForce) throw new InvalidOperationException("Disable Reserve Force before enabling Native routing.");
-            if (!File.Exists(paths.Codex) || Path.GetFullPath(paths.Codex).Equals(Path.GetFullPath(helper), StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Select the real Codex CLI executable.");
+            if (!CodexRuntime.IsUsable(paths.Codex) || Path.GetFullPath(paths.Codex).Equals(Path.GetFullPath(helper), StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Select a complete Codex CLI runtime including codex-code-mode-host.exe.");
             var records = Read();
             var original = TextFile.Read(paths.CodexConfig);
             bool supported; var keys = DesktopDiagnostics.RootKeys(original, out supported); string catalog;
@@ -171,7 +172,7 @@ namespace OpenCodexLauncherV2
                     TextFile.AtomicWrite(paths.CodexConfig, patched, new UTF8Encoding(false));
                     TextFile.AtomicWrite(catalog, JsonData.Serializer().Serialize(document), new UTF8Encoding(false));
                     TextFile.AtomicWrite(RoutesPath, JsonData.Serializer().Serialize(routes), new UTF8Encoding(false));
-                    TextFile.AtomicWrite(BridgePath, JsonData.Serializer().Serialize(new NativeBridgeSettings { RealCodex = paths.Codex, CodexHome = paths.CodexHome, RoutesPath = RoutesPath }), new UTF8Encoding(false));
+                    TextFile.AtomicWrite(BridgePath, JsonData.Serializer().Serialize(new NativeBridgeSettings { RealCodex = paths.Codex, CodexHome = paths.CodexHome, RoutesPath = RoutesPath, AutomaticRuntime = paths.AutomaticCodexRuntime }), new UTF8Encoding(false));
                     TextFile.AtomicWrite(StatePath, JsonData.Serializer().Serialize(new { config = Path.GetFullPath(paths.CodexConfig), block = block, aliases = routes.Keys.ToArray() }), new UTF8Encoding(false));
                     return Task.FromResult(0);
                 }); if (shared == null) transaction.Commit();
