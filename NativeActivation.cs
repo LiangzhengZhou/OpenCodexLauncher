@@ -64,10 +64,21 @@ namespace OpenCodexLauncherV2
             var config=File.ReadAllBytes(source+".config");
             string hash=ContentHash(bytes, config);
             var directory=Path.Combine(LocalEnvironment.Current.DataDirectory,"native-host",hash);
-            Directory.CreateDirectory(directory);
-            var target=Path.Combine(directory,"OpenCodexLauncher.exe");
-            CopyVerified(target,bytes); CopyVerified(target+".config",config);
-            return target;
+            // Serialize publication of the complete bundle across threads and processes.
+            // A reader must not race another publisher's rename on Windows.
+            var identity = Encoding.UTF8.GetBytes(Path.GetFullPath(directory).ToUpperInvariant());
+            using (var gate = new System.Threading.Mutex(false, "Local\\OpenCodexLauncher.Helper." + ContentHash(identity, new byte[0]))) {
+                bool acquired = false;
+                try {
+                    try { acquired = gate.WaitOne(TimeSpan.FromSeconds(30)); }
+                    catch (System.Threading.AbandonedMutexException) { acquired = true; }
+                    if (!acquired) throw new IOException("Native helper deployment is busy. Retry the update.");
+                    Directory.CreateDirectory(directory);
+                    var target=Path.Combine(directory,"OpenCodexLauncher.exe");
+                    CopyVerified(target,bytes); CopyVerified(target+".config",config);
+                    return target;
+                } finally { if (acquired) gate.ReleaseMutex(); }
+            }
         }
         public static string ExpectedHelperPath(string source)
         {

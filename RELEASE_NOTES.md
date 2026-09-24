@@ -1,4 +1,4 @@
-# OpenCodexLauncher 3.1.2 — validation candidate
+# OpenCodexLauncher 3.1.2
 
 - Launcher 启动后自动核对已注册 Native Helper 的 EXE 与 .config 内容。GUI 更新后不会再把旧 Helper 当成当前构建。
 - 首页及 Native 页面提供确认后更新入口；新 Helper 部署到独立内容寻址目录，不覆盖仍在运行的旧文件。
@@ -8,4 +8,4 @@
 
 Detect stale Native helpers after GUI updates and offer a confirmed helper-only update. Deployment is content addressed and registration is recoverable. Existing sessions and credential command paths remain valid because older helpers are retained. Fully restart Desktop after updating.
 
-This is a local validation candidate. Real Desktop restart acceptance is pending; no release has been published by this task.
+Validation covers isolated Native, UI, regression, rollback, build and package checks. A full restart acceptance test against a real Codex Desktop session has not been performed for this release; existing user sessions were not interrupted.

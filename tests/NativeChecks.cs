@@ -102,6 +102,22 @@ class NativeChecks
         }
         System.Threading.Tasks.Parallel.For(0,8,i=> { if(NativeActivation.InstallHelper(configSource)!=NativeActivation.ExpectedHelperPath(configSource)) throw new Exception(); });
         Check(File.ReadAllBytes(NativeActivation.ExpectedHelperPath(configSource)).SequenceEqual(File.ReadAllBytes(configSource)), "concurrent content deployment produces complete bytes");
+        var processSource = Path.Combine(root, "process-helper.exe");
+        File.WriteAllText(processSource, "multi-process fixture");
+        File.WriteAllText(processSource+".config", "fixture config");
+        var children = new List<Process>();
+        try {
+            for (int i=0; i<8; i++) children.Add(Process.Start(new ProcessStartInfo(
+                typeof(NativeChecks).Assembly.Location, "\""+root+"\" --install \""+processSource+"\"") { UseShellExecute=false, CreateNoWindow=true }));
+            bool succeeded = true;
+            foreach (var child in children) {
+                if (!child.WaitForExit(45000)) { child.Kill(); succeeded=false; }
+                else if (child.ExitCode!=0) succeeded=false;
+            }
+            Check(succeeded && File.ReadAllBytes(NativeActivation.ExpectedHelperPath(processSource)).SequenceEqual(File.ReadAllBytes(processSource))
+                && File.ReadAllBytes(NativeActivation.ExpectedHelperPath(processSource)+".config").SequenceEqual(File.ReadAllBytes(processSource+".config")),
+                "concurrent processes publish a complete helper bundle");
+        } finally { foreach (var child in children) child.Dispose(); }
         File.WriteAllText(a,"external corruption");
         Check(activation.CheckHelper(sourceA)=="outdated", "matching hash directory does not hide corrupted helper bytes");
         rejected=false; try { activation.UpdateHelper(sourceA); } catch(IOException) { rejected=true; }
@@ -120,6 +136,7 @@ class NativeChecks
     {
         try {
             Directory.CreateDirectory(args[0]); LocalEnvironment.UseIsolated(args[0]);
+            if (args.Length==3 && args[1]=="--install") { NativeActivation.InstallHelper(args[2]); return 0; }
             RuntimeChecks(args[0]);
             var exe = typeof(NativeProviders).Assembly.Location;
             var environment=new Dictionary<string,string>(); int broadcasts=0;
@@ -253,6 +270,10 @@ class NativeChecks
             var emptyBridge=new NativeControlBridge(()=>JsonData.Serializer().Deserialize<Dictionary<string,NativeRoute>>(File.ReadAllText(NativeProviders.RoutesPath)));
             Check(emptyBridge.Input(JsonData.Serializer().Serialize(new{id=10,method="thread/start",@params=new{model=alias}}),out errorText)==null,"deleted cached alias fails closed instead of falling back");
             Console.WriteLine("ALL " + count + " NATIVE CHECKS PASSED"); return 0;
-        } catch(Exception) { Console.Error.WriteLine("Native check failed; payloads suppressed."); return 1; }
+        } catch(Exception ex) {
+            var aggregate = ex as AggregateException;
+            var failure = aggregate == null ? ex : aggregate.Flatten().InnerExceptions[0];
+            Console.Error.WriteLine("Native check failed after " + count + " passes: " + failure.GetType().Name + " (HRESULT " + failure.HResult.ToString("X8") + "; payloads suppressed)."); return 1;
+        }
     }
 }
