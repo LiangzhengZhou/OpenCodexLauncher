@@ -118,6 +118,16 @@ class NativeChecks
                 && File.ReadAllBytes(NativeActivation.ExpectedHelperPath(processSource)+".config").SequenceEqual(File.ReadAllBytes(processSource+".config")),
                 "concurrent processes publish a complete helper bundle");
         } finally { foreach (var child in children) child.Dispose(); }
+        var originalEnvironment = LocalEnvironment.Current;
+        try {
+            // Fits MAX_PATH for the final bundle and short staging name, but not the
+            // previous target-name-plus-GUID staging path used on CI.
+            var deepRoot = Path.Combine(root, new string('d', Math.Max(1, 132-root.Length)));
+            LocalEnvironment.UseIsolated(deepRoot);
+            var deepHelper = NativeActivation.InstallHelper(processSource);
+            Check(File.ReadAllBytes(deepHelper+".config").SequenceEqual(File.ReadAllBytes(processSource+".config")),
+                "deep workspace helper deployment keeps staging paths within Windows limits");
+        } finally { LocalEnvironment.Current = originalEnvironment; }
         File.WriteAllText(a,"external corruption");
         Check(activation.CheckHelper(sourceA)=="outdated", "matching hash directory does not hide corrupted helper bytes");
         rejected=false; try { activation.UpdateHelper(sourceA); } catch(IOException) { rejected=true; }

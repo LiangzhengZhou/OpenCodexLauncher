@@ -94,7 +94,8 @@ namespace OpenCodexLauncherV2
             if(File.Exists(target)) {
                 if(Convert.ToBase64String(File.ReadAllBytes(target))!=Convert.ToBase64String(bytes)) throw new IOException("Native helper changed externally.");
             } else {
-                var temp = target + ".tmp-" + Guid.NewGuid().ToString("N");
+                // Keep the staging name short: content-addressed paths are already long.
+                var temp = Path.Combine(Path.GetDirectoryName(target), Guid.NewGuid().ToString("N") + ".tmp");
                 try { File.WriteAllBytes(temp, bytes); File.Move(temp, target); }
                 catch (IOException) {
                     if (File.Exists(target) && Convert.ToBase64String(File.ReadAllBytes(target))==Convert.ToBase64String(bytes)) return;
