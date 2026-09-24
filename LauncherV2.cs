@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.1.1.0")]
-[assembly: AssemblyFileVersion("3.1.1.0")]
+[assembly: AssemblyVersion("3.1.2.0")]
+[assembly: AssemblyFileVersion("3.1.2.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -136,6 +136,7 @@ namespace OpenCodexLauncherV2
         UIElement Overview()
         {
             var panel = new StackPanel(); panel.Children.Add(SectionHeader(L.M("text.011"), L.M("text.012")));
+            panel.Children.Add(HelperUpdateNotice(true));
             panel.Children.Add(Card(Text(L.M("text.013"), 16)));
             var buttons = new WrapPanel(); buttons.Children.Add(AsyncBtn(L.M("text.014"), StartProxy)); buttons.Children.Add(AsyncBtn(L.M("text.015"), Sync));
             buttons.Children.Add(AsyncBtn(L.M("text.016"), async delegate { await RefreshModels(); await RefreshState(); })); buttons.Children.Add(AsyncBtn(L.M("text.017"), async () => Open((await OpenCodexEndpointResolver.ResolveAsync(paths.OcxConfig, life.Token)).BaseUrl))); panel.Children.Add(buttons);

@@ -12,6 +12,29 @@ namespace OpenCodexLauncherV2
 {
     public sealed partial class MainWindow
     {
+        bool helperRestartRequired;
+        UIElement HelperUpdateNotice(bool hideCurrent, NativeActivation activation = null)
+        {
+            activation = activation ?? NativeActivation.Current;
+            var panel = new StackPanel();
+            var message = Text(""); panel.Children.Add(message);
+            var button = AsyncBtn(L.M("native.updateHelper"), () => {
+                if (!Confirm(L.M("native.updateConfirm"))) return Task.FromResult(0);
+                activation.UpdateHelper(Assembly.GetExecutingAssembly().Location);
+                helperRestartRequired = true;
+                SetText(message, L.M("native.updateDone"));
+                return Task.FromResult(0);
+            });
+            panel.Children.Add(button);
+            Action refresh = () => {
+                var state = activation.HelperStatus;
+                panel.Visibility = hideCurrent && !helperRestartRequired && (state == "disabled" || state == "current") ? Visibility.Collapsed : Visibility.Visible;
+                SetText(message, L.M(helperRestartRequired && state == "current" ? "native.updateDone" : "native.helper." + state));
+                button.IsEnabled = state == "outdated" || state == "missing" || state == "recovery";
+            };
+            refresh(); panel.Loaded += delegate { refresh(); };
+            return panel;
+        }
         UIElement NativeProviderPage()
         {
             var panel = new StackPanel();
@@ -25,10 +48,11 @@ namespace OpenCodexLauncherV2
             panel.Loaded += delegate { try { refresh(); } catch { providers.ItemsSource = new[] { L.M("native.storeInvalid").ToString() }; } };
             panel.Children.Add(Card(body));
             var integration = new StackPanel(); integration.Children.Add(Text(L.M("native.enableNote")));
+            integration.Children.Add(HelperUpdateNotice(false));
             var activationStatus = Text("");
             Action updateActivation = () => {
                 var activation = NativeActivation.Current;
-                activationStatus.Text = L.M(activation.Enabled ? "native.enabled" : "native.disabled") + "\n" + L.M("native.runtime." + activation.RuntimeHealth);
+                SetText(activationStatus, L.M(activation.Enabled ? "native.enabled" : "native.disabled") + "\n" + L.M("native.runtime." + activation.RuntimeHealth));
             };
             updateActivation(); integration.Children.Add(activationStatus);
             integration.Children.Add(AsyncBtn(L.M("native.enablePersistent"), async () => {

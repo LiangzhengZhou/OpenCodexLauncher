@@ -83,6 +83,31 @@ partial class UiChecks
         w.Dispatcher.BeginInvoke(new Action(()=>{var dialog=w.OwnedWindows.Cast<Window>().Single();Click(Find<Button>(dialog).Single(b=>b.IsDefault));}));
         Await((Task)Invoke(w,"DeleteSelectedProvider"));
         Check(!ProviderManagement.List(path).Any(x=>x.Id==q.Id)&&ProviderManagement.List(path).Any(x=>x.Id==p.Id)&&!CredentialStore.Exists(NativeProviders.CredentialId(q.Id)),"confirmed native deletion removes key and retains other provider");
+        HelperNoticeChecks(w, output);
         w.Close();Pump();
+    }
+    static void HelperNoticeChecks(MainWindow w, string output)
+    {
+        var root=Path.Combine(output,"helper-notice");Directory.CreateDirectory(root);
+        var source=Path.Combine(root,"old.exe");File.WriteAllText(source,"fixture-old-build");File.WriteAllText(source+".config","fixture-config");
+        var manifest=Path.Combine(root,"bridge.json");File.WriteAllText(manifest,"{}");
+        var env=new Dictionary<string,string>();
+        var activation=new NativeActivation(Path.Combine(root,"activation.json"),key=>env.ContainsKey(key)?env[key]:null,(key,value)=>env[key]=value,()=>{});
+        Await(activation.Enable(NativeActivation.InstallHelper(source),manifest,()=>Task.FromResult(0)));
+        var previous=activation.RegisteredHelper;
+        var panel=(StackPanel)Invoke(w,"HelperUpdateNotice",true,activation);
+        var host=new Window {Owner=w,Content=panel,Width=600,Height=240,ShowInTaskbar=false};host.Show();Pump();
+        var button=panel.Children.OfType<Button>().Single();var message=panel.Children.OfType<TextBlock>().Single();
+        Check(panel.Visibility==Visibility.Visible&&button.IsEnabled,"outdated helper presents explicit update action");
+        L.SetLanguage("en");Pump();Check(message.Text==L.Get("native.helper.outdated"),"helper warning follows language switch");
+        w.Dispatcher.BeginInvoke(new Action(()=>{var dialog=w.OwnedWindows.Cast<Window>().Single(x=>x!=host);Click(Find<Button>(dialog).Single(b=>b.IsCancel));}));
+        Click(button);Pump();Check(activation.RegisteredHelper==previous,"cancelled helper update leaves registration unchanged");
+        w.Dispatcher.BeginInvoke(new Action(()=>{var dialog=w.OwnedWindows.Cast<Window>().Single(x=>x!=host);Click(Find<Button>(dialog).Single(b=>b.IsDefault));}));
+        Click(button);Pump();Check(activation.HelperStatus=="current"&&File.Exists(previous),"confirmed helper update deploys GUI build and retains old executable");
+        Check(message.Text==L.Get("native.updateDone"),"helper update shows Desktop restart instruction");
+        host.Content=null;host.Content=panel;Pump();
+        Check(panel.Visibility==Visibility.Visible&&message.Text==L.Get("native.updateDone"),"restart instruction survives page reload");
+        L.SetLanguage("zh");Pump();Check(message.Text==L.Get("native.updateDone"),"restart instruction follows language switch");
+        host.Close();activation.Disable();
     }
 }

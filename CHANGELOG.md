@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.2 — 2026-09-24
+
+- GUI 启动及 Native 页面比较已注册 Helper 与当前 EXE/.config 的实际内容，发现旧构建时显示提示及确认后更新入口。
+- Helper 更新复用内容寻址目录和注册恢复记录，保留旧文件及当前会话，不重新生成 TOML、模型目录或 Runtime 清单。完成后需自行完整重启 Desktop。
+- 新增跨构建、配置变化、部署并发、注册失败恢复、回退和内容损坏回归；保留 3.1.1 Runtime 自动恢复算法。
+- Detect stale Native helpers after GUI updates and provide a confirmed, recoverable helper-only update. Existing Desktop sessions continue until the user restarts Desktop.
+
 ## 3.1.1 — 2026-09-19
 
 - 修复 Desktop 更新后 Native helper 使用残缺旧 runtime 的问题，自动模式无需 Launcher GUI 即可解析完整 bundle。

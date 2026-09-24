@@ -62,23 +62,56 @@ namespace OpenCodexLauncherV2
         {
             var bytes=File.ReadAllBytes(source);
             var config=File.ReadAllBytes(source+".config");
-            string hash;
-            using(var sha=SHA256.Create()) {
-                var combined=new byte[bytes.Length+config.Length];
-                Buffer.BlockCopy(bytes,0,combined,0,bytes.Length); Buffer.BlockCopy(config,0,combined,bytes.Length,config.Length);
-                hash=BitConverter.ToString(sha.ComputeHash(combined)).Replace("-", "");
-            }
+            string hash=ContentHash(bytes, config);
             var directory=Path.Combine(LocalEnvironment.Current.DataDirectory,"native-host",hash);
             Directory.CreateDirectory(directory);
             var target=Path.Combine(directory,"OpenCodexLauncher.exe");
             CopyVerified(target,bytes); CopyVerified(target+".config",config);
             return target;
         }
+        public static string ExpectedHelperPath(string source)
+        {
+            var bytes=File.ReadAllBytes(source); var config=File.ReadAllBytes(source+".config");
+            return Path.Combine(LocalEnvironment.Current.DataDirectory,"native-host",ContentHash(bytes, config),"OpenCodexLauncher.exe");
+        }
+        static string ContentHash(byte[] bytes, byte[] config)
+        {
+            using(var sha=SHA256.Create()) { var combined=new byte[bytes.Length+config.Length]; Buffer.BlockCopy(bytes,0,combined,0,bytes.Length); Buffer.BlockCopy(config,0,combined,bytes.Length,config.Length); return BitConverter.ToString(sha.ComputeHash(combined)).Replace("-", ""); }
+        }
         static void CopyVerified(string target, byte[] bytes)
         {
             if(File.Exists(target)) {
                 if(Convert.ToBase64String(File.ReadAllBytes(target))!=Convert.ToBase64String(bytes)) throw new IOException("Native helper changed externally.");
-            } else File.WriteAllBytes(target,bytes);
+            } else {
+                var temp = target + ".tmp-" + Guid.NewGuid().ToString("N");
+                try { File.WriteAllBytes(temp, bytes); File.Move(temp, target); }
+                catch (IOException) {
+                    if (File.Exists(target) && Convert.ToBase64String(File.ReadAllBytes(target))==Convert.ToBase64String(bytes)) return;
+                    throw;
+                }
+                finally { try { if (File.Exists(temp)) File.Delete(temp); } catch { } }
+            }
+        }
+        public string CheckHelper(string source)
+        {
+            try {
+                var s = Read();
+                if (s == null) return get(Cli) == null && get(Bridge) == null ? "disabled" : "conflict";
+                try { Validate(s); } catch (InvalidOperationException) { return "conflict"; }
+                if (get(Cli) != s.Helper || get(Bridge) != s.Manifest) return "recovery";
+                if (!File.Exists(s.Manifest)) return "unverified";
+                if (!File.Exists(s.Helper) || !File.Exists(s.Helper + ".config")) return "missing";
+                // Verify actual bytes, not just the content-addressed directory name.
+                return ContentHash(File.ReadAllBytes(source), File.ReadAllBytes(source + ".config")) ==
+                    ContentHash(File.ReadAllBytes(s.Helper), File.ReadAllBytes(s.Helper + ".config")) ? "current" : "outdated";
+            } catch { return "unverified"; }
+        }
+        public string HelperStatus
+        {
+            get
+            {
+                return CheckHelper(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            }
         }
         void Validate(NativeActivationState s)
         {
@@ -92,6 +125,11 @@ namespace OpenCodexLauncherV2
             var previous=Read(); Validate(previous);
             await prepare();
             Validate(previous);
+            Register(previous, helper, manifest);
+            }
+        }
+        void Register(NativeActivationState previous, string helper, string manifest)
+        {
             var next=new NativeActivationState {Helper=helper,Manifest=manifest,PreviousCli=previous==null?get(Cli):previous.PreviousCli,PreviousBridge=previous==null?get(Bridge):previous.PreviousBridge,TransitionCli=get(Cli),TransitionBridge=get(Bridge)};
             var oldCli=get(Cli); var oldBridge=get(Bridge);
             TextFile.AtomicWrite(statePath,JsonData.Serializer().Serialize(next),new UTF8Encoding(false));
@@ -103,7 +141,6 @@ namespace OpenCodexLauncherV2
                 broadcast(); throw;
             }
             broadcast();
-            }
         }
         public void Disable()
         {
@@ -112,6 +149,22 @@ namespace OpenCodexLauncherV2
             set(Cli,s.PreviousCli); set(Bridge,s.PreviousBridge);
             File.Delete(statePath); broadcast();
             // Keep helper and provider configuration for existing processes/credential commands.
+            }
+        }
+        // Updates only the content-addressed helper registration. It deliberately does not
+        // rerun Prepare, so provider/config/catalog state and running Desktop sessions stay intact.
+        public string UpdateHelper(string source)
+        {
+            using(Lock()) {
+                var previous = Read();
+                if (previous == null) throw new InvalidOperationException("Native activation is not enabled.");
+                Validate(previous);
+                if (!File.Exists(previous.Manifest)) throw new InvalidDataException("Native manifest is missing. Restore Native configuration before updating the helper.");
+                var helper = InstallHelper(source);
+                Validate(previous);
+                if (helper == previous.Helper && get(Cli) == helper && get(Bridge) == previous.Manifest) return helper;
+                Register(previous, helper, previous.Manifest);
+                return helper;
             }
         }
     }

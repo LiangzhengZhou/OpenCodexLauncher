@@ -1,9 +1,11 @@
-# OpenCodexLauncher 3.1.1
+# OpenCodexLauncher 3.1.2 — validation candidate
 
-- 修复 Desktop 更新后 Native helper 仍启动残缺旧 runtime 的问题：旧目录即使保留 codex.exe，缺少 codex-code-mode-host.exe 时也不再使用。
-- 自动模式下 helper 自行查找完整 runtime，无需 Launcher 窗口运行；手动固定路径保持优先，残缺时明确失败。
-- 新增独立 runtime 健康状态，保持 Native 直连、供应商隔离、DPAPI 凭据及更新 ZIP 布局；保留 3.0.4、2.6.5 关键版本回退。
+- Launcher 启动后自动核对已注册 Native Helper 的 EXE 与 .config 内容。GUI 更新后不会再把旧 Helper 当成当前构建。
+- 首页及 Native 页面提供确认后更新入口；新 Helper 部署到独立内容寻址目录，不覆盖仍在运行的旧文件。
+- 更新仅切换启动注册，保留供应商、DPAPI 密钥、TOML、模型目录和手动 Runtime 配置；复用失败恢复记录和并发锁。
+- 完成后请完整退出并重新打开 Codex Desktop。不会强制停止当前会话。若启动来源缓存旧环境，请重开该来源或注销 Windows。
+- 3.1.1 的 Runtime 自动恢复和 Native thread/provider 隔离规则保持不变。3.0.4、2.6.5 回退规则不变。
 
-**升级提示：** 已启用 Native 的用户升级后，请点击一次“启用 / 更新日常 Native 接入”并完全重开 Desktop，以部署新版固定 helper。此后自动发现模式可在 Desktop runtime 更新后自行恢复，无需再次打开 Launcher。手动固定路径仍需用户维护。
+Detect stale Native helpers after GUI updates and offer a confirmed helper-only update. Deployment is content addressed and registration is recoverable. Existing sessions and credential command paths remain valid because older helpers are retained. Fully restart Desktop after updating.
 
-Fix Native activation after Desktop runtime rollover. The standalone helper rejects incomplete bundles and discovers a complete runtime without the Launcher GUI. Explicit paths fail closed rather than silently switching. Credentials, provider isolation and inference transport remain unchanged. Refresh Native activation and fully reopen Desktop once after upgrading to install the updated helper.
+This is a local validation candidate. Real Desktop restart acceptance is pending; no release has been published by this task.

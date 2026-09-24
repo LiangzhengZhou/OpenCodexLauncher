@@ -64,6 +64,58 @@ class NativeChecks
         Check(selected.Codex == b && !selected.AutomaticCodexRuntime, "manual configured path priority preserved");
         Check(PathResolver.Resolve(new LauncherSettings()).Codex == null, "isolated discovery never scans real Desktop or PATH");
     }
+    static void HelperUpdateChecks(string root, string sourceA, string sourceB, string manifest)
+    {
+        var env = new Dictionary<string,string>(); var state = Path.Combine(root,"update-cases.json");
+        bool failSecond = false, failRollback = false; int writes = 0;
+        var a = NativeActivation.InstallHelper(sourceA); var b = NativeActivation.InstallHelper(sourceB);
+        var activation = new NativeActivation(state, k => env.ContainsKey(k) ? env[k] : null, (k,v) => {
+            writes++;
+            if (failSecond && k == "OPENCODEX_LAUNCHER_BRIDGE") { failSecond=false; throw new IOException("fixture write failure"); }
+            if (failRollback && k == "CODEX_CLI_PATH" && v == a) throw new IOException("fixture rollback failure");
+            if(v==null) env.Remove(k); else env[k]=v;
+        }, () => {});
+        Check(activation.CheckHelper(sourceB)=="disabled", "helper status detects disabled registration without writes");
+        activation.Enable(a,manifest,()=>System.Threading.Tasks.Task.FromResult(0)).GetAwaiter().GetResult();
+        var before=File.ReadAllText(state); var beforeWrites=writes;
+        Check(activation.CheckHelper(sourceA)=="current" && activation.CheckHelper(sourceB)=="outdated" && writes==beforeWrites && File.ReadAllText(state)==before, "helper status compares bytes and is read only");
+        var configSource=Path.Combine(root,"config-only.exe"); File.Copy(sourceA,configSource); File.WriteAllText(configSource+".config","changed config");
+        Check(activation.CheckHelper(configSource)=="outdated", "config-only build change requires helper update");
+        env["CODEX_CLI_PATH"]="external"; bool rejected=false;
+        try { activation.UpdateHelper(sourceB); } catch(InvalidOperationException) { rejected=true; }
+        Check(rejected && activation.CheckHelper(sourceB)=="conflict" && env["CODEX_CLI_PATH"]=="external", "external environment blocks helper update");
+        env["CODEX_CLI_PATH"]=a;
+        failSecond=true; rejected=false;
+        try { activation.UpdateHelper(sourceB); } catch(IOException) { rejected=true; }
+        Check(rejected && env["CODEX_CLI_PATH"]==a && File.ReadAllText(state)==before, "failed helper registration restores original record and environment");
+        failSecond=true; failRollback=true; rejected=false;
+        try { activation.UpdateHelper(sourceB); } catch(IOException) { rejected=true; }
+        Check(rejected && JsonData.Serializer().Deserialize<NativeActivationState>(File.ReadAllText(state)).TransitionCli==a, "rollback failure retains recoverable transition record");
+        failRollback=false;
+        activation.UpdateHelper(sourceB);
+        Check(activation.CheckHelper(sourceB)=="current", "retry after rollback failure recovers registration");
+        activation.UpdateHelper(sourceA);
+        Check(activation.CheckHelper(sourceA)=="current" && File.Exists(b), "returning to earlier build retains both helper bundles");
+        using(var held=new FileStream(state+".lock",FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)) {
+            rejected=false; try { activation.UpdateHelper(sourceB); } catch(IOException) { rejected=true; }
+            Check(rejected && env["CODEX_CLI_PATH"]==a,"concurrent registration is rejected without mutation");
+        }
+        System.Threading.Tasks.Parallel.For(0,8,i=> { if(NativeActivation.InstallHelper(configSource)!=NativeActivation.ExpectedHelperPath(configSource)) throw new Exception(); });
+        Check(File.ReadAllBytes(NativeActivation.ExpectedHelperPath(configSource)).SequenceEqual(File.ReadAllBytes(configSource)), "concurrent content deployment produces complete bytes");
+        File.WriteAllText(a,"external corruption");
+        Check(activation.CheckHelper(sourceA)=="outdated", "matching hash directory does not hide corrupted helper bytes");
+        rejected=false; try { activation.UpdateHelper(sourceA); } catch(IOException) { rejected=true; }
+        Check(rejected && File.ReadAllText(a)=="external corruption", "deployment refuses to overwrite externally changed helper");
+        File.Delete(a); File.Delete(a+".config");
+        Check(activation.CheckHelper(sourceA)=="missing", "missing registered helper can be diagnosed");
+        activation.UpdateHelper(sourceA);
+        Check(activation.CheckHelper(sourceA)=="current", "missing registered helper repaired without Prepare");
+        before=File.ReadAllText(state); File.Delete(configSource+".config"); rejected=false;
+        try { activation.UpdateHelper(configSource); } catch(IOException) { rejected=true; }
+        Check(rejected && File.ReadAllText(state)==before && env["CODEX_CLI_PATH"]==a, "incomplete source fails before registration mutation");
+        activation.Disable();
+        Check(env.Count==0,"disable after upgrades restores original environment");
+    }
     static int Main(string[] args)
     {
         try {
@@ -78,6 +130,29 @@ class NativeChecks
             Check(installed!=exe&&File.Exists(installed+".config")&&NativeActivation.InstallHelper(exe)==installed,"stable helper bundle installed idempotently");
             activation.Enable(installed,"fixture-manifest",()=>System.Threading.Tasks.Task.FromResult(0)).GetAwaiter().GetResult();
             Check(activation.Enabled&&environment["CODEX_CLI_PATH"]==installed&&broadcasts==1,"activation persists environment and broadcasts");
+            var helperA=Path.Combine(args[0],"helper-a.exe"); var helperB=Path.Combine(args[0],"helper-b.exe");
+            File.WriteAllText(helperA,"helper-a"); File.WriteAllText(helperA+".config","config-a");
+            File.WriteAllText(helperB,"helper-b"); File.WriteAllText(helperB+".config","config-b");
+            var updateEnv=new Dictionary<string,string>();
+            var updateActivation=new NativeActivation(Path.Combine(args[0],"helper-update.json"),
+                key=>updateEnv.ContainsKey(key)?updateEnv[key]:null,
+                (key,value)=>{if(value==null)updateEnv.Remove(key);else updateEnv[key]=value;},()=>{});
+            var deployedA=NativeActivation.InstallHelper(helperA); var deployedB=NativeActivation.InstallHelper(helperB);
+            var updateManifest=Path.Combine(args[0],"update-manifest.json");
+            File.WriteAllText(updateManifest,JsonData.Serializer().Serialize(new NativeBridgeSettings { RealCodex="manual-fixture", AutomaticRuntime=false }));
+            var manifestBytes=File.ReadAllBytes(updateManifest);
+            updateActivation.Enable(deployedA,updateManifest,()=>System.Threading.Tasks.Task.FromResult(0)).GetAwaiter().GetResult();
+            var oldRecord=File.ReadAllText(Path.Combine(args[0],"helper-update.json"));
+            Check(updateActivation.HelperStatus=="outdated","helper content mismatch is detected");
+            updateActivation.UpdateHelper(helperB);
+            Check(updateEnv["CODEX_CLI_PATH"]==deployedB&&File.Exists(deployedA)&&File.Exists(deployedB),"helper update switches registration and retains old bundle");
+            Check(File.ReadAllText(Path.Combine(args[0],"helper-update.json"))!=oldRecord&&updateActivation.HelperStatus=="outdated","helper update is content addressed and repeatable");
+            updateActivation.UpdateHelper(helperB);
+            Check(updateEnv["CODEX_CLI_PATH"]==deployedB,"repeated helper update is idempotent");
+            updateActivation.Disable();
+            Check(updateEnv.Count==0,"helper update preserves disable recovery");
+            Check(File.ReadAllBytes(updateManifest).SequenceEqual(manifestBytes),"helper update never rewrites manual runtime manifest");
+            HelperUpdateChecks(args[0], helperA, helperB, updateManifest);
             activation.Enable(installed,"fixture-manifest",()=>System.Threading.Tasks.Task.FromResult(0)).GetAwaiter().GetResult();
             environment["CODEX_CLI_PATH"]="external";
             bool conflict=false;try{activation.Disable();}catch(InvalidOperationException){conflict=true;}
