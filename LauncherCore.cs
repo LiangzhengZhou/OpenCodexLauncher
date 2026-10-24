@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -429,7 +429,7 @@ namespace OpenCodexLauncherV2
             var ocxHome = manual ? Path.Combine(LocalEnvironment.Current.DataDirectory, "manual", "opencodex") : Home("OPENCODEX_HOME", Path.Combine(profile, ".opencodex"));
             return new PathSet {
                 Ocx = Existing(settings.OcxPath) ?? (LocalEnvironment.Current.IsIsolated || manual ? null : FromPath("ocx.cmd") ?? Find(Path.Combine(local, "Programs"), "ocx.cmd")),
-                Codex = !String.IsNullOrWhiteSpace(settings.CodexPath) ? Existing(settings.CodexPath) : (LocalEnvironment.Current.IsIsolated || manual ? null : CodexRuntime.FindUsable(CodexRuntime.DesktopRoot)),
+                Codex = !String.IsNullOrWhiteSpace(settings.CodexPath) ? Existing(settings.CodexPath) : (LocalEnvironment.Current.IsIsolated || manual ? null : CodexRuntime.FindCurrentDesktopRuntime()),
                 AutomaticCodexRuntime = String.IsNullOrWhiteSpace(settings.CodexPath) && !LocalEnvironment.Current.IsIsolated && !manual,
                 CodexHome = codexHome, OcxConfig = Path.Combine(ocxHome, "config.json"), CodexConfig = Path.Combine(codexHome, "config.toml"), Catalog = Path.Combine(codexHome, "opencodex-catalog.json")
             };

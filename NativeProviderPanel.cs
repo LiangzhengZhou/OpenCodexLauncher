@@ -13,7 +13,7 @@ namespace OpenCodexLauncherV2
     public sealed partial class MainWindow
     {
         bool helperRestartRequired;
-        UIElement HelperUpdateNotice(bool hideCurrent, NativeActivation activation = null)
+        UIElement HelperUpdateNotice(bool hideCurrent, NativeActivation activation = null, Action changed = null)
         {
             activation = activation ?? NativeActivation.Current;
             var panel = new StackPanel();
@@ -23,6 +23,7 @@ namespace OpenCodexLauncherV2
                 activation.UpdateHelper(Assembly.GetExecutingAssembly().Location);
                 helperRestartRequired = true;
                 SetText(message, L.M("native.updateDone"));
+                if (changed != null) changed();
                 return Task.FromResult(0);
             });
             panel.Children.Add(button);
@@ -48,35 +49,49 @@ namespace OpenCodexLauncherV2
             panel.Loaded += delegate { try { refresh(); } catch { providers.ItemsSource = new[] { L.M("native.storeInvalid").ToString() }; } };
             panel.Children.Add(Card(body));
             var integration = new StackPanel(); integration.Children.Add(Text(L.M("native.enableNote")));
-            integration.Children.Add(HelperUpdateNotice(false));
             var activationStatus = Text("");
-            Action updateActivation = () => {
+            Action updateActivation = null;
+            integration.Children.Add(HelperUpdateNotice(false, null, () => { if (updateActivation != null) updateActivation(); }));
+            updateActivation = () => {
                 var activation = NativeActivation.Current;
                 SetText(activationStatus, L.M(activation.Enabled ? "native.enabled" : "native.disabled") + "\n" + L.M("native.runtime." + activation.RuntimeHealth));
             };
             updateActivation(); integration.Children.Add(activationStatus);
             integration.Children.Add(AsyncBtn(L.M("native.enablePersistent"), async () => {
+                var current = PathResolver.Resolve(settings);
+                if (String.IsNullOrWhiteSpace(current.Codex) || !CodexRuntime.IsUsable(current.Codex))
+                    throw new InvalidOperationException(L.M("native.runtime.incompatible"));
                 var helper = NativeActivation.InstallHelper(Assembly.GetExecutingAssembly().Location);
                 await NativeActivation.Current.Enable(helper, NativeProviders.BridgePath,
-                    () => NativeProviders.Prepare(paths, helper, settings.ReserveForceEnabled));
+                    () => NativeProviders.Prepare(current, helper, settings.ReserveForceEnabled));
+                paths = current;
                 updateActivation();
             }));
             integration.Children.Add(AsyncBtn(L.M("native.disablePersistent"), () => {
                 NativeActivation.Current.Disable(); updateActivation(); return Task.FromResult(0);
             }));
-            integration.Children.Add(AsyncBtn(L.M("native.prepare"), () => NativeProviders.Prepare(paths, NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled)));
+            integration.Children.Add(AsyncBtn(L.M("native.prepare"), async () => {
+                var current = PathResolver.Resolve(settings);
+                await NativeProviders.Prepare(current, NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled);
+                paths = current;
+                updateActivation();
+            }));
             integration.Children.Add(AsyncBtn(L.M("native.launch"), async () => {
                 var picker = new OpenFileDialog { Filter = "Codex Desktop|*.exe", CheckFileExists = true };
                 if (picker.ShowDialog(this) != true) return;
                 var executable = picker.FileName;
-                if (Path.GetFullPath(executable).Equals(Assembly.GetExecutingAssembly().Location, StringComparison.OrdinalIgnoreCase) || Path.GetFullPath(executable).Equals(Path.GetFullPath(paths.Codex), StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException(L.M("native.desktopRequired"));
+                var current = PathResolver.Resolve(settings);
+                if (String.IsNullOrWhiteSpace(current.Codex) || !CodexRuntime.IsUsable(current.Codex))
+                    throw new InvalidOperationException(L.M("native.runtime.incompatible"));
+                if (Path.GetFullPath(executable).Equals(Assembly.GetExecutingAssembly().Location, StringComparison.OrdinalIgnoreCase) || Path.GetFullPath(executable).Equals(Path.GetFullPath(current.Codex), StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException(L.M("native.desktopRequired"));
                 foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(executable)))
                     using (process) { if (process.MainModule.FileName.Equals(executable, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException(L.M("native.closeFirst")); }
-                await NativeProviders.Prepare(paths, NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled);
+                await NativeProviders.Prepare(current, NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled);
                 var start = new ProcessStartInfo(executable) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(executable) };
                 start.EnvironmentVariables["CODEX_CLI_PATH"] = NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location);
-                start.EnvironmentVariables["CODEX_HOME"] = paths.CodexHome;
+                start.EnvironmentVariables["CODEX_HOME"] = current.CodexHome;
                 start.EnvironmentVariables["OPENCODEX_LAUNCHER_BRIDGE"] = NativeProviders.BridgePath;
+                paths = current;
                 Process.Start(start);
             }));
             panel.Children.Add(Card(integration));

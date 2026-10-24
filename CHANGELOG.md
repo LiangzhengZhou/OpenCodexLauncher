@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 3.1.3 — 2026-10-25
+
+- 修复 Codex Desktop 更新后 Native Helper 继续使用完整但过期 Runtime 的问题：自动模式按当前 Desktop 包内 `codex.exe` 的内容哈希选择兼容 Runtime，手动路径保持显式固定，找不到匹配项时明确失败而不是静默启动旧 Core。
+- Native Prepare / Enable 使用重新解析的 `PathSet`，避免 Launcher GUI 旧缓存把旧 Runtime 写回 `native-bridge.json`。
+- Helper 构建一致性保持不变；新增 `outdated` / `incompatible` Runtime 健康状态，不再用 `healthy` 掩盖版本不兼容。
+- Native Bridge 新增有界、脱敏诊断：Runtime 标识、子进程 PID/退出码、stderr 字节数、JSON-RPC 方法名和 `configRequirements` schema 字段存在性；不保存原始 stderr、JSON、prompt、凭据或用户路径。
+- 增加零真实模型请求的离线回归测试，覆盖过期完整 Runtime、包哈希匹配、手动固定、旧清单、残缺/缺失恢复、Helper 更新、旧/新 `configRequirements` schema、子进程退出/EOF、provider 隔离、Native 别名和凭据脱敏。
+
 ## 3.1.2 — 2026-09-24
 
 - GUI 启动及 Native 页面比较已注册 Helper 与当前 EXE/.config 的实际内容，发现旧构建时显示提示及确认后更新入口。
