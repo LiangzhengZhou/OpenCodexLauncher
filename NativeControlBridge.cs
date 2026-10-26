@@ -14,6 +14,7 @@ namespace OpenCodexLauncherV2
         readonly object gate = new object();
         readonly Dictionary<string, string> threads = new Dictionary<string, string>(StringComparer.Ordinal);
         readonly Dictionary<string, string> pending = new Dictionary<string, string>();
+        readonly Dictionary<string, string> diagnosticMethods = new Dictionary<string, string>(StringComparer.Ordinal);
         readonly Func<Dictionary<string, NativeRoute>> loadRoutes;
         public NativeControlBridge(Func<Dictionary<string, NativeRoute>> load) { loadRoutes = load; }
         static string Id(Dictionary<string, object> m) { return JsonData.Serializer().Serialize(JsonData.Value(m, "id")); }
@@ -24,6 +25,11 @@ namespace OpenCodexLauncherV2
             string method = JsonData.Text(message, "method"), model = JsonData.Text(p, "model");
             lock (gate)
             {
+                if ((method == "initialize" || method == "configRequirements/read") && diagnosticMethods.Count < 64)
+                {
+                    diagnosticMethods[Id(message)] = method;
+                    NativeBridgeDiagnostics.Method(method);
+                }
                 // Desktop can override the turn model through collaboration settings.
                 // Apply the same attested-thread checks to that explicit protocol field.
                 if (method == "turn/start")
@@ -85,12 +91,27 @@ namespace OpenCodexLauncherV2
             var message = JsonData.Parse(frame);
             lock (gate)
             {
-                string requested; var id = Id(message);
+                var id = Id(message);
+                string diagnosticMethod;
+                if (diagnosticMethods.TryGetValue(id, out diagnosticMethod))
+                {
+                    diagnosticMethods.Remove(id);
+                    if (diagnosticMethod == "configRequirements/read")
+                    {
+                        var result = JsonData.Object(JsonData.Value(message, "result")) ?? new Dictionary<string, object>();
+                        var requirements = JsonData.Object(JsonData.Value(result, "configRequirements")) ?? new Dictionary<string, object>();
+                        // Log schema presence only; never values, IDs or payloads.
+                        NativeBridgeDiagnostics.ResponseSchema(requirements.Count > 0,
+                            requirements.ContainsKey("requirements"),
+                            JsonData.Value(result, "appServerVersion") != null);
+                    }
+                }
+                string requested;
                 if (!pending.TryGetValue(id, out requested)) return;
                 pending.Remove(id);
-                var result = JsonData.Object(JsonData.Value(message, "result"));
-                var thread = JsonData.Object(JsonData.Value(result, "thread"));
-                string threadId = JsonData.Text(thread, "id"), provider = JsonData.Text(result, "modelProvider");
+                var threadResult = JsonData.Object(JsonData.Value(message, "result"));
+                var thread = JsonData.Object(JsonData.Value(threadResult, "thread"));
+                string threadId = JsonData.Text(thread, "id"), provider = JsonData.Text(threadResult, "modelProvider");
                 if (provider == "") provider = JsonData.Text(thread, "modelProvider");
                 // Never assume a requested provider was adopted if upstream did not attest it.
                 if (threadId != "" && provider != "") threads[threadId] = provider;
@@ -119,51 +140,92 @@ namespace OpenCodexLauncherV2
         }
         public static int Run(string manifest, string[] args)
         {
-            try { return RunAsync(manifest, args).GetAwaiter().GetResult(); }
-            catch { Console.Error.WriteLine("Native bridge startup or control-plane failure. Verify the complete Codex runtime and Native configuration."); return 2; } // No payloads or exception details.
+            return Run(manifest, args, null, null, true);
         }
-        static async Task<int> RunAsync(string manifest, string[] args)
+        // Test seam: production callers use Run(manifest, args) only.
+        public static int Run(string manifest, string[] args, string packageRoot, string runtimeRoot)
+        {
+            return Run(manifest, args, packageRoot, runtimeRoot, true);
+        }
+        public static int Run(string manifest, string[] args, string packageRoot, string runtimeRoot, bool bridgeInput)
+        {
+            try { return RunAsync(manifest, args, packageRoot, runtimeRoot, bridgeInput).GetAwaiter().GetResult(); }
+            catch (NativeRuntimeException error)
+            {
+                NativeBridgeDiagnostics.Failure(error.Code, error.GetType().Name, error.HResult);
+                Console.Error.WriteLine("Native bridge runtime check failed: " + error.Code);
+                return 2;
+            }
+            catch (Exception error)
+            {
+                NativeBridgeDiagnostics.Failure("bridge-failure", error.GetType().Name, error.HResult);
+                Console.Error.WriteLine("Native bridge startup or control-plane failure.");
+                return 2;
+            }
+        }
+        static async Task<int> RunAsync(string manifest, string[] args, string packageRoot, string runtimeRoot, bool bridgeInput)
         {
             var settings = JsonData.Serializer().Deserialize<NativeBridgeSettings>(TextFile.Read(manifest));
             // Resolve here, not in the GUI: daily activation works while Launcher is closed.
             // Keep the manifest read-only to avoid racing Prepare/rollback or external edits.
-            var executable = CodexRuntime.ResolveNative(settings, CodexRuntime.DesktopRoot, CodexRuntime.FindUsable);
+            var root = String.IsNullOrWhiteSpace(runtimeRoot) ? CodexRuntime.DesktopRoot : runtimeRoot;
+            var executable = CodexRuntime.ResolveNative(settings, root, CodexRuntime.FindUsable, packageRoot);
+            NativeBridgeDiagnostics.RuntimeSelected(CodexRuntime.RuntimeId(executable), settings.AutomaticRuntime != false);
             var own = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            if (Path.GetFullPath(executable).Equals(own, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException();
+            if (Path.GetFullPath(executable).Equals(own, StringComparison.OrdinalIgnoreCase))
+                throw new NativeRuntimeException("helper-path-invalid", "The Native runtime resolves to the helper itself.");
             var bridge = new NativeControlBridge(() => JsonData.Serializer().Deserialize<Dictionary<string, NativeRoute>>(TextFile.Read(settings.RoutesPath)));
             var start = new ProcessStartInfo(executable, String.Join(" ", args.Select(Quote))) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
-            if (String.IsNullOrWhiteSpace(settings.CodexHome) || !Directory.Exists(settings.CodexHome)) throw new InvalidDataException();
+            if (String.IsNullOrWhiteSpace(settings.CodexHome) || !Directory.Exists(settings.CodexHome))
+                throw new NativeRuntimeException("codex-home-missing", "The configured Codex home is missing.");
             start.EnvironmentVariables["CODEX_HOME"] = settings.CodexHome;
-            if (!CodexRuntime.IsUsable(executable)) throw new InvalidDataException("Codex runtime changed before launch. Retry after the Desktop update.");
+            if (!CodexRuntime.IsUsable(executable))
+                throw new NativeRuntimeException("runtime-changed", "The Codex runtime changed before launch. Retry after the Desktop update.");
             using (var child = Process.Start(start))
             using (var outputLock = new System.Threading.SemaphoreSlim(1))
             {
+                if (child == null) throw new NativeRuntimeException("child-start-failed", "Codex could not be started.");
+                NativeBridgeDiagnostics.ChildStarted(child.Id);
                 var output = Console.OpenStandardOutput();
                 Func<byte[], Task> write = async bytes => { await outputLock.WaitAsync(); try { await output.WriteAsync(bytes, 0, bytes.Length); await output.FlushAsync(); } finally { outputLock.Release(); } };
                 var utf8 = new UTF8Encoding(false, true);
                 bool rpc = args.Contains("app-server");
                 var outgoing = rpc ? Frames(child.StandardOutput.BaseStream, async frame => { bridge.Output(utf8.GetString(frame)); await write(frame); }) : child.StandardOutput.BaseStream.CopyToAsync(output);
-                var incoming = rpc ? Frames(Console.OpenStandardInput(), async frame => {
+                Task incoming;
+                if (!rpc) incoming = Console.OpenStandardInput().CopyToAsync(child.StandardInput.BaseStream);
+                else if (!bridgeInput) incoming = new TaskCompletionSource<object>().Task;
+                else incoming = Frames(Console.OpenStandardInput(), async frame => {
                     string original = utf8.GetString(frame), error;
                     var forwarded = bridge.Input(original, out error);
                     if (error != null) await write(utf8.GetBytes(error + "\n"));
                     else { var bytes = forwarded == original ? frame : utf8.GetBytes(forwarded + "\n"); await child.StandardInput.BaseStream.WriteAsync(bytes, 0, bytes.Length); await child.StandardInput.BaseStream.FlushAsync(); }
-                }) : Console.OpenStandardInput().CopyToAsync(child.StandardInput.BaseStream);
-                // Stderr is not recorded. Forwarding may contain upstream diagnostics, so
-                // discard it in this self-test bridge rather than writing Launcher logs.
-                var errors = child.StandardError.BaseStream.CopyToAsync(Stream.Null);
+                });
+                // Count stderr only. Its content can contain upstream diagnostics,
+                // prompts or credentials and is never persisted.
+                var errors = Drain(child.StandardError.BaseStream);
                 var exit = Task.Run(() => child.WaitForExit());
                 var first = await Task.WhenAny(exit, incoming, outgoing);
                 if (first != exit)
                 {
-                    if (first.IsFaulted) { if (!child.HasExited) child.Kill(); }
+                    if (first.IsFaulted)
+                    {
+                        NativeBridgeDiagnostics.Failure("control-plane-fault", first.Exception.GetType().Name, first.Exception.HResult);
+                        if (!child.HasExited) child.Kill();
+                    }
                     else child.StandardInput.Close();
                     if (await Task.WhenAny(exit, Task.Delay(5000)) != exit && !child.HasExited) child.Kill();
                 }
-                await exit; await outgoing; await errors;
-                if (incoming.IsFaulted) throw new InvalidDataException("Control-plane input failed.");
+                await exit; await outgoing; var stderrBytes = await errors;
+                NativeBridgeDiagnostics.ChildExit(child.Id, child.ExitCode, stderrBytes);
+                if (incoming.IsFaulted) throw new NativeRuntimeException("control-plane-input-failed", "Control-plane input failed.");
                 return child.ExitCode;
             }
+        }
+        static async Task<long> Drain(Stream stream)
+        {
+            var buffer = new byte[8192]; long total = 0; int count;
+            while ((count = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0) total += count;
+            return total;
         }
     }
 }

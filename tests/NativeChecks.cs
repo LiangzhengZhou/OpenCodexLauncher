@@ -8,57 +8,102 @@ class NativeChecks
 {
     static int count;
     static void Check(bool ok, string name) { if (!ok) throw new Exception(name); Console.WriteLine("PASS: " + name); count++; }
-    static string Bundle(string root, string name)
+    static string Bundle(string root, string name, string core)
     {
         var directory = Path.Combine(root, name); Directory.CreateDirectory(directory);
-        File.WriteAllText(Path.Combine(directory, "codex.exe"), "fixture only");
-        File.WriteAllText(Path.Combine(directory, "codex-code-mode-host.exe"), "fixture only");
+        File.WriteAllText(Path.Combine(directory, "codex.exe"), core);
+        File.WriteAllText(Path.Combine(directory, "codex-code-mode-host.exe"), "host");
         return Path.Combine(directory, "codex.exe");
+    }
+    static string Package(string root, string name, string core)
+    {
+        var directory = Path.Combine(root, name); var resources = Path.Combine(directory, "app", "resources");
+        Directory.CreateDirectory(resources);
+        File.WriteAllText(Path.Combine(resources, "codex.exe"), core);
+        return directory;
     }
     static void RuntimeChecks(string directory)
     {
         var root = Path.Combine(directory, "runtime-fixtures");
-        var a = Bundle(root, "A"); var b = Bundle(root, "B");
-        var manifest = new NativeBridgeSettings { RealCodex = a, CodexHome = "fixture-home", RoutesPath = "fixture-routes" };
+        var package = Package(directory, "desktop-package-b", "package-core-B");
+        var a = Bundle(root, "A", "core-A");
+        var b = Bundle(root, "B", "package-core-B");
+        var manifest = new NativeBridgeSettings { RealCodex = a, CodexHome = "fixture-home", RoutesPath = "fixture-routes", AutomaticRuntime = false };
         var manifestPath = Path.Combine(directory, "rollover-manifest.json");
-        File.WriteAllText(manifestPath, JsonData.Serializer().Serialize(manifest));
+        Action persist = () => File.WriteAllText(manifestPath, JsonData.Serializer().Serialize(manifest));
+        persist();
         var activation = new NativeActivation(Path.Combine(directory, "rollover-activation.json"), key => key == "CODEX_CLI_PATH" ? b : manifestPath, (key, value) => { throw new Exception(); }, () => { });
         File.WriteAllText(Path.Combine(directory, "rollover-activation.json"), JsonData.Serializer().Serialize(new NativeActivationState { Helper = b, Manifest = manifestPath }));
-        Check(activation.Enabled && activation.RuntimeHealth == "healthy", "activation registration and runtime health independently available");
+        Check(activation.Enabled && activation.RuntimeHealthFor(package, root) == "healthy", "activation registration and explicit runtime health are independent");
         int scans = 0; Func<string,string> discover = r => { scans++; return CodexRuntime.FindUsable(r); };
-        Check(CodexRuntime.ResolveNative(manifest, root, discover) == a && scans == 0, "complete manifest runtime does not scan or switch");
+        Check(CodexRuntime.ResolveNative(manifest, root, discover, package) == a && scans == 0, "explicit complete runtime is respected without discovery");
+
+        File.SetLastWriteTimeUtc(a, DateTime.UtcNow.AddHours(1));
+        manifest.AutomaticRuntime = true; persist();
+        Check(CodexRuntime.ResolveNative(manifest, root, discover, package) == b, "automatic mode selects the package-compatible runtime even when old A is complete and newer by timestamp");
+        Check(activation.RuntimeHealthFor(package, root) == "outdated", "helper health reports a complete but outdated runtime");
+        manifest.RealCodex = b; persist();
+        Check(activation.RuntimeHealthFor(package, root) == "healthy", "helper health becomes healthy when the bridge matches the package");
+
+        manifest.RealCodex = a; persist();
         File.Delete(Path.Combine(Path.GetDirectoryName(a), "codex-code-mode-host.exe"));
         File.SetLastWriteTimeUtc(a, DateTime.UtcNow.AddHours(1));
         Check(File.Exists(a) && !CodexRuntime.IsUsable(a) && CodexRuntime.IsUsable(b), "rollover leaves executable but removes required host");
-        Check(activation.Enabled && activation.RuntimeHealth == "stale", "stale runtime does not erase activation registration");
         Check(CodexRuntime.FindUsable(root) == b, "newest incomplete executable excluded before ordering");
-        Check(CodexRuntime.ResolveNative(manifest, root, discover) == b, "bridge startup resolution replaces stale A with complete B");
+        Check(CodexRuntime.ResolveNative(manifest, root, discover, package) == b, "automatic resolution replaces incomplete A with package-compatible B");
+        Check(activation.RuntimeHealthFor(package, root) == "outdated", "incomplete old runtime is reported as recoverable/outdated");
         var persisted = File.ReadAllText(manifestPath);
-        Check(CodexRuntime.ResolveNative(JsonData.Serializer().Deserialize<NativeBridgeSettings>(persisted), root, discover) == b && File.ReadAllText(manifestPath) == persisted, "persisted stale manifest resolves without disk mutation");
+        Check(CodexRuntime.ResolveNative(JsonData.Serializer().Deserialize<NativeBridgeSettings>(persisted), root, discover, package) == b && File.ReadAllText(manifestPath) == persisted, "persisted stale manifest resolves without disk mutation");
         Check(JsonData.Serializer().Deserialize<NativeBridgeSettings>("{\"RealCodex\":\"fixture\",\"CodexHome\":\"home\",\"RoutesPath\":\"routes\"}").AutomaticRuntime == null, "3.1.0 manifest without provenance remains readable");
         Check(manifest.RealCodex == a && manifest.CodexHome == "fixture-home" && manifest.RoutesPath == "fixture-routes", "resolution leaves manifest and routing configuration untouched");
+
+        var legacyInside = new NativeBridgeSettings { RealCodex = a, CodexHome = "fixture-home", RoutesPath = "fixture-routes", AutomaticRuntime = null };
+        Check(CodexRuntime.ResolveNative(legacyInside, root, discover, package) == b, "legacy manifest inside Desktop root upgrades to the package-compatible runtime");
+        Check(activation.RuntimeHealthFor(package, root) == "outdated", "legacy manifest health reports outdated");
+
+        var packageNoMatch = Package(directory, "desktop-package-d", "package-core-D");
+        manifest.RealCodex = b; manifest.AutomaticRuntime = true; persist();
+        bool rejected = false;
+        try { CodexRuntime.ResolveNative(manifest, root, discover, packageNoMatch); }
+        catch (NativeRuntimeException error) { rejected = error.Code == "no-compatible-runtime"; }
+        Check(rejected, "automatic mode fails closed when no runtime matches the installed package");
+        Check(activation.RuntimeHealthFor(packageNoMatch, root) == "incompatible", "no package-compatible runtime is reported as incompatible");
+
+        manifest.RealCodex = a; persist();
         File.Delete(a);
-        Check(activation.RuntimeHealth == "missing", "missing runtime health is an allowlisted state");
-        Check(CodexRuntime.ResolveNative(manifest, root, discover) == b, "missing executable also recovers");
-        manifest.AutomaticRuntime = false; bool rejected = false;
-        try { CodexRuntime.ResolveNative(manifest, root, discover); } catch (InvalidDataException) { rejected = true; }
+        Check(activation.RuntimeHealthFor(package, root) == "outdated", "missing recorded runtime is recoverable to the package runtime");
+        Check(CodexRuntime.ResolveNative(manifest, root, discover, package) == b, "missing executable resolves to the package-compatible runtime");
+
+        manifest.AutomaticRuntime = false; persist();
+        rejected = false;
+        try { CodexRuntime.ResolveNative(manifest, root, discover, package); }
+        catch (NativeRuntimeException error) { rejected = error.Code == "manual-runtime-incomplete"; }
         Check(rejected, "incomplete explicit runtime fails closed");
+        Check(activation.RuntimeHealthFor(package, root) == "stale", "incomplete explicit runtime health is stale");
+
         manifest.RealCodex = b;
-        Check(CodexRuntime.ResolveNative(manifest, root, r => { throw new Exception(); }) == b, "complete explicit runtime respected without discovery");
-        var manual = Bundle(directory, "manual-runtime");
-        manifest.RealCodex = manual; manifest.AutomaticRuntime = null;
+        Check(CodexRuntime.ResolveNative(manifest, root, r => { throw new Exception(); }, package) == b, "complete explicit runtime respected without discovery");
+        var manual = Bundle(directory, "manual-runtime", "manual-core");
+        manifest.RealCodex = manual; manifest.AutomaticRuntime = null; persist();
         File.Delete(Path.Combine(Path.GetDirectoryName(manual), "codex-code-mode-host.exe"));
-        rejected = false; try { CodexRuntime.ResolveNative(manifest, root, discover); } catch (InvalidDataException) { rejected = true; }
-        Check(rejected, "legacy manual runtime outside managed root never substituted");
-        manifest.RealCodex = a;
+        rejected = false;
+        try { CodexRuntime.ResolveNative(manifest, root, discover, package); }
+        catch (NativeRuntimeException error) { rejected = error.Code == "manual-runtime-incomplete"; }
+        Check(rejected, "legacy manual runtime outside managed root is never substituted");
+
         File.Delete(Path.Combine(Path.GetDirectoryName(b), "codex-code-mode-host.exe"));
-        rejected = false; try { CodexRuntime.ResolveNative(manifest, root, discover); } catch (InvalidDataException) { rejected = true; }
+        manifest.RealCodex = b; manifest.AutomaticRuntime = true; persist();
+        rejected = false;
+        try { CodexRuntime.ResolveNative(manifest, root, discover, packageNoMatch); }
+        catch (NativeRuntimeException error) { rejected = error.Code == "no-compatible-runtime"; }
         Check(rejected, "no complete runtime fails closed without starting stale executable");
-        b = Bundle(root, "B"); var c = Bundle(root, "C");
+
+        b = Bundle(root, "B", "package-core-B"); var c = Bundle(root, "C", "core-C");
         var stamp = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         File.SetLastWriteTimeUtc(b, stamp); File.SetLastWriteTimeUtc(c, stamp);
         Check(CodexRuntime.FindUsable(root) == b, "equal timestamp selection is deterministic");
-        System.Threading.Tasks.Parallel.For(0, 12, i => { if (CodexRuntime.ResolveNative(manifest, root, CodexRuntime.FindUsable) != b) throw new Exception(); });
+        manifest.RealCodex = a; manifest.AutomaticRuntime = true; persist();
+        System.Threading.Tasks.Parallel.For(0, 12, i => { if (CodexRuntime.ResolveNative(manifest, root, CodexRuntime.FindUsable, package) != b) throw new Exception(); });
         Check(manifest.RealCodex == a, "concurrent startup resolution has no manifest writes");
         var selected = PathResolver.Resolve(new LauncherSettings { CodexPath = b, ConfigurationMode = "manual" });
         Check(selected.Codex == b && !selected.AutomaticCodexRuntime, "manual configured path priority preserved");
@@ -142,12 +187,58 @@ class NativeChecks
         activation.Disable();
         Check(env.Count==0,"disable after upgrades restores original environment");
     }
+    static void BridgeChecks(string directory)
+    {
+        var log = Path.Combine(LocalEnvironment.Current.DataDirectory, "logs", "native-bridge.log");
+        try { if (File.Exists(log)) File.Delete(log); } catch (IOException) { }
+        var bridge = new NativeControlBridge(() => new Dictionary<string, NativeRoute>());
+        string error;
+        Check(bridge.Input("{\"id\":7,\"method\":\"configRequirements/read\"}", out error) != null && error == null, "policy request reaches the bridge");
+        bridge.Output("{\"id\":7,\"result\":{\"appServerVersion\":\"0.163.0\",\"configRequirements\":{},\"secret\":\"SHOULD_NOT_APPEAR\"}}");
+        var text = File.ReadAllText(log);
+        Check(text.Contains("requirements=absent") && text.Contains("appServerVersion=present") && !text.Contains("SHOULD_NOT_APPEAR"),
+            "old configRequirements schema is diagnosed without payload leakage");
+        Check(bridge.Input("{\"id\":8,\"method\":\"configRequirements/read\"}", out error) != null && error == null, "second policy request reaches the bridge");
+        bridge.Output("{\"id\":8,\"result\":{\"appServerVersion\":\"0.164.0\",\"configRequirements\":{\"requirements\":{}}}}");
+        text = File.ReadAllText(log);
+        Check(text.Contains("requirements=present"), "new configRequirements schema is recorded as present");
+        Check(bridge.Input("{\"id\":9,\"method\":\"configRequirements/read\"}", out error) != null && error == null, "error-response policy request reaches the bridge");
+        bridge.Output("{\"id\":9,\"error\":{\"code\":-32601,\"message\":\"unsupported\"}}");
+        Check(File.ReadAllText(log).Contains("requirements=absent"), "error response is classified without throwing on a missing result");
+    }
+    static void ProcessChecks(string directory)
+    {
+        var mock = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MockAppServer.exe");
+        if (!File.Exists(mock)) throw new FileNotFoundException("MockAppServer.exe is required for the offline process checks.");
+        var runtimeRoot = Path.Combine(directory, "process-runtimes");
+        var runtime = Path.Combine(runtimeRoot, "process-runtime"); Directory.CreateDirectory(runtime);
+        var core = Path.Combine(runtime, "codex.exe"); File.Copy(mock, core);
+        File.WriteAllText(Path.Combine(runtime, "codex-code-mode-host.exe"), "host");
+        var package = Path.Combine(directory, "process-package");
+        var resources = Path.Combine(package, "app", "resources"); Directory.CreateDirectory(resources);
+        File.Copy(mock, Path.Combine(resources, "codex.exe"));
+        var home = Path.Combine(directory, "process-home"); Directory.CreateDirectory(home);
+        var manifest = Path.Combine(directory, "process-manifest.json");
+        File.WriteAllText(manifest, JsonData.Serializer().Serialize(new NativeBridgeSettings {
+            RealCodex = core, CodexHome = home, RoutesPath = Path.Combine(directory, "process-routes.json"), AutomaticRuntime = true }));
+        var log = Path.Combine(LocalEnvironment.Current.DataDirectory, "logs", "native-bridge.log");
+        try { if (File.Exists(log)) File.Delete(log); } catch (IOException) { }
+        var exit = NativeControlBridge.Run(manifest, new[] { "app-server", "--mock-exit=7" }, package, runtimeRoot, false);
+        Check(exit == 7, "child process exit code is returned to the caller");
+        var text = File.ReadAllText(log);
+        Check(text.Contains("child exit") && text.Contains("code=7"), "child exit status is diagnosed");
+        var truncated = NativeControlBridge.Run(manifest, new[] { "app-server", "--mock-partial" }, package, runtimeRoot, false);
+        Check(truncated == 2, "incomplete control-plane frame fails closed");
+        Check(text.IndexOf(directory, StringComparison.OrdinalIgnoreCase) < 0, "diagnostics never persist user paths");
+    }
     static int Main(string[] args)
     {
         try {
             Directory.CreateDirectory(args[0]); LocalEnvironment.UseIsolated(args[0]);
             if (args.Length==3 && args[1]=="--install") { NativeActivation.InstallHelper(args[2]); return 0; }
             RuntimeChecks(args[0]);
+            BridgeChecks(args[0]);
+            ProcessChecks(args[0]);
             var exe = typeof(NativeProviders).Assembly.Location;
             var environment=new Dictionary<string,string>(); int broadcasts=0;
             var activation=new NativeActivation(Path.Combine(args[0],"activation.json"),
@@ -237,13 +328,19 @@ class NativeChecks
             File.WriteAllText(catalog,"{\"models\":[{\"slug\":\"gpt-5.5\",\"display_name\":\"Official\",\"visibility\":\"list\"}]}");
             var config=Path.Combine(home,"config.toml");
             File.WriteAllText(config,"model_catalog_json = '"+catalog+"'\nopenai_base_url = 'http://127.0.0.1:10100/v1'\n");
-            var paths=new PathSet{Codex=Bundle(args[0],"prepare-runtime"),CodexHome=home,CodexConfig=config};
+            var paths=new PathSet{Codex=Bundle(args[0],"prepare-runtime","prepare-core"),CodexHome=home,CodexConfig=config};
             NativeProviders.Prepare(paths,exe,false).GetAwaiter().GetResult();
             var first=File.ReadAllText(config);
             NativeProviders.Prepare(paths,exe,false).GetAwaiter().GetResult();
             Check(File.ReadAllText(config)==first && first.Contains("openai_base_url = 'http://127.0.0.1:10100/v1'"),"repeated prepare preserves proxy route");
             Check(File.ReadAllText(catalog).Contains(alias)&&File.Exists(NativeProviders.BridgePath),"prepare writes native catalog aliases and executable manifest");
             Check(!first.Contains("dummy-token"),"prepared TOML never contains credential");
+            var runtimeB = Bundle(args[0], "prepare-runtime-b", "prepare-core-b");
+            var fresh = new PathSet { Codex = runtimeB, AutomaticCodexRuntime = false, CodexHome = home, CodexConfig = config, Catalog = catalog, OcxConfig = paths.OcxConfig };
+            NativeProviders.Prepare(fresh, exe, false).GetAwaiter().GetResult();
+            var refreshed = JsonData.Serializer().Deserialize<NativeBridgeSettings>(TextFile.Read(NativeProviders.BridgePath));
+            Check(refreshed.RealCodex == runtimeB && refreshed.AutomaticRuntime == false, "fresh Native Prepare replaces a stale runtime reference");
+            Check(File.ReadAllText(config) == first, "runtime refresh preserves user-edited provider configuration");
             rejected=false;try{NativeProviders.Prepare(paths,exe,true).GetAwaiter().GetResult();}catch(InvalidOperationException){rejected=true;}
             Check(rejected&&File.ReadAllText(config)==first,"Reserve Force blocks prepare without mutation");
             paths.OcxConfig=Path.Combine(args[0],"proxy.json"); paths.Catalog=catalog;

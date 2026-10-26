@@ -44,18 +44,31 @@ namespace OpenCodexLauncherV2
             return new FileStream(statePath+".lock",FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);
         }
         public bool Enabled { get { var s=Read(); return s!=null && get(Cli)==s.Helper && get(Bridge)==s.Manifest && File.Exists(s.Helper); } }
-        // Registration remains independent from the cached runtime's health. No discovery here.
-        public string RuntimeHealth { get {
+        // Registration remains independent from the cached runtime's health. The
+        // health check now compares the recorded runtime with the currently
+        // installed Desktop package, so Helper=current cannot hide Runtime=outdated.
+        public string RuntimeHealth { get { return RuntimeHealthFor(null, null); } }
+        public string RuntimeHealthFor(string packageRoot) { return RuntimeHealthFor(packageRoot, null); }
+        public string RuntimeHealthFor(string packageRoot, string runtimeRoot) {
+            var root = String.IsNullOrWhiteSpace(runtimeRoot) ? CodexRuntime.DesktopRoot : runtimeRoot;
             try {
                 var state = Read();
                 if (state == null) return "unverified";
                 if (!File.Exists(state.Manifest)) return "missing";
                 var manifest = JsonData.Serializer().Deserialize<NativeBridgeSettings>(TextFile.Read(state.Manifest));
                 if (manifest == null || String.IsNullOrWhiteSpace(manifest.RealCodex)) return "unverified";
-                if (!File.Exists(manifest.RealCodex)) return "missing";
-                return CodexRuntime.IsUsable(manifest.RealCodex) ? "healthy" : "stale";
+                string resolved;
+                try { resolved = CodexRuntime.ResolveNative(manifest, root, CodexRuntime.FindUsable, packageRoot); }
+                catch (NativeRuntimeException error) {
+                    if (error.Code == "no-compatible-runtime" || error.Code == "desktop-core-missing") return "incompatible";
+                    if (error.Code == "manual-runtime-incomplete") return "stale";
+                    if (error.Code == "manifest-missing") return "missing";
+                    return "unverified";
+                }
+                return String.Equals(Path.GetFullPath(resolved), Path.GetFullPath(manifest.RealCodex), StringComparison.OrdinalIgnoreCase)
+                    ? "healthy" : "outdated";
             } catch { return "unverified"; }
-        } }
+        }
         public string RegisteredHelper { get { var s=Read(); return s==null ? null : s.Helper; } }
         public static string ResolveHelper(string fallback) { return Current.RegisteredHelper ?? fallback; }
         public static string InstallHelper(string source)

@@ -1,6 +1,8 @@
 {
   "native.runtime.healthy": {"zh":"已记录的 CLI runtime：完整。","en":"Recorded CLI runtime: complete."},
   "native.runtime.stale": {"zh":"已记录的 CLI runtime：不完整。自动模式会在启动时重新查找；手动指定的路径需重新配置。","en":"Recorded CLI runtime: incomplete. Automatic mode resolves again at startup; explicit paths require reconfiguration."},
+  "native.runtime.outdated": {"zh":"已记录的 CLI runtime 仍完整，但与当前 Desktop 版本不一致。请重新执行 Native Prepare。","en":"The recorded CLI runtime is complete but does not match the installed Desktop build. Run Native Prepare again."},
+  "native.runtime.incompatible": {"zh":"没有找到与当前 Desktop 版本匹配的完整 runtime。请完成 Desktop 更新或重新准备 Native。","en":"No complete runtime matches the installed Desktop build. Finish the Desktop update or prepare Native again."},
   "native.runtime.missing": {"zh":"已记录的 CLI runtime 或清单缺失。自动模式仅能恢复 Desktop 管理目录内的旧 runtime。","en":"Recorded CLI runtime or manifest is missing. Automatic recovery applies only to old Desktop-managed runtimes."},
   "native.runtime.unverified": {"zh":"已记录的 CLI runtime：未验证。","en":"Recorded CLI runtime: unverified."},
   "native.enablePersistent": {"zh":"启用 / 更新日常 Native 接入","en":"Enable / update Native for everyday launch"},

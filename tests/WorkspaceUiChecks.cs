@@ -95,7 +95,7 @@ partial class UiChecks
         var activation=new NativeActivation(Path.Combine(root,"activation.json"),key=>env.ContainsKey(key)?env[key]:null,(key,value)=>env[key]=value,()=>{});
         Await(activation.Enable(NativeActivation.InstallHelper(source),manifest,()=>Task.FromResult(0)));
         var previous=activation.RegisteredHelper;
-        var panel=(StackPanel)Invoke(w,"HelperUpdateNotice",true,activation);
+        var panel=(StackPanel)Invoke(w,"HelperUpdateNotice",true,activation,null);
         var host=new Window {Owner=w,Content=panel,Width=600,Height=240,ShowInTaskbar=false};host.Show();Pump();
         var button=panel.Children.OfType<Button>().Single();var message=panel.Children.OfType<TextBlock>().Single();
         Check(panel.Visibility==Visibility.Visible&&button.IsEnabled,"outdated helper presents explicit update action");
