@@ -13,7 +13,7 @@ namespace OpenCodexLauncherV2
     public sealed partial class MainWindow
     {
         bool helperRestartRequired;
-        UIElement HelperUpdateNotice(bool hideCurrent, NativeActivation activation = null, Action changed = null)
+        UIElement HelperUpdateNotice(bool hideCurrent, NativeActivation activation = null, Action changed = null, bool autoUpdate = false)
         {
             activation = activation ?? NativeActivation.Current;
             var panel = new StackPanel();
@@ -27,13 +27,30 @@ namespace OpenCodexLauncherV2
                 return Task.FromResult(0);
             });
             panel.Children.Add(button);
+            bool autoAttempted = false;
             Action refresh = () => {
                 var state = activation.HelperStatus;
                 panel.Visibility = hideCurrent && !helperRestartRequired && (state == "disabled" || state == "current") ? Visibility.Collapsed : Visibility.Visible;
                 SetText(message, L.M(helperRestartRequired && state == "current" ? "native.updateDone" : "native.helper." + state));
                 button.IsEnabled = state == "outdated" || state == "missing" || state == "recovery";
             };
-            refresh(); panel.Loaded += delegate { refresh(); };
+            refresh();
+            panel.Loaded += delegate {
+                refresh();
+                if (!autoUpdate || autoAttempted || LocalEnvironment.Current.IsIsolated) return;
+                autoAttempted = true;
+                try
+                {
+                    if (activation.AutoUpdateHelper(Assembly.GetExecutingAssembly().Location))
+                    {
+                        helperRestartRequired = true;
+                        Log(L.M("native.autoHelperUpdated"));
+                        if (changed != null) changed();
+                        refresh();
+                    }
+                }
+                catch { Log(L.M("native.autoHelperFailed")); refresh(); }
+            };
             return panel;
         }
         UIElement NativeProviderPage()
@@ -51,10 +68,10 @@ namespace OpenCodexLauncherV2
             var integration = new StackPanel(); integration.Children.Add(Text(L.M("native.enableNote")));
             var activationStatus = Text("");
             Action updateActivation = null;
-            integration.Children.Add(HelperUpdateNotice(false, null, () => { if (updateActivation != null) updateActivation(); }));
             updateActivation = () => {
                 var activation = NativeActivation.Current;
-                SetText(activationStatus, L.M(activation.Enabled ? "native.enabled" : "native.disabled") + "\n" + L.M("native.runtime." + activation.RuntimeHealth));
+                var helper = helperRestartRequired && activation.HelperStatus == "current" ? L.M("native.updateDone") : L.M("native.helper." + activation.HelperStatus);
+                SetText(activationStatus, L.M(activation.Enabled ? "native.enabled" : "native.disabled") + "\n" + L.M("native.runtime." + activation.RuntimeHealth) + "\n" + helper);
             };
             updateActivation(); integration.Children.Add(activationStatus);
             integration.Children.Add(AsyncBtn(L.M("native.enablePersistent"), async () => {
@@ -70,13 +87,16 @@ namespace OpenCodexLauncherV2
             integration.Children.Add(AsyncBtn(L.M("native.disablePersistent"), () => {
                 NativeActivation.Current.Disable(); updateActivation(); return Task.FromResult(0);
             }));
-            integration.Children.Add(AsyncBtn(L.M("native.prepare"), async () => {
+            var advanced = new Expander { Margin = new Thickness(0, 8, 0, 8), Content = new StackPanel() };
+            L.Bind(advanced, HeaderedContentControl.HeaderProperty, L.M("native.advanced"));
+            var advancedContent = (StackPanel)advanced.Content;
+            advancedContent.Children.Add(AsyncBtn(L.M("native.prepare"), async () => {
                 var current = PathResolver.Resolve(settings);
                 await NativeProviders.Prepare(current, NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled);
                 paths = current;
                 updateActivation();
             }));
-            integration.Children.Add(AsyncBtn(L.M("native.launch"), async () => {
+            advancedContent.Children.Add(AsyncBtn(L.M("native.launch"), async () => {
                 var picker = new OpenFileDialog { Filter = "Codex Desktop|*.exe", CheckFileExists = true };
                 if (picker.ShowDialog(this) != true) return;
                 var executable = picker.FileName;
@@ -94,6 +114,7 @@ namespace OpenCodexLauncherV2
                 paths = current;
                 Process.Start(start);
             }));
+            integration.Children.Add(advanced);
             panel.Children.Add(Card(integration));
             try { refresh(); }
             catch { panel.Children.Add(Text(L.M("native.storeInvalid"))); }

@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 3.1.5 — 2026-10-28
+
+- 已启用 Native 且 Helper 仅构建过期时自动更新 Helper，首页只提示重启 Desktop；不再要求每次 GUI 更新后手动点更新。
+- Desktop 诊断同时识别当前 `ChatGPT.exe` 和旧 `Codex.exe` 主进程，报告实际进程名；将 `transport-get-only`、`desktop-loading-unverified` 从 findings 移到 scope。
+- `desktopHomeEvidence` 按实际 Desktop 关联状态生成，不再固定为 `candidates-only`。
+- 去掉 Codex 路由页的重复同步入口和模型页的重复 Desktop 关联入口；Native Prepare、诊断启动移入高级操作。
+- 增加自动 Helper 更新和诊断字段的离线测试；不调用真实模型。
+
 ## 3.1.4 — 2026-10-28
 
 - 修复 Codex Desktop MSIX 更新后的启动死锁：新包已替换 `app/resources/codex.exe`，但 `%LOCALAPPDATA%\OpenAI\Codex\bin` 尚未生成新 runtime 时，自动模式回退到当前包内完整 core，而不是只返回 `no-compatible-runtime`。

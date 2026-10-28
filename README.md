@@ -1,8 +1,8 @@
-# OpenCodex Launcher 3.1.4
+# OpenCodex Launcher 3.1.5
 
-3.1.4 validates the recorded Native runtime against the installed Codex Desktop package before launching. A complete but outdated runtime is no longer silently reused; automatic mode resolves the runtime whose `codex.exe` matches the Desktop package core, and manual paths remain explicitly pinned. If a Desktop MSIX update has installed a new package core but the local runtime copy has not been created yet, automatic mode safely falls back to the complete core bundled in `app/resources` instead of deadlocking the Desktop startup.
+3.1.5 is a UI/interaction and diagnostics update. Native Helper updates are automatic when an enabled installation is only build-outdated; the Home page reports the restart requirement instead of asking for another click. Duplicate sync entries were reduced, Native preparation and diagnostic launch moved under Advanced, and Desktop diagnostics now recognize the current `ChatGPT.exe` Desktop process while separating observation scope from actual findings.
 
-After a GUI update, the home page automatically checks the registered Native helper against the current build. Confirm **Check and update Native Helper**, then fully exit and reopen Codex Desktop. This does not interrupt sessions or rewrite providers, credentials, catalogs or manual runtime settings. Old helpers remain available for existing processes and credential commands. Restart the shortcut host or sign out of Windows if it caches the old environment.
+After a GUI update, the home page automatically updates an enabled, build-outdated Native helper. Fully exit and reopen Codex Desktop after the restart notice. This does not interrupt sessions or rewrite providers, credentials, catalogs or manual runtime settings. Old helpers remain available for existing processes and credential commands. Restart the shortcut host or sign out of Windows if it caches the old environment.
 This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
 
 Version 2.6.5 is the first confirmed launcher rollback milestone. The 2.6.x sections below document retained functionality.
@@ -144,7 +144,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.4.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.5.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

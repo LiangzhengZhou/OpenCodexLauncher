@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.1.4.0")]
-[assembly: AssemblyFileVersion("3.1.4.0")]
+[assembly: AssemblyVersion("3.1.5.0")]
+[assembly: AssemblyFileVersion("3.1.5.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -136,7 +136,7 @@ namespace OpenCodexLauncherV2
         UIElement Overview()
         {
             var panel = new StackPanel(); panel.Children.Add(SectionHeader(L.M("text.011"), L.M("text.012")));
-            panel.Children.Add(HelperUpdateNotice(true));
+            panel.Children.Add(HelperUpdateNotice(true, null, null, true));
             panel.Children.Add(Card(Text(L.M("text.013"), 16)));
             var buttons = new WrapPanel(); buttons.Children.Add(AsyncBtn(L.M("text.014"), StartProxy)); buttons.Children.Add(AsyncBtn(L.M("text.015"), Sync));
             buttons.Children.Add(AsyncBtn(L.M("text.016"), async delegate { await RefreshModels(); await RefreshState(); })); buttons.Children.Add(AsyncBtn(L.M("text.017"), async () => Open((await OpenCodexEndpointResolver.ResolveAsync(paths.OcxConfig, life.Token)).BaseUrl))); panel.Children.Add(buttons);
@@ -152,7 +152,6 @@ namespace OpenCodexLauncherV2
             var actions = new WrapPanel(); actions.Children.Add(AsyncBtn(L.M("text.049"), RefreshModels));
             actions.Children.Add(Btn(L.M("models.configure"), () => navigation.SelectedItem = navigation.Items.Cast<ListBoxItem>().Single(x => (string)x.Tag == "providers")));
             actions.Children.Add(AsyncBtn(L.M("diag.button"), DiagnoseDesktop));
-            actions.Children.Add(AsyncBtn(L.M("repair.button"), AssociateAndSyncDesktop));
             actions.Children.Add(Btn(L.M("text.050"), () => { var id = Selected(); ModelNames.ValidateId(id); var cwd = Directory.Exists(settings.WorkingDirectory) ? settings.WorkingDirectory : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile); AsyncProcessRunner.StartVisible(paths.Codex, "-m " + Commands.Quote(id), cwd, paths); }));
             actions.Children.Add(AsyncBtn(L.M("text.051"), async delegate { var id = Selected(); if (Confirm(L.M("text.052") + id + "？")) { await EnsureProxyRoute(); await config.SetDefaultModelAsync(paths.CodexConfig, id); await Sync(); await RefreshState(); } }));
             actions.Children.Add(AsyncBtn(L.M("text.053"), async delegate {
@@ -319,7 +318,6 @@ namespace OpenCodexLauncherV2
         {
             var panel = new StackPanel(); panel.Children.Add(Text(L.M("text.123"), 14));
             panel.Children.Add(DesktopPanel());
-            panel.Children.Add(AsyncBtn(L.M("text.124"), Sync));
             panel.Children.Add(AsyncBtn(L.M("text.125"), async delegate { if (Confirm(L.M("text.126"))) await Ocx(new [] { "restore" }); }));
             panel.Children.Add(AsyncBtn(L.M("text.127"), async delegate { if (Confirm(L.M("text.128"))) await Ocx(new [] { "restore", "back" }); }));
             panel.Children.Add(AsyncBtn(L.M("text.129"), async delegate {

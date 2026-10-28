@@ -25,7 +25,7 @@ static class DesktopDiagnosticChecks
         var reads = new List<string>(); var probes = new List<int>(); int processReads = 0;
         var input = new DesktopDiagnosticInputs {
             DefaultHome=other, Read=p=> { reads.Add(p); string value; return files.TryGetValue(p,out value)?value:null; },
-            Processes=t=> { processReads++; return Task.FromResult(new DesktopProcessEvidence {Available=true,DesktopCandidates=1,AppServers=1}); },
+            Processes=t=> { processReads++; return Task.FromResult(new DesktopProcessEvidence {Available=true,DesktopCandidates=1,AppServers=1,DesktopNames=new List<string>{"ChatGPT.exe"}}); },
             Health=(p,t)=> { probes.Add(p); return Task.FromResult(p==14567); }
         };
         var fresh = await DesktopDiagnostics.CollectAsync(paths,new LauncherSettings(),input,CancellationToken.None);
@@ -39,12 +39,16 @@ static class DesktopDiagnosticChecks
         check(transportCalls==0,"onboarding also blocks newly injected transport probes");
         check(fresh.Findings.Contains("setup-required")&&reads.Count==0&&probes.Count==0&&processReads==0,"desktop diagnostics before onboarding perform zero file, process and network access");
         var report = await DesktopDiagnostics.CollectAsync(paths,settings,input,CancellationToken.None);
-        check(transportCalls==3&&report.Json.Contains("responsesGet")&&report.Findings.Contains("transport-get-only"),"one-click Desktop diagnostics integrate the transport report at the configured target");
+        check(transportCalls==3&&report.Json.Contains("responsesGet")&&report.Json.Contains("transport-get-only")&&report.Json.Contains("\"scope\""),"one-click Desktop diagnostics integrate the transport report at the configured target");
         input.Transport = null;
         check(report.Findings.Contains("possible-home-mismatch"),"desktop diagnostics reproduce populated manual home versus default home without root catalog reference");
         check(report.Findings.Contains("app-server-active")&&!report.Findings.Contains("target-models-missing"),"running app-server is reported without misclassifying successful catalog writing");
         check(report.Json.Contains("candidates-only")&&report.Json.Contains("unverified"),"candidate directory and process observations never claim Desktop loaded the catalog");
+        check(report.Json.Contains("ChatGPT.exe")&&!report.Findings.Contains("desktop-loading-unverified"),"Desktop process names are reported while model loading remains a scope note");
         check(probes.SequenceEqual(new[]{14567}),"diagnostics probe the configured dynamic port");
+        var associatedSettings = new LauncherSettings { SetupCompleted=true, DesktopConfigPath=paths.CodexConfig };
+        var associatedReport = await DesktopDiagnostics.CollectAsync(paths,associatedSettings,input,CancellationToken.None);
+        check(associatedReport.Json.Contains("\"desktopHomeEvidence\":\"associated\""),"explicit association is reflected in Desktop home evidence");
         files[Path.Combine(Path.GetDirectoryName(paths.OcxConfig),"runtime-port.json")]="{\"port\":14568}";
         input.Health=(p,t)=>Task.FromResult(p==14568);
         var dynamicReport=await DesktopDiagnostics.CollectAsync(paths,settings,input,CancellationToken.None);

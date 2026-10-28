@@ -1,4 +1,14 @@
-# OpenCodexLauncher 3.1.4
+# OpenCodexLauncher 3.1.5
+
+- Automatic Native Helper update for enabled installations whose Helper is only build-outdated. The Home page now reports the restart requirement instead of requiring a separate update click every Launcher release.
+- Desktop diagnostics detect the current `ChatGPT.exe` Desktop process as well as legacy `Codex.exe`, report observed process names, and separate observation scope (`transport-get-only`, `desktop-loading-unverified`) from actual findings.
+- `desktopHomeEvidence` now reflects the explicit association instead of always reporting `candidates-only`.
+- Duplicate sync entries were reduced: the routes page no longer duplicates the daily sync, the models page no longer duplicates Desktop association, and Native Prepare/diagnostic launch moved under Advanced.
+- Added offline tests for automatic Helper update and the new diagnostic fields. No real model request is used.
+
+Local validation on 2026-10-28: 104 Native checks, 280 regression checks and 145 UI checks passed. No real model request was made.
+
+## 3.1.4
 
 - Fixed a Desktop-update startup deadlock: when the installed MSIX package contains a new `app/resources/codex.exe` but the LocalAppData runtime copy has not been refreshed yet, automatic mode now uses the complete packaged core as a safe fallback.
 - Resolution order is: local runtime whose `codex.exe` hash matches the current package core; otherwise the current package's complete bundled core; otherwise fail closed with `no-compatible-runtime`. A stale complete runtime is still never reused.
