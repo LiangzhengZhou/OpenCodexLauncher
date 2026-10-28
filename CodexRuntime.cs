@@ -134,14 +134,20 @@ namespace OpenCodexLauncherV2
             catch (System.Security.SecurityException) { return null; }
         }
 
-        public static string FindCurrentDesktopRuntime(string packageRoot = null)
+        public static string FindCurrentDesktopRuntime(string packageRoot = null, string runtimeRoot = null)
         {
             try
             {
                 var root = String.IsNullOrWhiteSpace(packageRoot) ? DesktopPackageRoot() : packageRoot;
                 var core = DesktopCore(root);
                 if (String.IsNullOrWhiteSpace(core) || !File.Exists(core)) return null;
-                return FindMatchingRuntime(DesktopRoot, core);
+                var localRoot = String.IsNullOrWhiteSpace(runtimeRoot) ? DesktopRoot : runtimeRoot;
+                var matching = FindMatchingRuntime(localRoot, core);
+                if (matching != null) return matching;
+                // Desktop updates may install the new package before the local
+                // runtime copy exists. The package core is the authoritative
+                // current core and is complete when its host sibling is present.
+                return IsUsable(core) ? core : null;
             }
             catch (IOException) { return null; }
             catch (UnauthorizedAccessException) { return null; }
@@ -187,11 +193,15 @@ namespace OpenCodexLauncherV2
                     "The installed Codex Desktop package has no bundled codex.exe. Repair the Desktop installation and retry.");
 
             var compatible = FindMatchingRuntime(root, core);
-            if (compatible == null)
-                throw new NativeRuntimeException("no-compatible-runtime",
-                    "No complete Codex runtime matches the installed Desktop package. Finish the Desktop update or run Native Prepare again.");
-
-            return compatible;
+            if (compatible != null) return compatible;
+            // A Desktop MSIX update can replace the package core before the
+            // LocalAppData runtime copy is refreshed. Starting the helper would
+            // otherwise deadlock: the helper rejects the old runtime, while
+            // Desktop cannot run its new core to create the new copy. The
+            // package's complete core is the same core Desktop just installed.
+            if (IsUsable(core)) return core;
+            throw new NativeRuntimeException("no-compatible-runtime",
+                "No complete Codex runtime matches the installed Desktop package. Finish the Desktop update or run Native Prepare again.");
         }
 
         // Safe for logs: directory hash + length, never a user path or file content.

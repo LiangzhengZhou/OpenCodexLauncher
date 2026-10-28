@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.3
+# OpenCodex Launcher 3.1.4
 
-3.1.3 validates the recorded Native runtime against the installed Codex Desktop package before launching. A complete but outdated runtime is no longer silently reused; automatic mode resolves the runtime whose `codex.exe` matches the Desktop package core, and manual paths remain explicitly pinned.
+3.1.4 validates the recorded Native runtime against the installed Codex Desktop package before launching. A complete but outdated runtime is no longer silently reused; automatic mode resolves the runtime whose `codex.exe` matches the Desktop package core, and manual paths remain explicitly pinned. If a Desktop MSIX update has installed a new package core but the local runtime copy has not been created yet, automatic mode safely falls back to the complete core bundled in `app/resources` instead of deadlocking the Desktop startup.
 
 After a GUI update, the home page automatically checks the registered Native helper against the current build. Confirm **Check and update Native Helper**, then fully exit and reopen Codex Desktop. This does not interrupt sessions or rewrite providers, credentials, catalogs or manual runtime settings. Old helpers remain available for existing processes and credential commands. Restart the shortcut host or sign out of Windows if it caches the old environment.
 This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
@@ -144,7 +144,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.3.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.4.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

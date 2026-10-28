@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.3
+# OpenCodex Launcher 3.1.4
 
-3.1.3 在启动前把已记录的 Native runtime 与当前 Codex Desktop 包内的 core 做内容校验。完整但过期的 runtime 不再被静默复用；自动模式选择与 Desktop 包 core 匹配的 runtime，手动固定路径仍保持显式优先。
+3.1.4 在启动前把已记录的 Native runtime 与当前 Codex Desktop 包内的 core 做内容校验。完整但过期的 runtime 不再被静默复用；自动模式选择与 Desktop 包 core 匹配的 runtime，手动固定路径仍保持显式优先。若 Desktop MSIX 更新已替换包内 core，但 LocalAppData 中的 runtime 副本尚未生成，自动模式会安全回退到 `app/resources` 中的完整包内 core，避免 Desktop 启动死锁。
 
 已启用 Native 的用户升级 Launcher 后，首页会自动检查 Helper 构建一致性。出现提示时点击“检查并更新 Native Helper”并确认，然后完整退出并重新打开 Codex Desktop。更新不强制结束会话，也不重写供应商、凭据、模型目录或手动 Runtime 配置。旧 Helper 会保留，供尚未退出的进程和已有凭据命令使用；如果快捷方式宿主缓存旧环境，需要重开该宿主或注销 Windows。
 本正式版新增 Windows 系统托盘常驻。供应商采用概览、连接与 API、模型状态三张卡片；模型管理按供应商显示缓存模型与勾选。密钥默认隐藏，点击显示后可编辑；切换页面或窗口失焦会隐藏。默认模型 ID 已从供应商编辑器移除，旧字段保留。
@@ -142,7 +142,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.3.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.4.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
