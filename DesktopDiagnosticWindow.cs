@@ -34,7 +34,9 @@ namespace OpenCodexLauncherV2
             var panel = new DockPanel();
             var note = Text(L.M("diag.explain")); DockPanel.SetDock(note, Dock.Top); panel.Children.Add(note);
             var actions = new WrapPanel(); DockPanel.SetDock(actions, Dock.Bottom); panel.Children.Add(actions);
-            var output = new LocalText(() => String.Join(Environment.NewLine, report.Findings.Select(code => "[" + code + "] " + L.Get("diag." + code))) + Environment.NewLine + Environment.NewLine + report.Json);
+            var output = new LocalText(() => String.Join(Environment.NewLine, report.Findings.Select(code => "[" + code + "] " + L.Get("diag." + code)))
+                + (report.Scope == null || report.Scope.Length == 0 ? String.Empty : Environment.NewLine + Environment.NewLine + String.Join(Environment.NewLine, report.Scope.Select(code => "[scope:" + code + "] " + L.Get("diag." + code))))
+                + Environment.NewLine + Environment.NewLine + report.Json);
             actions.Children.Add(Btn(L.M("diag.copy"), () => { Clipboard.SetText(output.Value); L.Bind(window, Window.TitleProperty, L.M("diag.copied")); }));
             actions.Children.Add(Btn(L.M("repair.button"), async () => { if (gate.CurrentCount == 0) return; window.Close(); await Run(L.M("repair.button"), AssociateAndSyncDesktop); }));
             actions.Children.Add(Btn(L.M("diag.save"), () => {

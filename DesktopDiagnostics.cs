@@ -17,6 +17,7 @@ namespace OpenCodexLauncherV2
     {
         public bool Available;
         public int DesktopCandidates, AppServers;
+        public List<string> DesktopNames = new List<string>();
     }
 
     // Dependencies are explicit so regression checks cannot discover the host's accounts,
@@ -90,7 +91,7 @@ namespace OpenCodexLauncherV2
                 try
                 {
                     var options = new EnumerationOptions { Timeout = TimeSpan.FromSeconds(3), ReturnImmediately = false };
-                    using (var search = new ManagementObjectSearcher("root\\CIMV2", "SELECT Name, CommandLine FROM Win32_Process WHERE Name = 'Codex.exe'", options))
+                    using (var search = new ManagementObjectSearcher("root\\CIMV2", "SELECT Name, CommandLine FROM Win32_Process WHERE Name = 'Codex.exe' OR Name = 'ChatGPT.exe'", options))
                     using (var rows = search.Get())
                     {
                         int count = 0; bool hidden = false;
@@ -99,9 +100,14 @@ namespace OpenCodexLauncherV2
                         {
                             token.ThrowIfCancellationRequested(); if (++count > 256) return new DesktopProcessEvidence();
                             var command = row["CommandLine"] as string;
+                            var name = row["Name"] as string;
                             if (command == null) { hidden = true; continue; }
                             if (Regex.IsMatch(command, @"(?:^|\s)app-server(?:\s|$)")) result.AppServers++;
-                            else if (!command.Contains("--type=")) result.DesktopCandidates++;
+                            else if (!command.Contains("--type="))
+                            {
+                                result.DesktopCandidates++;
+                                if (!String.IsNullOrWhiteSpace(name) && !result.DesktopNames.Contains(name, StringComparer.OrdinalIgnoreCase)) result.DesktopNames.Add(name);
+                            }
                         }
                         result.Available = !hidden;
                     }
@@ -117,6 +123,7 @@ namespace OpenCodexLauncherV2
     {
         public string Json { get; internal set; }
         public string[] Findings { get; internal set; }
+        public string[] Scope { get; internal set; }
     }
 
     public static class DesktopDiagnostics
@@ -188,9 +195,11 @@ namespace OpenCodexLauncherV2
         { task.ContinueWith(t => { var ignored = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted); }
         static async Task<DesktopDiagnosticReport> Collect(PathSet paths, LauncherSettings settings, DesktopDiagnosticInputs input, CancellationToken token)
         {
+            bool associated = !String.IsNullOrWhiteSpace(settings.DesktopConfigPath);
+            string homeEvidence = associated ? "associated" : "candidates-only";
             var report = new Dictionary<string, object> { { "status", "completed" }, { "desktopLoaded", "unverified" },
-                { "desktopHomeEvidence", "candidates-only" }, { "associated", !String.IsNullOrWhiteSpace(settings.DesktopConfigPath) } };
-            var findings = new List<string>();
+                { "desktopHomeEvidence", homeEvidence }, { "associated", associated } };
+            var findings = new List<string>(); var scope = new List<string>();
             string state; var providerText = Read(input, paths.OcxConfig, out state);
             var expected = new HashSet<string>(StringComparer.Ordinal);
             bool providersKnown = false;
@@ -299,7 +308,7 @@ namespace OpenCodexLauncherV2
             if (input.Transport != null)
             {
                 report["transport"] = await TransportDiagnostics.CollectAsync(targetRoute, input.Transport, token).ConfigureAwait(false);
-                findings.Add("transport-get-only");
+                scope.Add("transport-get-only");
             }
             else report["transport"] = new { status = "not-collected" };
             DesktopProcessEvidence processes;
@@ -307,6 +316,7 @@ namespace OpenCodexLauncherV2
             catch (OperationCanceledException) { throw; } catch { processes = new DesktopProcessEvidence(); }
             report["processInspection"] = processes.Available ? "available" : "unavailable";
             report["desktopCandidateProcesses"] = processes.Available ? (object)processes.DesktopCandidates : null;
+            report["desktopProcessNames"] = processes.Available ? (object)processes.DesktopNames.ToArray() : null;
             report["appServerProcesses"] = processes.Available ? (object)processes.AppServers : null;
             if (!processes.Available) findings.Add("processes-unknown");
             else
@@ -314,14 +324,16 @@ namespace OpenCodexLauncherV2
                 if (processes.DesktopCandidates == 0) findings.Add("desktop-not-detected");
                 if (processes.AppServers > 0) findings.Add("app-server-active");
             }
-            findings.Add("desktop-loading-unverified");
+            scope.Add("desktop-loading-unverified");
+            report["scope"] = scope.Distinct().ToArray();
             token.ThrowIfCancellationRequested(); return Finish(report, findings);
         }
         static DesktopDiagnosticReport Finish(Dictionary<string, object> data, List<string> findings)
         {
             data["reportVersion"] = 2; data["launcherVersion"] = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             data["capturedAtUtc"] = DateTime.UtcNow.ToString("o"); data["findings"] = findings.Distinct().ToArray();
-            return new DesktopDiagnosticReport { Json = JsonData.Serializer().Serialize(data), Findings = findings.Distinct().ToArray() };
+            var scope = data.ContainsKey("scope") ? (string[])data["scope"] : new string[0];
+            return new DesktopDiagnosticReport { Json = JsonData.Serializer().Serialize(data), Findings = findings.Distinct().ToArray(), Scope = scope };
         }
     }
 }

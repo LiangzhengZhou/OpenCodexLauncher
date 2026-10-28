@@ -178,6 +178,14 @@ namespace OpenCodexLauncherV2
         }
         // Updates only the content-addressed helper registration. It deliberately does not
         // rerun Prepare, so provider/config/catalog state and running Desktop sessions stay intact.
+        // Safe automatic path: update only an already-enabled, content-outdated
+        // helper. Never enables Native or repairs an inconsistent registration.
+        public bool AutoUpdateHelper(string source)
+        {
+            if (!Enabled || HelperStatus != "outdated") return false;
+            UpdateHelper(source);
+            return true;
+        }
         public string UpdateHelper(string source)
         {
             using(Lock()) {

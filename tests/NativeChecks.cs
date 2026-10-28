@@ -275,6 +275,15 @@ class NativeChecks
             File.WriteAllText(updateManifest,JsonData.Serializer().Serialize(new NativeBridgeSettings { RealCodex="manual-fixture", AutomaticRuntime=false }));
             var manifestBytes=File.ReadAllBytes(updateManifest);
             updateActivation.Enable(deployedA,updateManifest,()=>System.Threading.Tasks.Task.FromResult(0)).GetAwaiter().GetResult();
+            var autoEnv=new Dictionary<string,string>();
+            var autoActivation=new NativeActivation(Path.Combine(args[0],"auto-helper-update.json"),
+                key=>autoEnv.ContainsKey(key)?autoEnv[key]:null,
+                (key,value)=>{if(value==null)autoEnv.Remove(key);else autoEnv[key]=value;},()=>{});
+            autoActivation.Enable(deployedA,updateManifest,()=>System.Threading.Tasks.Task.FromResult(0)).GetAwaiter().GetResult();
+            var currentBuild=typeof(NativeProviders).Assembly.Location;
+            Check(autoActivation.AutoUpdateHelper(currentBuild)&&autoActivation.Enabled,"outdated helper updates automatically without enabling Native");
+            Check(!autoActivation.AutoUpdateHelper(currentBuild),"automatic helper update is idempotent");
+            autoActivation.Disable();
             var oldRecord=File.ReadAllText(Path.Combine(args[0],"helper-update.json"));
             Check(updateActivation.HelperStatus=="outdated","helper content mismatch is detected");
             updateActivation.UpdateHelper(helperB);

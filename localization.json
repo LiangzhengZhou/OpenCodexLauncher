@@ -26,6 +26,7 @@
   "native.key": {"zh":"API Key（DPAPI 加密；未编辑则保留）","en":"API Key (DPAPI encrypted; unchanged preserves saved value)"},
   "native.models": {"zh":"已选模型 ID（逗号分隔；也可获取后在列表中选择）","en":"Selected model IDs (comma separated, or fetch and select below)"},
   "native.fetch": {"zh":"获取模型（不发送推理）","en":"Fetch models (no inference)"},
+  "native.advanced": {"zh":"高级操作","en":"Advanced"},
   "native.prepare": {"zh":"准备 Native 配置与模型目录","en":"Prepare Native configuration and catalog"},
   "native.launch": {"zh":"选择并启动 Desktop（诊断）","en":"Select and launch Desktop (diagnostic)"},
   "native.enableNote": {"zh":"先完成 Desktop 关联及模型同步，再点击启用。桥接程序安装到固定目录，并设置当前用户启动环境；不修改 Desktop 安装。首次启用或更新后完全退出 Desktop，再从原快捷方式打开，无需保持 Launcher 窗口开启。如果启动来源缓存旧环境，请重开该启动来源或注销 Windows 后重试。关闭仅恢复启动环境，保留供应商配置。","en":"Associate and sync Desktop, then enable. Installs a stable helper and sets user launch environment without changing Desktop installation. Fully exit and reopen Desktop from your usual shortcut after enabling or updating. Launcher need not stay open. If the launch host caches old environment, restart it or sign out of Windows. Disabling restores launch environment and keeps provider configuration."},
@@ -33,7 +34,7 @@
   "native.helper.current": {"zh":"Helper 与当前 Launcher 构建一致。","en":"Helper matches the current Launcher build."},
   "native.helper.conflict": {"zh":"Native 启动环境与注册记录冲突，已阻止更新。请检查启动环境。","en":"Native launch environment conflicts with registration. Update blocked; check the launch environment."},
   "native.helper.recovery": {"zh":"Native 注册更新未完成，可重试更新以恢复。","en":"Native registration update is incomplete. Retry the update to recover."},
-  "native.helper.outdated": {"zh":"Helper 不是当前 Launcher 构建；请确认后更新。","en":"Helper differs from the current Launcher build; update it after confirmation."},
+  "native.helper.outdated": {"zh":"Helper 与当前 Launcher 构建不一致；将自动更新，失败时可手动重试。","en":"Helper differs from the current Launcher build; it will update automatically, with manual retry on failure."},
   "native.helper.missing": {"zh":"Helper 或注册文件缺失。","en":"Helper or its registration is missing."},
   "native.helper.disabled": {"zh":"Helper 尚未启用。","en":"Helper is not enabled."},
   "native.helper.unverified": {"zh":"Helper 状态暂时无法验证。","en":"Helper status could not be verified."},
@@ -41,6 +42,8 @@
   "native.updateRequiresEnabled": {"zh":"请先启用日常 Native 接入。","en":"Enable everyday Native integration first."},
   "native.updateConfirm": {"zh":"将部署当前 Launcher 对应的新 Helper，不会停止 Desktop 或覆盖旧文件。更新后请完整重启 Desktop。继续吗？","en":"Deploy the Helper matching this Launcher without stopping Desktop or overwriting the old files. Fully restart Desktop after updating. Continue?"},
   "native.updateDone": {"zh":"Native Helper 已更新。请完整退出并重新打开 Codex Desktop；当前会话不会被强制中断。","en":"Native Helper updated. Fully exit and reopen Codex Desktop; current sessions were not interrupted."},
+  "native.autoHelperUpdated": {"zh":"已自动更新 Native Helper。请完整退出并重新打开 Codex Desktop 使其生效。","en":"Native Helper was updated automatically. Fully exit and reopen Codex Desktop to apply it."},
+  "native.autoHelperFailed": {"zh":"Native Helper 自动更新失败，已保留当前注册。可点击“检查并更新 Native Helper”重试。","en":"Automatic Native Helper update failed; the current registration was preserved. Use Check and update Native Helper to retry."},
   "native.desktopRequired": {"zh":"请选择 Desktop 的 EXE，而不是 Launcher 或 Codex CLI。","en":"Select Desktop's EXE, not Launcher or Codex CLI."},
   "tray.show": {"zh":"显示主窗口","en":"Show main window"},
   "tray.exit": {"zh":"退出启动器","en":"Exit launcher"},
@@ -120,8 +123,8 @@
     "en": "Start OpenCodex"
   },
   "text.015": {
-    "zh": "同步到 Codex",
-    "en": "Sync to Codex"
+    "zh": "应用模型到 Codex",
+    "en": "Apply models to Codex"
   },
   "text.016": {
     "zh": "刷新",
