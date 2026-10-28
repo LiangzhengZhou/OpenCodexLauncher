@@ -22,6 +22,13 @@ class NativeChecks
         File.WriteAllText(Path.Combine(resources, "codex.exe"), core);
         return directory;
     }
+    static string PackageBundle(string root, string name, string core)
+    {
+        var directory = Package(root, name, core);
+        var resources = Path.Combine(directory, "app", "resources");
+        File.WriteAllText(Path.Combine(resources, "codex-code-mode-host.exe"), "host");
+        return directory;
+    }
     static void RuntimeChecks(string directory)
     {
         var root = Path.Combine(directory, "runtime-fixtures");
@@ -45,6 +52,14 @@ class NativeChecks
         manifest.RealCodex = b; persist();
         Check(activation.RuntimeHealthFor(package, root) == "healthy", "helper health becomes healthy when the bridge matches the package");
 
+        var packageBundle = PackageBundle(directory, "desktop-package-e", "package-core-E");
+        var bundleCore = Path.Combine(packageBundle, "app", "resources", "codex.exe");
+        manifest.RealCodex = a; manifest.AutomaticRuntime = true; persist();
+        Check(CodexRuntime.ResolveNative(manifest, root, discover, packageBundle) == bundleCore, "automatic mode falls back to a complete package core when no local runtime matches");
+        Check(CodexRuntime.FindCurrentDesktopRuntime(packageBundle, root) == bundleCore, "GUI discovery uses the complete package core fallback");
+        Check(activation.RuntimeHealthFor(packageBundle, root) == "outdated", "package-core fallback is reported as a runtime change");
+        manifest.RealCodex = bundleCore; persist();
+        Check(activation.RuntimeHealthFor(packageBundle, root) == "healthy", "package-core fallback becomes healthy after Prepare records it");
         manifest.RealCodex = a; persist();
         File.Delete(Path.Combine(Path.GetDirectoryName(a), "codex-code-mode-host.exe"));
         File.SetLastWriteTimeUtc(a, DateTime.UtcNow.AddHours(1));

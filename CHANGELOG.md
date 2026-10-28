@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 3.1.4 — 2026-10-28
+
+- 修复 Codex Desktop MSIX 更新后的启动死锁：新包已替换 `app/resources/codex.exe`，但 `%LOCALAPPDATA%\OpenAI\Codex\bin` 尚未生成新 runtime 时，自动模式回退到当前包内完整 core，而不是只返回 `no-compatible-runtime`。
+- 保留内容哈希优先级：先使用本地 hash 匹配 runtime；没有匹配时使用当前 Desktop 包内完整 bundle；两者都不可用才失败关闭。旧完整 runtime 仍不会被复用。
+- 增加 package-core fallback 的 GUI 发现、Helper 健康状态和离线回归测试；不调用真实模型。
+
 ## 3.1.3 — 2026-10-25
 
 - 修复 Codex Desktop 更新后 Native Helper 继续使用完整但过期 Runtime 的问题：自动模式按当前 Desktop 包内 `codex.exe` 的内容哈希选择兼容 Runtime，手动路径保持显式固定，找不到匹配项时明确失败而不是静默启动旧 Core。

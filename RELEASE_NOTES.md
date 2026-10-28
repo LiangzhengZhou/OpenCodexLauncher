@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.3
+# OpenCodexLauncher 3.1.4
+
+- Fixed a Desktop-update startup deadlock: when the installed MSIX package contains a new `app/resources/codex.exe` but the LocalAppData runtime copy has not been refreshed yet, automatic mode now uses the complete packaged core as a safe fallback.
+- Resolution order is: local runtime whose `codex.exe` hash matches the current package core; otherwise the current package's complete bundled core; otherwise fail closed with `no-compatible-runtime`. A stale complete runtime is still never reused.
+- This preserves the 3.1.3 package-hash compatibility guarantee while allowing Desktop to start after an MSIX update, instead of blocking the very process that would create the new runtime copy.
+- Added offline fixture coverage for package-core fallback, GUI discovery and Helper health transitions. No real model request is used.
+
+Local validation on 2026-10-28: 102 Native checks, 278 regression checks and 145 UI checks passed; a read-only probe against the installed 26.1023 package returned its bundled `app/resources/codex.exe` as the fallback. Source and binary release scans passed. No real model request was made.
+
+## 3.1.3
 
 - Native Helper now resolves the runtime from the installed Codex Desktop package: the runtime `codex.exe` must match the package's `app/resources/codex.exe` by content hash. A complete but outdated runtime is no longer silently reused.
 - Automatic mode and explicit manual paths remain separate. `AutomaticRuntime=true` selects the package-compatible complete runtime; `false` keeps the user-selected path; legacy manifests without provenance are upgraded only when their path is inside Desktop's managed runtime root.

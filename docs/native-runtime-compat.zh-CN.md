@@ -1,4 +1,4 @@
-# Native Runtime 自动兼容（3.1.3）
+# Native Runtime 自动兼容（3.1.4）
 
 ## 问题
 
@@ -8,13 +8,14 @@ Codex Desktop 更新后，旧 runtime 目录可能仍然完整。3.1.1/3.1.2 的
 Desktop startup policy read failed ... phase=policy-read reason=protocol
 ```
 
-## 3.1.3 规则
+## 3.1.4 规则
 
 - 自动模式（`AutomaticRuntime=true`）不再把“文件完整”等同于“版本兼容”。
 - 从当前用户已注册的 `OpenAI.Codex` AppModel 包读取安装根目录，计算包内 `app/resources/codex.exe` 的 SHA-256。
-- 只在 Desktop 管理目录中查找 `codex.exe` + `codex-code-mode-host.exe` 完整、长度相同且内容哈希匹配的 runtime。
-- 不比较 CLI `0.164` 与 Desktop `26.x` 两套版本号；以内容哈希为准。
-- 找不到匹配项时返回 `NativeRuntimeException` 的明确错误码，不启动旧 Core：
+- 优先在 Desktop 管理目录中查找 `codex.exe` + `codex-code-mode-host.exe` 完整、长度相同且内容哈希匹配的 runtime。
+- 如果本地没有匹配 runtime，但当前 Desktop 包内 `app/resources/codex.exe` 及 `codex-code-mode-host.exe` 完整，则使用包内 core 作为安全回退。这样 MSIX 更新可以先让 Desktop 启动，避免“Helper 拒绝旧 runtime、Desktop 又无法运行新 core 生成副本”的死锁。
+- 不比较 CLI `0.164` 与 Desktop `26.x` 两套版本号；以内容哈希和包内 core 为准。
+- 只有本地无匹配且包内 bundle 也不完整时，才返回 `NativeRuntimeException` 的明确错误码，不启动旧 Core：
   - `desktop-package-unavailable`
   - `desktop-core-missing`
   - `no-compatible-runtime`
