@@ -7,6 +7,8 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -725,6 +727,30 @@ namespace OpenCodexLauncherV2
                 return WriteChecked(path, before, after, TextFile.Detect(path, before));
             }));
         }
+        public Task<string> SetPortAsync(string path, int port)
+        {
+            if (port < 1 || port > 65535) throw new ArgumentOutOfRangeException("port");
+            return UpdateAsync(path, root => root["port"] = port);
+        }
+        public Task<string> SetProxyRouteAsync(string path, int port)
+        {
+            if (port < 1 || port > 65535) throw new ArgumentOutOfRangeException("port");
+            return Task.Run(() => Locked(path, delegate {
+                var before = File.Exists(path) ? TextFile.Read(path) : "";
+                var firstTable = Regex.Match(before, @"(?m)^\s*\[");
+                var rootEnd = firstTable.Success ? firstTable.Index : before.Length;
+                var root = before.Substring(0, rootEnd);
+                var rest = before.Substring(rootEnd);
+                var line = "openai_base_url = \"http://127.0.0.1:" + port + "/v1\"";
+                if (Regex.IsMatch(root, @"(?m)^\s*openai_base_url\s*="))
+                    root = Regex.Replace(root, @"(?m)^\s*openai_base_url\s*=[^\r\n]*", line);
+                else
+                    root = line + Environment.NewLine + root;
+                var after = root + rest;
+                if (String.Equals(before, after, StringComparison.Ordinal)) return L.M("text.190");
+                return WriteChecked(path, before, after, TextFile.Detect(path, before));
+            }));
+        }
         public Task<string> SetAutoStartAsync(string path, bool enabled) { return UpdateAsync(path, root => root["codexAutoStart"] = enabled); }
         public string ReserveForceTargetRoute(string path)
         {
@@ -1032,6 +1058,58 @@ namespace OpenCodexLauncherV2
         public int Port { get; set; }
         public string ApiUrl { get { return BaseUrl.TrimEnd('/') + "/api"; } }
         public string DataUrl { get { return BaseUrl.TrimEnd('/') + "/v1"; } }
+    }
+
+    // The Launcher must distinguish "port is occupied by another tool" from a
+    // generic startup failure. Binding a short-lived exclusive listener is
+    // local-only and does not contact the proxy.
+    public static class ProxyPort
+    {
+        public const int DefaultPort = 10100;
+        public static int Configured(string ocxConfig)
+        {
+            try
+            {
+                int port;
+                var value = JsonData.Value(JsonData.Read(ocxConfig), "port");
+                return Int32.TryParse(Convert.ToString(value), out port) && port > 0 && port <= 65535 ? port : DefaultPort;
+            }
+            catch { return DefaultPort; }
+        }
+        public static bool IsAvailable(int port)
+        {
+            if (port < 1 || port > 65535) return false;
+            try
+            {
+                var properties = IPGlobalProperties.GetIPGlobalProperties();
+                if (properties.GetActiveTcpListeners().Any(x => x.Port == port)) return false;
+                // A bound/established local endpoint can block ocx even when the
+                // port is not reported as a normal listener (for example a
+                // transparent-proxy socket held by verge-mihomo).
+                if (properties.GetActiveTcpConnections().Any(x => x.LocalEndPoint != null && x.LocalEndPoint.Port == port)) return false;
+            }
+            catch (NetworkInformationException) { }
+            catch (PlatformNotSupportedException) { }
+            try
+            {
+                var listener = new TcpListener(IPAddress.Any, port);
+                listener.ExclusiveAddressUse = true;
+                listener.Start();
+                listener.Stop();
+                return true;
+            }
+            catch (SocketException) { return false; }
+            catch (InvalidOperationException) { return false; }
+            catch (UnauthorizedAccessException) { return false; }
+        }
+        public static int FindAvailable(int start)
+        {
+            var first = Math.Max(1, start);
+            var last = Math.Min(65535, first + 99);
+            for (var port = first; port <= last; port++)
+                if (IsAvailable(port)) return port;
+            return 0;
+        }
     }
 
     public static class OpenCodexEndpointResolver

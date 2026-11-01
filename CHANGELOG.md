@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.6 — 2026-11-02
+
+- 启动 OpenCodex 前检测配置端口是否被占用；覆盖 Clash/verge-mihomo 占用 10100 的常见情况。
+- 端口冲突时提示改用附近空闲端口，写入 `.opencodex/config.json`，同步更新 Codex 的 `openai_base_url` 和回退用的 `opencodex.config.toml`，再启动代理。
+- Launcher 日志明确记录端口冲突和端口变更，不再只显示“退出代码 1”。
+- 增加端口占用/空闲检测、邻近端口选择、配置保留和路由重写测试；不调用真实模型。
+
 ## 3.1.5 — 2026-10-28
 
 - 已启用 Native 且 Helper 仅构建过期时自动更新 Helper，首页只提示重启 Desktop；不再要求每次 GUI 更新后手动点更新。

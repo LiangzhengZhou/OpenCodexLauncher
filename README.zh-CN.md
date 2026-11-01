@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.5
+# OpenCodex Launcher 3.1.6
 
-3.1.5 是 UI/交互和诊断更新。已启用 Native 且 Helper 仅构建过期时，Launcher 会自动更新 Helper，首页只提示重启 Desktop，不再要求手动点一次更新。同步入口做了去重，Native 准备和诊断启动移入高级操作；Desktop 诊断现在能识别当前的 `ChatGPT.exe` 主进程，并把“观测范围”和“真正问题”分开显示。
+3.1.6 增加代理端口冲突恢复。如果 OpenCodex 配置端口（默认 10100）被 Clash 等程序占用，点击“启动 OpenCodex”会提示改用附近空闲端口、同步更新 Codex 路由，并明确记录端口变更，而不是只显示“退出代码 1”。
 
 已启用 Native 的用户升级 Launcher 后，首页会自动更新仅构建过期的 Helper。看到重启提示后完整退出并重新打开 Codex Desktop。更新不强制结束会话，也不重写供应商、凭据、模型目录或手动 Runtime 配置。旧 Helper 会保留，供尚未退出的进程和已有凭据命令使用；如果快捷方式宿主缓存旧环境，需要重开该宿主或注销 Windows。
 本正式版新增 Windows 系统托盘常驻。供应商采用概览、连接与 API、模型状态三张卡片；模型管理按供应商显示缓存模型与勾选。密钥默认隐藏，点击显示后可编辑；切换页面或窗口失焦会隐藏。默认模型 ID 已从供应商编辑器移除，旧字段保留。
@@ -142,7 +142,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.5.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.6.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.1.5.0")]
-[assembly: AssemblyFileVersion("3.1.5.0")]
+[assembly: AssemblyVersion("3.1.6.0")]
+[assembly: AssemblyFileVersion("3.1.6.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -366,6 +366,21 @@ namespace OpenCodexLauncherV2
         async Task StartProxy()
         {
             if (await Healthy()) { Log(L.M("text.149")); return; }
+            var configuredPort = ProxyPort.Configured(paths.OcxConfig);
+            if (!ProxyPort.IsAvailable(configuredPort))
+            {
+                var freePort = ProxyPort.FindAvailable(configuredPort + 1);
+                if (freePort == 0) throw new InvalidOperationException(L.F("proxy.noFreePort", configuredPort));
+                if (!Confirm(L.F("proxy.portConflict", configuredPort, freePort))) throw new OperationCanceledException();
+                await config.SetPortAsync(paths.OcxConfig, freePort);
+                if (!String.IsNullOrWhiteSpace(paths.CodexConfig))
+                {
+                    await config.SetProxyRouteAsync(paths.CodexConfig, freePort);
+                    var fallback = Path.Combine(Path.GetDirectoryName(paths.CodexConfig), "opencodex.config.toml");
+                    if (File.Exists(fallback)) await config.SetProxyRouteAsync(fallback, freePort);
+                }
+                Log(L.F("proxy.portChanged", configuredPort, freePort));
+            }
             // --version exits in the Node shim; --help also loads the Bun CLI and
             // validates its imports/homes without starting a service or inference.
             await runner.CheckStartupAsync(Commands.Ocx(paths.Ocx, "--help"), paths.OcxConfig, paths.CodexHome, life.Token);
