@@ -658,6 +658,18 @@
     "zh": "OpenCodex 命令失败，退出代码 ",
     "en": "OpenCodex command failed with exit code "
   },
+  "proxy.portConflict": {
+    "zh": "端口 {0} 已被其他程序占用。是否改用空闲端口 {1}，并同步更新 Codex 路由？",
+    "en": "Port {0} is in use by another program. Switch OpenCodex to the free port {1} and update the Codex route?"
+  },
+  "proxy.noFreePort": {
+    "zh": "端口 {0} 被占用，且没有找到可用的后续端口。请释放端口或手动修改 OpenCodex 配置。",
+    "en": "Port {0} is in use and no nearby free port was found. Free the port or edit the OpenCodex configuration manually."
+  },
+  "proxy.portChanged": {
+    "zh": "OpenCodex 端口已从 {0} 改为 {1}，Codex 路由已同步更新。",
+    "en": "OpenCodex port changed from {0} to {1}; the Codex route was updated."
+  },
   "text.149": {
     "zh": "OpenCodex 已在运行。",
     "en": "OpenCodex is already running."

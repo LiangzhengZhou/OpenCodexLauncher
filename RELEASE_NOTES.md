@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.5
+# OpenCodexLauncher 3.1.6
+
+- Detect when the configured OpenCodex port is already occupied before starting the proxy. This covers the common Clash/verge-mihomo conflict on 10100.
+- Offer a nearby free port, write it to `.opencodex/config.json`, update the Codex `openai_base_url` route and the fallback `opencodex.config.toml`, then start normally.
+- Show the actual port conflict/change in the Launcher log instead of only `Proxy start failed with exit code 1`.
+- Added offline tests for occupied/free port detection, nearby free-port selection, config preservation and route rewriting.
+
+Local validation on 2026-11-02: 109 Native checks, 280 regression checks and 145 UI checks passed. No real model request was made.
+
+## 3.1.5
 
 - Automatic Native Helper update for enabled installations whose Helper is only build-outdated. The Home page now reports the restart requirement instead of requiring a separate update click every Launcher release.
 - Desktop diagnostics detect the current `ChatGPT.exe` Desktop process as well as legacy `Codex.exe`, report observed process names, and separate observation scope (`transport-get-only`, `desktop-loading-unverified`) from actual findings.

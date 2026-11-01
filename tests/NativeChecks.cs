@@ -3,6 +3,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using OpenCodexLauncherV2;
 class NativeChecks
 {
@@ -246,6 +248,27 @@ class NativeChecks
         Check(truncated == 2, "incomplete control-plane frame fails closed");
         Check(text.IndexOf(directory, StringComparison.OrdinalIgnoreCase) < 0, "diagnostics never persist user paths");
     }
+    static void PortChecks(string directory)
+    {
+        var listener = new TcpListener(IPAddress.Any, 0); listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        Check(!ProxyPort.IsAvailable(port), "occupied OpenCodex port is detected");
+        listener.Stop();
+        Check(ProxyPort.IsAvailable(port), "released OpenCodex port is available");
+        var free = ProxyPort.FindAvailable(port + 1);
+        Check(free > 0 && ProxyPort.IsAvailable(free), "next free OpenCodex port is found");
+        var ocx = Path.Combine(directory, "port-config.json");
+        File.WriteAllText(ocx, "{\"port\":10100,\"untouched\":true}");
+        var store = new ConfigStore();
+        store.SetPortAsync(ocx, free).GetAwaiter().GetResult();
+        var portRoot = JsonData.Read(ocx);
+        Check(Convert.ToInt32(JsonData.Value(portRoot, "port")) == free && Object.Equals(JsonData.Value(portRoot, "untouched"), true), "port update preserves OpenCodex config");
+        var codex = Path.Combine(directory, "port-config.toml");
+        File.WriteAllText(codex, "model_provider = 'x'\nopenai_base_url = \"http://127.0.0.1:10100/v1\"\n[model_providers.x]\nname='x'\n");
+        store.SetProxyRouteAsync(codex, free).GetAwaiter().GetResult();
+        var route = File.ReadAllText(codex);
+        Check(route.Contains("127.0.0.1:" + free + "/v1") && !route.Contains("10100") && route.Contains("model_provider"), "proxy route update preserves the rest of config.toml");
+    }
     static int Main(string[] args)
     {
         try {
@@ -254,6 +277,7 @@ class NativeChecks
             RuntimeChecks(args[0]);
             BridgeChecks(args[0]);
             ProcessChecks(args[0]);
+            PortChecks(args[0]);
             var exe = typeof(NativeProviders).Assembly.Location;
             var environment=new Dictionary<string,string>(); int broadcasts=0;
             var activation=new NativeActivation(Path.Combine(args[0],"activation.json"),
