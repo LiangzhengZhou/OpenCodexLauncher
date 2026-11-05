@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.1.7.0")]
-[assembly: AssemblyFileVersion("3.1.7.0")]
+[assembly: AssemblyVersion("3.1.8.0")]
+[assembly: AssemblyFileVersion("3.1.8.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -84,6 +84,7 @@ namespace OpenCodexLauncherV2
                 LoadModels();
                 if (LocalEnvironment.Current.IsIsolated) return;
                 await RefreshState(); await RefreshReserveStatus();
+                try { AggregationMode.Resume(paths); } catch { Log(L.M("aggregation.failed")); }
                 try {
                     if (NativeActivation.Current.Enabled && NativeProviders.NeedsProviderRepair(paths)) {
                         await NativeProviders.Prepare(paths, NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled);
@@ -143,7 +144,7 @@ namespace OpenCodexLauncherV2
             var side = new Border { Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(Color.FromArgb(180, 255, 225, 244), 0), new GradientStop(Color.FromArgb(135, 255, 232, 201), 0.42), new GradientStop(Color.FromArgb(210, 255, 255, 255), 1) }, new Point(0, 0), new Point(0, 1)), BorderBrush = line, BorderThickness = new Thickness(0,0,1,0), Padding = new Thickness(16, 24, 16, 18) }; Grid.SetColumn(side, 0); body.Children.Add(side); var sidePanel = new DockPanel(); var sideNote = Text(L.M("text.002"), 12); sideNote.Foreground = muted; DockPanel.SetDock(sideNote, Dock.Bottom); sidePanel.Children.Add(sideNote); navigation = new ListBox { BorderThickness = new Thickness(0), Background = Brushes.Transparent, Foreground = ink, FontSize = 14, FontWeight = FontWeights.SemiBold, ItemContainerStyle = NavigationStyle() }; navigation.SelectionChanged += delegate { if (navigation.SelectedItem != null) { var pageId = (string)((ListBoxItem)navigation.SelectedItem).Tag; HideProviderKey(); content.Content = pages[pageId]; if (pageId == "models") { try { LoadModels(); } catch (Exception) { SetText(modelSummary, L.M("models.configError")); } } } }; sidePanel.Children.Add(navigation); side.Child = sidePanel;
             content = new ContentControl { Background = Brushes.Transparent }; Grid.SetColumn(content, 1); body.Children.Add(content);
             operation = Text(L.M("text.003")); operation.Margin = new Thickness(24, 10, 24, 10); operation.FontSize = 14; operation.FontWeight = FontWeights.SemiBold; var feedback = new Border { Background = new LinearGradientBrush(new GradientStopCollection { new GradientStop(Color.FromRgb(255, 247, 239), 0), new GradientStop(Color.FromRgb(250, 235, 219), 1) }, new Point(0, 0), new Point(1, 0)), BorderBrush = new SolidColorBrush(Color.FromRgb(239, 214, 184)), BorderThickness = new Thickness(0, 1, 0, 1), Child = operation }; Grid.SetRow(feedback, 1); root.Children.Add(feedback);
-            AddPage("overview", L.M("text.004"), Overview()); AddPage("providers", L.M("text.005"), Providers()); AddPage("models", L.M("text.006"), Models()); AddPage("force", L.M("text.007"), ForceLaunch()); AddPage("routes", L.M("text.008"), Routes()); AddPage("logs", L.M("text.009"), Logs()); AddPage("settings", L.M("text.010"), Settings()); AddPage("nativeProviders", L.M("native.title"), NativeProviderPage()); navigation.SelectedIndex = 0; Content = root;
+            AddPage("overview", L.M("text.004"), Overview()); AddPage("providers", L.M("text.005"), Providers()); AddPage("models", L.M("text.006"), Models()); AddPage("force", L.M("text.007"), ForceLaunch()); AddPage("routes", L.M("text.008"), Routes()); AddPage("logs", L.M("text.009"), Logs()); AddPage("settings", L.M("text.010"), Settings()); AddPage("nativeProviders", L.M("native.title"), NativeProviderPage()); AddPage("aggregation", L.M("aggregation.title"), AggregationPage()); navigation.SelectedIndex = 0; Content = root;
         }
         UIElement Overview()
         {

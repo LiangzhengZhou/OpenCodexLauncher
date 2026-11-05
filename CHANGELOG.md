@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.8 — 2026-11-05
+
+- 新增 Codex 聚合模式：Codex 只使用一个本地 `launcher_aggregate` provider，不再在官方和 Packy Native 之间切换全局 `model_provider`。
+- 官方请求转发到现有 OpenCodex 路由；Packy 模型 alias 使用 Packy DPAPI 凭据直连 Packy Responses。
+- 聚合模式写入单一 provider 表和合并 catalog，移除旧 Native provider 区块，并在切换前备份直连配置；关闭时恢复。
+- 增加官方认证透传、Packy 认证替换、模型 alias、SSE、配置/catalog 生成和关闭恢复测试；不调用真实模型。
+
 ## 3.1.7 — 2026-11-05
 
 - 修复 Codex Desktop 更新后的 Native provider 绑定：Native Prepare 会为当前 `launcher-native-*` 模型写入根配置 `model_provider`，不再让当前 provider 停留在 `openai`。

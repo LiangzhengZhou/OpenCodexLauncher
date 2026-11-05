@@ -8,7 +8,7 @@ $test = Join-Path $OutputDirectory 'NativeChecks.exe'
 $mock = Join-Path $OutputDirectory 'MockAppServer.exe'
 & $compiler /nologo /target:exe /platform:x64 ('/out:' + $mock) (Join-Path $PSScriptRoot 'MockAppServer.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Mock app-server compilation failed' }
-& $compiler /nologo /target:exe /platform:x64 ('/out:' + $test) ('/reference:' + $exe) /reference:System.Web.Extensions.dll (Join-Path $PSScriptRoot 'NativeChecks.cs')
+& $compiler /nologo /target:exe /platform:x64 ('/out:' + $test) ('/reference:' + $exe) /reference:System.Web.Extensions.dll /reference:System.Net.Http.dll (Join-Path $PSScriptRoot 'NativeChecks.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Native test compilation failed' }
 Copy-Item (Join-Path $root 'App.config') ($test + '.config')
 $previousPreference = $ErrorActionPreference
