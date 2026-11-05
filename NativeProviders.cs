@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
@@ -45,6 +46,44 @@ namespace OpenCodexLauncherV2
         public static string Alias(string id, string model)
         {
             using (var hash = SHA256.Create()) return "launcher-native-" + BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(id + "\n" + model))).Replace("-", "").ToLowerInvariant();
+        }
+        static string ProviderForModel(IEnumerable<NativeProviderRecord> records, string model)
+        {
+            if (String.IsNullOrWhiteSpace(model)) return null;
+            foreach (var record in records)
+                if (record.Models != null && record.Models.Any(x => String.Equals(Alias(record.Provider.Id, x), model, StringComparison.Ordinal)))
+                    return ProviderId(record.Provider.Id);
+            return null;
+        }
+        static string EnsureProvider(string text, IEnumerable<NativeProviderRecord> records)
+        {
+            bool supported; var keys = DesktopDiagnostics.RootKeys(text, out supported);
+            if (!supported || !keys.ContainsKey("model")) return text;
+            var provider = ProviderForModel(records, keys["model"]);
+            if (provider == null) return text;
+            var firstTable = System.Text.RegularExpressions.Regex.Match(text, @"(?m)^\s*\[");
+            var rootEnd = firstTable.Success ? firstTable.Index : text.Length;
+            var root = text.Substring(0, rootEnd); var rest = text.Substring(rootEnd);
+            var line = "model_provider = '" + provider + "'";
+            root = System.Text.RegularExpressions.Regex.IsMatch(root, @"(?m)^\s*model_provider\s*=")
+                ? System.Text.RegularExpressions.Regex.Replace(root, @"(?m)^\s*model_provider\s*=[^\r\n]*", line)
+                : line + Environment.NewLine + root;
+            return root + rest;
+        }
+        public static bool NeedsProviderRepair(PathSet paths)
+        {
+            try
+            {
+                var records = Read(); if (records.Count == 0) return false;
+                var text = TextFile.Read(paths.CodexConfig); bool supported;
+                var keys = DesktopDiagnostics.RootKeys(text, out supported);
+                if (!supported || !keys.ContainsKey("model")) return false;
+                var expected = ProviderForModel(records, keys["model"]);
+                if (expected == null) return false;
+                string current; keys.TryGetValue("model_provider", out current);
+                return !String.Equals(current, expected, StringComparison.Ordinal);
+            }
+            catch { return false; }
         }
         public static List<NativeProviderRecord> Read()
         {
@@ -123,7 +162,8 @@ namespace OpenCodexLauncherV2
                 remainder = original.Substring(0, start);
             }
             else if (!String.IsNullOrEmpty(previousBlock)) throw new IOException("Native sections were removed externally. Review before syncing.");
-            if (remainder.Contains("launcher_native_") || remainder.Contains(End)) throw new InvalidDataException("Existing native provider namespace conflicts with Launcher.");
+            var outsideOwnedBlock = Regex.Replace(remainder, @"(?m)^\s*model_provider\s*=\s*['""]launcher_native_[^'""\r\n]*['""]\s*(?:\r?\n|$)", "");
+            if (outsideOwnedBlock.Contains("launcher_native_") || outsideOwnedBlock.Contains(End)) throw new InvalidDataException("Existing native provider namespace conflicts with Launcher.");
             return remainder + (remainder.EndsWith("\n") || remainder.Length == 0 ? "" : "\n") + block;
         }
         public static async Task Prepare(PathSet paths, string helper, bool reserveForce)
@@ -143,7 +183,7 @@ namespace OpenCodexLauncherV2
                 throw new InvalidOperationException("Sync the existing Codex model catalog first, then prepare Native providers.");
             var state = JsonData.Read(StatePath);
             if (state.Count > 0 && JsonData.Text(state, "config") != Path.GetFullPath(paths.CodexConfig)) throw new InvalidOperationException("Native sync is already associated with another Codex home.");
-            var block = Block(records, helper); var patched = Patch(original, JsonData.Text(state, "block"), block);
+            var block = Block(records, helper); var patched = EnsureProvider(Patch(original, JsonData.Text(state, "block"), block), records);
             var catalogBefore = TextFile.Read(catalog);
             var document = JsonData.Parse(catalogBefore);
             var models = JsonData.Array(JsonData.Value(document, "models")).Select(JsonData.Object).ToList();

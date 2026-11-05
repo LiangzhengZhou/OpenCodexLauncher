@@ -143,8 +143,8 @@ namespace OpenCodexLauncherV2
                 var s = line.Trim(); if (s.StartsWith("[")) break;
                 if (s.StartsWith("#")) continue;
                 if (s.Contains("\"\"\"") || s.Contains("'''")) { supported = false; break; }
-                if (Regex.IsMatch(s, "^[\"'](?:model_catalog_json|openai_base_url|model)[\"']\\s*=")) { supported = false; continue; }
-                var key = Regex.Match(s, "^(model_catalog_json|openai_base_url|model)\\s*=");
+                if (Regex.IsMatch(s, "^[\"'](?:model_catalog_json|openai_base_url|model_provider|model)[\"']\\s*=")) { supported = false; continue; }
+                var key = Regex.Match(s, "^(model_catalog_json|openai_base_url|model_provider|model)\\s*=");
                 if (!key.Success) continue;
                 var value = s.Substring(key.Length).Trim(); string parsed = null;
                 if (!value.StartsWith("\"\"\"") && !value.StartsWith("'''"))

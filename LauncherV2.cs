@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.1.6.0")]
-[assembly: AssemblyFileVersion("3.1.6.0")]
+[assembly: AssemblyVersion("3.1.7.0")]
+[assembly: AssemblyFileVersion("3.1.7.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -79,7 +79,19 @@ namespace OpenCodexLauncherV2
             if (startupError != null) BuildRecovery(startupError); else if (!settings.SetupCompleted) BuildSetup(); else Build();
             timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
             timer.Tick += async delegate { if (gate.CurrentCount == 0 || LocalEnvironment.Current.IsIsolated || recoveryMode || !settings.SetupCompleted || life.IsCancellationRequested || Interlocked.Exchange(ref polling, 1) != 0) return; try { await RefreshState(); await RefreshReserveStatus(); if (activeSession != null) await RefreshDiagnostics(); } catch (OperationCanceledException) { } catch (Exception e) { Log(e.Message); } finally { Interlocked.Exchange(ref polling, 0); } };
-            Loaded += async delegate { if (startupError != null || !settings.SetupCompleted) return; LoadModels(); if (LocalEnvironment.Current.IsIsolated) return; await RefreshState(); await RefreshReserveStatus(); timer.Start(); };
+            Loaded += async delegate {
+                if (startupError != null || !settings.SetupCompleted) return;
+                LoadModels();
+                if (LocalEnvironment.Current.IsIsolated) return;
+                await RefreshState(); await RefreshReserveStatus();
+                try {
+                    if (NativeActivation.Current.Enabled && NativeProviders.NeedsProviderRepair(paths)) {
+                        await NativeProviders.Prepare(paths, NativeActivation.ResolveHelper(Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled);
+                        Log(L.M("native.repairedProvider"));
+                    }
+                } catch { Log(L.M("native.repairFailed")); }
+                timer.Start();
+            };
             Closing += HandleWindowClosing;
             Closed += HandleWindowClosed;
         }

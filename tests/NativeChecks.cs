@@ -375,12 +375,13 @@ class NativeChecks
             var catalog=Path.Combine(home,"catalog.json");
             File.WriteAllText(catalog,"{\"models\":[{\"slug\":\"gpt-5.5\",\"display_name\":\"Official\",\"visibility\":\"list\"}]}");
             var config=Path.Combine(home,"config.toml");
-            File.WriteAllText(config,"model_catalog_json = '"+catalog+"'\nopenai_base_url = 'http://127.0.0.1:10100/v1'\n");
+            File.WriteAllText(config,"model = '"+alias+"'\nmodel_catalog_json = '"+catalog+"'\nopenai_base_url = 'http://127.0.0.1:10100/v1'\n");
             var paths=new PathSet{Codex=Bundle(args[0],"prepare-runtime","prepare-core"),CodexHome=home,CodexConfig=config};
             NativeProviders.Prepare(paths,exe,false).GetAwaiter().GetResult();
             var first=File.ReadAllText(config);
             NativeProviders.Prepare(paths,exe,false).GetAwaiter().GetResult();
             Check(File.ReadAllText(config)==first && first.Contains("openai_base_url = 'http://127.0.0.1:10100/v1'"),"repeated prepare preserves proxy route");
+            Check(first.Contains("model_provider = 'launcher_native_mock'")&&!NativeProviders.NeedsProviderRepair(paths),"prepare writes the Native current provider binding");
             Check(File.ReadAllText(catalog).Contains(alias)&&File.Exists(NativeProviders.BridgePath),"prepare writes native catalog aliases and executable manifest");
             Check(!first.Contains("dummy-token"),"prepared TOML never contains credential");
             var runtimeB = Bundle(args[0], "prepare-runtime-b", "prepare-core-b");
@@ -393,6 +394,10 @@ class NativeChecks
             Check(rejected&&File.ReadAllText(config)==first,"Reserve Force blocks prepare without mutation");
             paths.OcxConfig=Path.Combine(args[0],"proxy.json"); paths.Catalog=catalog;
             var store=new ConfigStore();
+            var routeTest=Path.Combine(args[0],"route-preserve.toml");
+            File.WriteAllText(routeTest,"model_provider = 'launcher_native_mock'\nopenai_base_url = 'http://127.0.0.1:10100/v1'\n[model_providers.'launcher_native_mock']\nname='Mock'\n");
+            store.PrepareProxyRouteAsync(routeTest).GetAwaiter().GetResult();
+            Check(File.ReadAllText(routeTest).Contains("model_provider = 'launcher_native_mock'"),"proxy route preparation preserves Native provider binding");
             var proxy=new ProviderOption{Id="provider-a",DisplayName="Provider A",BaseUrl="https://example.invalid/v1",Adapter="openai-responses"};
             var other=new ProviderOption{Id="provider-b",DisplayName="Provider B",BaseUrl="https://example.invalid/v1",Adapter="openai-responses"};
             store.UpsertProviderAsync(paths.OcxConfig,proxy,"test-key").GetAwaiter().GetResult();
