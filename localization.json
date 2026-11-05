@@ -44,6 +44,8 @@
   "native.updateDone": {"zh":"Native Helper 已更新。请完整退出并重新打开 Codex Desktop；当前会话不会被强制中断。","en":"Native Helper updated. Fully exit and reopen Codex Desktop; current sessions were not interrupted."},
   "native.autoHelperUpdated": {"zh":"已自动更新 Native Helper。请完整退出并重新打开 Codex Desktop 使其生效。","en":"Native Helper was updated automatically. Fully exit and reopen Codex Desktop to apply it."},
   "native.autoHelperFailed": {"zh":"Native Helper 自动更新失败，已保留当前注册。可点击“检查并更新 Native Helper”重试。","en":"Automatic Native Helper update failed; the current registration was preserved. Use Check and update Native Helper to retry."},
+  "native.repairedProvider": {"zh":"Native provider 与当前模型的绑定不一致，已自动修复。请完全退出并重新打开 Codex Desktop。","en":"Native provider binding did not match the current model and was repaired. Fully exit and reopen Codex Desktop."},
+  "native.repairFailed": {"zh":"Native provider 配置修复失败，配置未被强制覆盖。请打开 Native 页面手动重新准备。","en":"Native provider repair failed; configuration was not forcibly overwritten. Re-prepare from the Native page."},
   "native.desktopRequired": {"zh":"请选择 Desktop 的 EXE，而不是 Launcher 或 Codex CLI。","en":"Select Desktop's EXE, not Launcher or Codex CLI."},
   "tray.show": {"zh":"显示主窗口","en":"Show main window"},
   "tray.exit": {"zh":"退出启动器","en":"Exit launcher"},

@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.7 — 2026-11-05
+
+- 修复 Codex Desktop 更新后的 Native provider 绑定：Native Prepare 会为当前 `launcher-native-*` 模型写入根配置 `model_provider`，不再让当前 provider 停留在 `openai`。
+- 代理路由准备时保留已显式选择的 `launcher_native_*` provider，后续同步不会再把 Native 会话改回 `openai`。
+- Launcher 启动时检测 Native alias/provider 不一致并自动修复，记录日志。
+- 增加根 provider 绑定、Native Prepare 幂等和代理路由保留测试；不调用真实模型。
+
 ## 3.1.6 — 2026-11-02
 
 - 启动 OpenCodex 前检测配置端口是否被占用；覆盖 Clash/verge-mihomo 占用 10100 的常见情况。

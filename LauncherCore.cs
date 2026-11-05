@@ -721,7 +721,11 @@ namespace OpenCodexLauncherV2
                 var rest = before.Substring(rootEnd);
                 // OpenCodex owns the root route. Remove an old direct/custom route so
                 // the upstream injector can install model_provider = "opencodex".
-                root = Regex.Replace(root, @"(?m)^\s*model_provider\s*=.*(?:\r?\n|$)", "");
+                // Preserve an explicitly selected Native provider; a proxy sync must
+                // not turn a Native chat back into an "openai" provider mismatch.
+                var providerLine = Regex.Match(root, @"(?m)^\s*model_provider\s*=\s*([^\r\n]+)");
+                if (!providerLine.Success || !providerLine.Groups[1].Value.Trim().Trim('\'', '"').StartsWith("launcher_native_", StringComparison.OrdinalIgnoreCase))
+                    root = Regex.Replace(root, @"(?m)^\s*model_provider\s*=.*(?:\r?\n|$)", "");
                 var after = root + rest;
                 if (String.Equals(before, after, StringComparison.Ordinal)) return L.M("text.190");
                 return WriteChecked(path, before, after, TextFile.Detect(path, before));

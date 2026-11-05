@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.6
+# OpenCodexLauncher 3.1.7
+
+- Fix Native provider binding after Codex Desktop updates. Native Prepare now writes the root `model_provider` for the selected `launcher-native-*` model instead of leaving Codex on `openai`.
+- Proxy route preparation preserves an explicitly selected `launcher_native_*` provider, so a later sync no longer turns a Native chat back into an `openai` mismatch.
+- Launcher startup detects an inconsistent Native alias/provider configuration and repairs it before the next Desktop session, with a log entry.
+- Added offline tests for root provider binding, idempotent Native Prepare, and proxy-route preservation.
+
+Local validation on 2026-11-05: 111 Native checks, 280 regression checks and 145 UI checks passed. No real model request was made.
+
+## 3.1.6
 
 - Detect when the configured OpenCodex port is already occupied before starting the proxy. This covers the common Clash/verge-mihomo conflict on 10100.
 - Offer a nearby free port, write it to `.opencodex/config.json`, update the Codex `openai_base_url` route and the fallback `opencodex.config.toml`, then start normally.
