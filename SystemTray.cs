@@ -116,6 +116,7 @@ namespace OpenCodexLauncherV2
 
         void HandleWindowClosed(object sender, EventArgs e)
         {
+            try { AggregationMode.Disable(paths); } catch { }
             windowClosed = true;
             if (Application.Current != null) Application.Current.SessionEnding -= TraySessionEnding;
             if (tray != null) { tray.Dispose(); tray = null; }

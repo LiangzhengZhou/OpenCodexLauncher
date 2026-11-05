@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.7
+# OpenCodex Launcher 3.1.8
 
-3.1.7 fixes Native provider binding after Codex Desktop updates. Native mode now writes the selected model alias's `model_provider` into the root Codex configuration, preserves it during proxy-route preparation, and repairs an inconsistent alias/provider state on Launcher startup. This addresses chats created with `launcher_native_*` while Codex still reports `current provider is openai`.
+3.1.8 adds an Aggregation mode for Codex. Instead of switching the global `model_provider` between official and Native Packy, Codex uses one local aggregate provider. Official requests are relayed through the existing OpenCodex route; Packy models are sent directly to Packy Responses. This allows official and Packy models to appear in one model list without the provider-mismatch error.
 
 After a GUI update, the home page automatically updates an enabled, build-outdated Native helper. Fully exit and reopen Codex Desktop after the restart notice. This does not interrupt sessions or rewrite providers, credentials, catalogs or manual runtime settings. Old helpers remain available for existing processes and credential commands. Restart the shortcut host or sign out of Windows if it caches the old environment.
 This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
@@ -144,7 +144,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.7.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.8.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

@@ -4,7 +4,10 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
 using OpenCodexLauncherV2;
 class NativeChecks
 {
@@ -248,6 +251,86 @@ class NativeChecks
         Check(truncated == 2, "incomplete control-plane frame fails closed");
         Check(text.IndexOf(directory, StringComparison.OrdinalIgnoreCase) < 0, "diagnostics never persist user paths");
     }
+    static void AggregationConfigChecks(string directory, string sourceConfig, string sourceCatalog, string ocxConfig)
+    {
+        var home = Path.Combine(directory, "aggregation-home"); Directory.CreateDirectory(home);
+        var config = Path.Combine(home, "config.toml");
+        var catalog = Path.Combine(home, "catalog.json"); File.Copy(sourceCatalog, catalog, true);
+        var configText = File.ReadAllText(sourceConfig);
+        configText = System.Text.RegularExpressions.Regex.Replace(configText, @"(?m)^\s*model_catalog_json\s*=[^\r\n]*", "model_catalog_json = '" + catalog + "'");
+        File.WriteAllText(config, configText);
+        var paths = new PathSet { CodexHome = home, CodexConfig = config, Catalog = catalog, OcxConfig = ocxConfig };
+        AggregationMode.Enable(paths);
+        Check(AggregationMode.Enabled && AggregationMode.RouteCount > 0, "aggregation starts with Native provider routes");
+        var text = File.ReadAllText(config);
+        Check(text.Contains("model_provider = 'launcher_aggregate'") && text.Contains("[model_providers.'launcher_aggregate']") && !text.Contains("launcher_native_PackyAPI"), "aggregation writes one aggregate provider and removes Native block");
+        Check(File.ReadAllText(catalog).Contains("launcher-agg-") && !File.ReadAllText(catalog).Contains("launcher-native-"), "aggregation catalog contains aggregate aliases only");
+        AggregationMode.Disable(paths);
+        Check(!AggregationMode.Enabled && File.ReadAllText(config).Contains("model_provider = 'openai'") && File.ReadAllText(config).Contains("model = \""), "aggregation disable restores direct Codex config");
+    }
+    static void RouterChecks(string directory)
+    {
+        CredentialStore.Save(NativeProviders.CredentialId("mock"), "dummy-token");
+        var mockPort = ProxyPort.FindAvailable(21001);
+        var routerPort = ProxyPort.FindAvailable(22001);
+        var mock = new HttpListener(); mock.Prefixes.Add("http://127.0.0.1:" + mockPort + "/"); mock.Start();
+        string seenModel = null, seenAuth = null, seenBody = null;
+        var received = Task.Run(async () => {
+            var context = await mock.GetContextAsync();
+            using (var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8)) seenBody = await reader.ReadToEndAsync();
+            seenModel = JsonData.Text(JsonData.Parse(seenBody), "model");
+            seenAuth = context.Request.Headers["Authorization"];
+            var bytes = Encoding.UTF8.GetBytes("data: {\"ok\":true}\n\n");
+            context.Response.StatusCode = 200; context.Response.ContentType = "text/event-stream";
+            await context.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length); context.Response.Close();
+        });
+        var routes = new Dictionary<string, AggregationRoute> { { "launcher-agg-test", new AggregationRoute { Alias = "launcher-agg-test", ProviderId = "mock", Model = "test-model", BaseUrl = "http://127.0.0.1:" + mockPort + "/v1" } } };
+        using (var router = new AggregationRouter(routerPort, Path.Combine(directory, "unused-ocx.json"), routes))
+        {
+            router.Start();
+            using (var client = new HttpClient())
+            {
+                var response = client.PostAsync("http://127.0.0.1:" + routerPort + "/v1/responses", new StringContent("{\"model\":\"launcher-agg-test\",\"input\":[]}", Encoding.UTF8, "application/json")).GetAwaiter().GetResult();
+                var text = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                Check(response.IsSuccessStatusCode && text.Contains("data:"), "aggregation router forwards streamed response");
+            }
+            received.GetAwaiter().GetResult();
+        }
+        mock.Stop();
+        Check(seenModel == "test-model" && seenAuth == "Bearer dummy-token" && seenBody.Contains("test-model") && !seenBody.Contains("launcher-agg-test"), "aggregation router rewrites Packy model and replaces auth");
+
+        var officialPort = ProxyPort.FindAvailable(23001);
+        var routerPort2 = ProxyPort.FindAvailable(24001);
+        var official = new HttpListener(); official.Prefixes.Add("http://127.0.0.1:" + officialPort + "/"); official.Start();
+        string officialAuth = null, officialBody = null;
+        var officialTask = Task.Run(async () => {
+            var health = await official.GetContextAsync();
+            health.Response.StatusCode = 200; health.Response.Close();
+            var context = await official.GetContextAsync();
+            using (var reader = new StreamReader(context.Request.InputStream, Encoding.UTF8)) officialBody = await reader.ReadToEndAsync();
+            officialAuth = context.Request.Headers["Authorization"];
+            var bytes = Encoding.UTF8.GetBytes("{\"id\":\"resp-1\",\"output\":[]}");
+            context.Response.StatusCode = 200; context.Response.ContentType = "application/json";
+            await context.Response.OutputStream.WriteAsync(bytes, 0, bytes.Length); context.Response.Close();
+        });
+        var officialConfig = Path.Combine(directory, "official-ocx.json");
+        File.WriteAllText(officialConfig, "{\"port\":" + officialPort + "}");
+        using (var router = new AggregationRouter(routerPort2, officialConfig, new Dictionary<string, AggregationRoute>()))
+        {
+            router.Start();
+            using (var client = new HttpClient())
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, "http://127.0.0.1:" + routerPort2 + "/v1/responses")
+                { Content = new StringContent("{\"model\":\"gpt-5.6-luna\",\"input\":[]}", Encoding.UTF8, "application/json") };
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "official-token");
+                var response = client.SendAsync(request).GetAwaiter().GetResult();
+                Check(response.IsSuccessStatusCode && response.Content.ReadAsStringAsync().GetAwaiter().GetResult().Contains("resp-1"), "aggregation router forwards official responses");
+            }
+            officialTask.GetAwaiter().GetResult();
+        }
+        official.Stop();
+        Check(officialAuth == "Bearer official-token" && officialBody.Contains("gpt-5.6-luna"), "aggregation router preserves official auth and model");
+    }
     static void PortChecks(string directory)
     {
         var listener = new TcpListener(IPAddress.Any, 0); listener.Start();
@@ -278,6 +361,7 @@ class NativeChecks
             BridgeChecks(args[0]);
             ProcessChecks(args[0]);
             PortChecks(args[0]);
+            RouterChecks(args[0]);
             var exe = typeof(NativeProviders).Assembly.Location;
             var environment=new Dictionary<string,string>(); int broadcasts=0;
             var activation=new NativeActivation(Path.Combine(args[0],"activation.json"),
@@ -335,7 +419,7 @@ class NativeChecks
                 (key,value)=>{if(key=="OPENCODEX_LAUNCHER_BRIDGE"&&failWrite){failWrite=false;throw new IOException("mock registry failure");}if(value==null)environment.Remove(key);else environment[key]=value;},()=>{});
             conflict=false;try{failing.Enable(installed,"fixture",()=>System.Threading.Tasks.Task.FromResult(0)).GetAwaiter().GetResult();}catch(IOException){conflict=true;}
             Check(conflict&&environment.Count==0&&!failing.Enabled,"partial environment failure restores both values");
-            var record = new NativeProviderRecord { Provider = new ProviderOption { Id="mock", DisplayName="Mock", BaseUrl="http://127.0.0.1:1/v1", Adapter="openai-responses", RouteMode=ProviderRouteMode.NativeCodex }, Models=new[]{"test-model"} };
+            var record = new NativeProviderRecord { Provider = new ProviderOption { Id="mock", DisplayName="Mock", BaseUrl="https://example.invalid/v1", Adapter="openai-responses", RouteMode=ProviderRouteMode.NativeCodex }, Models=new[]{"test-model"} };
             NativeProviders.Save(record,"dummy-token"); NativeProviders.Save(record,null);
             Check(CredentialStore.Load(NativeProviders.CredentialId("mock"))=="dummy-token", "DPAPI key preserved on metadata save");
             using(var p=Process.Start(new ProcessStartInfo(exe,"--credential-isolated " + NativeControlBridge.Quote(args[0]) + " launcher_native_mock") { UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true })) {
@@ -383,6 +467,7 @@ class NativeChecks
             Check(File.ReadAllText(config)==first && first.Contains("openai_base_url = 'http://127.0.0.1:10100/v1'"),"repeated prepare preserves proxy route");
             Check(first.Contains("model_provider = 'launcher_native_mock'")&&!NativeProviders.NeedsProviderRepair(paths),"prepare writes the Native current provider binding");
             Check(File.ReadAllText(catalog).Contains(alias)&&File.Exists(NativeProviders.BridgePath),"prepare writes native catalog aliases and executable manifest");
+            AggregationConfigChecks(args[0], config, catalog, Path.Combine(args[0], "aggregation-ocx.json"));
             Check(!first.Contains("dummy-token"),"prepared TOML never contains credential");
             var runtimeB = Bundle(args[0], "prepare-runtime-b", "prepare-core-b");
             var fresh = new PathSet { Codex = runtimeB, AutomaticCodexRuntime = false, CodexHome = home, CodexConfig = config, Catalog = catalog, OcxConfig = paths.OcxConfig };

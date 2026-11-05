@@ -13,6 +13,8 @@ release-files.txt
 NuGet.Config
 OpenCodexLauncher.csproj
 LauncherCore.cs
+AggregationMode.cs
+AggregationPage.cs
 CodexRuntime.cs
 NativeBridgeDiagnostics.cs
 ModelDiagnostics.cs
@@ -77,3 +79,5 @@ docs/native-runtime-3.1.5-test-report.zh-CN.md
 docs/ui-redesign.zh-CN.md
 docs/proxy-port-3.1.6-test-report.zh-CN.md
 docs/native-provider-binding-3.1.7-test-report.zh-CN.md
+docs/launcher-aggregation-3.1.8.zh-CN.md
+docs/aggregation-3.1.8-test-report.zh-CN.md

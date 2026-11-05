@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.7
+# OpenCodexLauncher 3.1.8
+
+- Add an Aggregation mode: Codex uses one local aggregate provider instead of switching its global `model_provider` between official and Native Packy.
+- Official requests are relayed to the existing OpenCodex route; Packy model aliases are forwarded directly to Packy Responses with the Packy DPAPI credential.
+- Aggregation writes a single provider table and a combined catalog, removes the old Native provider block, and backs up the direct configuration before switching.
+- Added offline router tests for official auth passthrough, Packy auth replacement, model alias rewriting, SSE forwarding, catalog/config generation and disable restoration.
+
+Local validation on 2026-11-05: 119 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.7
 
 - Fix Native provider binding after Codex Desktop updates. Native Prepare now writes the root `model_provider` for the selected `launcher-native-*` model instead of leaving Codex on `openai`.
 - Proxy route preparation preserves an explicitly selected `launcher_native_*` provider, so a later sync no longer turns a Native chat back into an `openai` mismatch.
