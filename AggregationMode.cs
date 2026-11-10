@@ -119,8 +119,9 @@ namespace OpenCodexLauncherV2
                 context.Response.Close();
             }
             catch (OperationCanceledException) { try { context.Response.Abort(); } catch { } }
-            catch
+            catch (Exception error)
             {
+                LogFailure("route", error);
                 try { context.Response.StatusCode = 502; context.Response.Close(); } catch { }
             }
         }
@@ -146,21 +147,33 @@ namespace OpenCodexLauncherV2
                     String.Equals(key, "Content-Type", StringComparison.OrdinalIgnoreCase) || String.Equals(key, "Authorization", StringComparison.OrdinalIgnoreCase) && packy)
                     continue;
                 var value = source.Headers[key];
-                if (!target.Headers.TryAddWithoutValidation(key, value)) target.Content.Headers.TryAddWithoutValidation(key, value);
+                try { if (!target.Headers.TryAddWithoutValidation(key, value)) target.Content.Headers.TryAddWithoutValidation(key, value); } catch (ArgumentException) { }
             }
         }
         static void CopyResponseHeaders(HttpResponseMessage source, HttpListenerResponse target)
         {
+            if (source.Content.Headers.ContentType != null) target.ContentType = source.Content.Headers.ContentType.ToString();
             foreach (var header in source.Headers)
             {
                 if (String.Equals(header.Key, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase) || String.Equals(header.Key, "Connection", StringComparison.OrdinalIgnoreCase)) continue;
-                target.Headers[header.Key] = String.Join(",", header.Value);
+                try { target.Headers[header.Key] = String.Join(",", header.Value); } catch (ArgumentException) { }
             }
             foreach (var header in source.Content.Headers)
             {
-                if (String.Equals(header.Key, "Content-Length", StringComparison.OrdinalIgnoreCase)) continue;
-                target.Headers[header.Key] = String.Join(",", header.Value);
+                if (String.Equals(header.Key, "Content-Length", StringComparison.OrdinalIgnoreCase) || String.Equals(header.Key, "Content-Type", StringComparison.OrdinalIgnoreCase)) continue;
+                try { target.Headers[header.Key] = String.Join(",", header.Value); } catch (ArgumentException) { }
             }
+        }
+        static void LogFailure(string stage, Exception error)
+        {
+            try
+            {
+                var directory = Path.Combine(LocalEnvironment.Current.DataDirectory, "logs");
+                Directory.CreateDirectory(directory);
+                File.AppendAllText(Path.Combine(directory, "aggregation.log"),
+                    DateTime.UtcNow.ToString("o") + " stage=" + stage + " type=" + error.GetType().Name + " hresult=0x" + error.HResult.ToString("X8") + Environment.NewLine);
+            }
+            catch { }
         }
         public void Dispose()
         {

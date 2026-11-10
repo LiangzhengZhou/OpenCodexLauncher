@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.8
+# OpenCodex Launcher 3.1.9
 
-3.1.8 adds an Aggregation mode for Codex. Instead of switching the global `model_provider` between official and Native Packy, Codex uses one local aggregate provider. Official requests are relayed through the existing OpenCodex route; Packy models are sent directly to Packy Responses. This allows official and Packy models to appear in one model list without the provider-mismatch error.
+3.1.9 fixes aggregation router response handling. The router now copies the upstream content type and tolerates restricted HTTP headers instead of turning an upstream response into a 502 Bad Gateway. Aggregation mode still uses one local provider, with official requests relayed through OpenCodex and Packy models sent directly to Packy Responses.
 
 After a GUI update, the home page automatically updates an enabled, build-outdated Native helper. Fully exit and reopen Codex Desktop after the restart notice. This does not interrupt sessions or rewrite providers, credentials, catalogs or manual runtime settings. Old helpers remain available for existing processes and credential commands. Restart the shortcut host or sign out of Windows if it caches the old environment.
 This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
@@ -144,7 +144,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.8.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.9.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

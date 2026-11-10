@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.8
+# OpenCodexLauncher 3.1.9
+
+- Fix the aggregation router 502 Bad Gateway caused by copying restricted response headers. The router now uses `ContentType` for the upstream content type and ignores headers that `HttpListener` does not allow.
+- The aggregation router now writes a sanitized failure type/HRESULT to `logs/aggregation.log` instead of failing silently.
+- Live local probe: the router forwarded a request to the running OpenCodex endpoint and returned its `400 missing input` response instead of 502.
+- No change to the aggregation model/config design.
+
+Local validation on 2026-11-10: 119 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.8
 
 - Add an Aggregation mode: Codex uses one local aggregate provider instead of switching its global `model_provider` between official and Native Packy.
 - Official requests are relayed to the existing OpenCodex route; Packy model aliases are forwarded directly to Packy Responses with the Packy DPAPI credential.
