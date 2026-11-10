@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.8
+# OpenCodex Launcher 3.1.9
 
-3.1.8 新增 Codex 聚合模式。Codex 只使用一个本地聚合 provider，不再在官方和 Packy Native 之间切换全局 `model_provider`。官方请求交给现有 OpenCodex 路由；Packy 模型直连 Packy Responses。这样官方和 Packy 模型可以出现在同一个模型列表中，不再触发 provider 不一致错误。
+3.1.9 修复聚合路由的响应处理。路由现在正确复制上游 Content-Type，并容忍受限 HTTP 头，不再把上游正常响应变成 502 Bad Gateway。聚合模式仍使用单一本地 provider：官方请求经 OpenCodex 转发，Packy 模型直连 Packy Responses。
 
 已启用 Native 的用户升级 Launcher 后，首页会自动更新仅构建过期的 Helper。看到重启提示后完整退出并重新打开 Codex Desktop。更新不强制结束会话，也不重写供应商、凭据、模型目录或手动 Runtime 配置。旧 Helper 会保留，供尚未退出的进程和已有凭据命令使用；如果快捷方式宿主缓存旧环境，需要重开该宿主或注销 Windows。
 本正式版新增 Windows 系统托盘常驻。供应商采用概览、连接与 API、模型状态三张卡片；模型管理按供应商显示缓存模型与勾选。密钥默认隐藏，点击显示后可编辑；切换页面或窗口失焦会隐藏。默认模型 ID 已从供应商编辑器移除，旧字段保留。
@@ -142,7 +142,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.8.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.9.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

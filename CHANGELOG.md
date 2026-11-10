@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.9 — 2026-11-10
+
+- 修复聚合路由因复制受限 HTTP 响应头导致的 502 Bad Gateway：Content-Type 改用 `HttpListenerResponse.ContentType`，不允许的头单独忽略。
+- 聚合路由失败时向 `logs/aggregation.log` 写入脱敏的异常类型/HRESULT，不再静默返回 502。
+- 本地实测：路由向运行中的 OpenCodex 转发请求后返回其 `400 missing input` 响应，不再变成 502。
+- 聚合模式的数据和模型设计未变。
+
 ## 3.1.8 — 2026-11-05
 
 - 新增 Codex 聚合模式：Codex 只使用一个本地 `launcher_aggregate` provider，不再在官方和 Packy Native 之间切换全局 `model_provider`。
