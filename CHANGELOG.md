@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 3.1.14 — 2026-11-11
+
+- 聚合路由在 JSON 解析前解压 `gzip` / `deflate` 请求体，修复 Codex 压缩请求时反复出现的 `ArgumentException: DeserializeObject input`。
+- 不支持的 Content-Encoding 记录 encoding 名称和字节数，不再静默 502。
+- 包含 3.1.10–3.1.13 的聚合修复。
+
 ## 3.1.13 — 2026-11-11
 
 - 修复根配置缺少 `model_catalog_json` 时聚合 Repair/CheckCatalog 静默返回的问题。

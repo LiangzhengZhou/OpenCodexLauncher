@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -71,8 +72,14 @@ namespace OpenCodexLauncherV2
                 }
                 if (context.Request.HttpMethod != "POST" || context.Request.Url.AbsolutePath != "/v1/responses")
                 { context.Response.StatusCode = 404; context.Response.Close(); return; }
-                var body = await ReadBody(context.Request.InputStream).ConfigureAwait(false);
-                if (body == null) { context.Response.StatusCode = 413; context.Response.Close(); return; }
+                var raw = await ReadBody(context.Request.InputStream).ConfigureAwait(false);
+                if (raw == null) { context.Response.StatusCode = 413; context.Response.Close(); return; }
+                var body = DecodeBody(raw, context.Request.Headers["Content-Encoding"]);
+                if (body == null)
+                {
+                    LogFailure("body-decode", new InvalidDataException("encoding=" + (context.Request.Headers["Content-Encoding"] ?? "") + " bytes=" + raw.Length));
+                    context.Response.StatusCode = 400; context.Response.Close(); return;
+                }
                 var document = JsonData.Parse(body);
                 var model = JsonData.Text(document, "model");
                 if (String.IsNullOrWhiteSpace(model)) { context.Response.StatusCode = 400; context.Response.Close(); return; }
@@ -125,7 +132,7 @@ namespace OpenCodexLauncherV2
                 try { context.Response.StatusCode = 502; context.Response.Close(); } catch { }
             }
         }
-        static async Task<string> ReadBody(Stream stream)
+        static async Task<byte[]> ReadBody(Stream stream)
         {
             using (var buffer = new MemoryStream())
             {
@@ -135,8 +142,27 @@ namespace OpenCodexLauncherV2
                     if (buffer.Length + read > 64L * 1024 * 1024) return null;
                     buffer.Write(bytes, 0, read);
                 }
-                return Encoding.UTF8.GetString(buffer.ToArray());
+                return buffer.ToArray();
             }
+        }
+        static string DecodeBody(byte[] raw, string encoding)
+        {
+            if (String.IsNullOrWhiteSpace(encoding) || String.Equals(encoding.Trim(), "identity", StringComparison.OrdinalIgnoreCase))
+                return Encoding.UTF8.GetString(raw);
+            try
+            {
+                using (var input = new MemoryStream(raw))
+                using (Stream decoded = String.Equals(encoding.Trim(), "gzip", StringComparison.OrdinalIgnoreCase)
+                    ? (Stream)new GZipStream(input, CompressionMode.Decompress)
+                    : String.Equals(encoding.Trim(), "deflate", StringComparison.OrdinalIgnoreCase)
+                        ? (Stream)new DeflateStream(input, CompressionMode.Decompress)
+                        : null)
+                {
+                    if (decoded == null) return null;
+                    using (var reader = new StreamReader(decoded, new UTF8Encoding(false, true))) return reader.ReadToEnd();
+                }
+            }
+            catch { return null; }
         }
         static void CopyRequestHeaders(HttpListenerRequest source, HttpRequestMessage target, bool packy)
         {

@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.13
+# OpenCodexLauncher 3.1.14
+
+- Decode `gzip` and `deflate` request bodies in the aggregation router before JSON parsing.
+- Fix the repeated router `ArgumentException` at `DeserializeObject`/`Deserialize` with `param=input` when Codex compresses the Responses request body.
+- Log unsupported content encodings (encoding name and byte length only) instead of returning a silent 502.
+- Includes 3.1.10–3.1.13 aggregation fixes.
+
+Local validation on 2026-11-11: 122 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.13
 
 - Fix the missing root `model_catalog_json` dead-end. Aggregation Repair/CheckCatalog previously returned silently when the root catalog reference disappeared, so the watcher could never restore aliases.
 - Repair now falls back to `paths.Catalog` or the default `opencodex-catalog.json` beside the Codex config, restores the root `model_catalog_json` reference, and re-adds the `launcher-agg-*` aliases.
