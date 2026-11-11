@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 3.1.15 — 2026-11-11
+
+- 即使 Codex 不发送 Content-Encoding，也按 magic bytes 识别 gzip/deflate 请求体。
+- JSON 解析失败时记录 encoding、原始/解码长度和首 4 字节，不记录 prompt 内容。
+- 保留 3.1.14 的解压逻辑和所有聚合修复。
+
 ## 3.1.14 — 2026-11-11
 
 - 聚合路由在 JSON 解析前解压 `gzip` / `deflate` 请求体，修复 Codex 压缩请求时反复出现的 `ArgumentException: DeserializeObject input`。

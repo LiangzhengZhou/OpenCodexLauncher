@@ -1,4 +1,12 @@
-# OpenCodexLauncher 3.1.14
+# OpenCodexLauncher 3.1.15
+
+- Detect gzip/deflate by magic bytes even when Codex omits `Content-Encoding`.
+- On JSON parse failure, log encoding, raw/decoded lengths and the first 4 bytes; never log prompt content.
+- Preserve the 3.1.14 gzip/deflate decoding and all aggregation fixes.
+
+Local validation on 2026-11-11: 122 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.14
 
 - Decode `gzip` and `deflate` request bodies in the aggregation router before JSON parsing.
 - Fix the repeated router `ArgumentException` at `DeserializeObject`/`Deserialize` with `param=input` when Codex compresses the Responses request body.

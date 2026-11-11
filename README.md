@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.14
+# OpenCodex Launcher 3.1.15
 
-3.1.14 fixes aggregation requests whose body is sent with `Content-Encoding: gzip` or `deflate`. The router now decodes the request body before JSON parsing instead of returning 502 from `JavaScriptSerializer.DeserializeObject`.
+3.1.15 adds body diagnostics and magic-byte decompression for aggregation requests. If Codex compresses the body without a Content-Encoding header, gzip/deflate magic is detected; otherwise the log records encoding, raw/decoded length and the first bytes, without logging prompt content.
 
 After a GUI update, the home page automatically updates an enabled, build-outdated Native helper. Fully exit and reopen Codex Desktop after the restart notice. This does not interrupt sessions or rewrite providers, credentials, catalogs or manual runtime settings. Old helpers remain available for existing processes and credential commands. Restart the shortcut host or sign out of Windows if it caches the old environment.
 This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
@@ -144,7 +144,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.14.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.15.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
