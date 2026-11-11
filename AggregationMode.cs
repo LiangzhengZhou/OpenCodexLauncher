@@ -193,6 +193,9 @@ namespace OpenCodexLauncherV2
         const string End = "# END OpenCodexLauncher Aggregation v1";
         static readonly object gate = new object();
         static AggregationRouter router;
+        static Timer watch;
+        static PathSet watchedPaths;
+        static int repairing;
         public static string StatePath { get { return Path.Combine(LocalEnvironment.Current.DataDirectory, "aggregation-state.json"); } }
         public static string RoutesPath { get { return Path.Combine(LocalEnvironment.Current.DataDirectory, "aggregation-routes.json"); } }
         public static bool Enabled { get { try { return ReadState() != null; } catch { return false; } } }
@@ -223,7 +226,7 @@ namespace OpenCodexLauncherV2
         public static void Enable(PathSet paths)
         {
             if (String.IsNullOrWhiteSpace(paths.OcxConfig) || String.IsNullOrWhiteSpace(paths.CodexConfig)) throw new InvalidOperationException("Setup is incomplete.");
-            if (Enabled) return;
+            if (Enabled) { Repair(paths); StartWatch(paths); return; }
             if (NativeActivation.Current.Enabled) NativeActivation.Current.Disable();
             lock (gate)
             {
@@ -244,6 +247,7 @@ namespace OpenCodexLauncherV2
                     router = new AggregationRouter(port, paths.OcxConfig, routes); router.Start();
                     var state = new AggregationState { Enabled = true, Port = port, ConfigBackup = configBackup, CatalogBackup = catalogBackup };
                     TextFile.AtomicWrite(StatePath, JsonData.Serializer().Serialize(state), new UTF8Encoding(false));
+                    StartWatch(paths);
                 }
                 catch
                 {
@@ -258,6 +262,7 @@ namespace OpenCodexLauncherV2
         {
             lock (gate)
             {
+                StopWatch();
                 var state = ReadState();
                 try { if (router != null) { router.Dispose(); router = null; } } catch { }
                 if (state == null) return;
@@ -283,7 +288,38 @@ namespace OpenCodexLauncherV2
                 // advertising the router as active.
                 Repair(paths);
                 router = new AggregationRouter(state.Port, paths.OcxConfig, routes); router.Start();
+                StartWatch(paths);
             }
+        }
+        static void StartWatch(PathSet paths)
+        {
+            watchedPaths = paths;
+            if (watch == null) watch = new Timer(_ => CheckCatalog(), null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+            else watch.Change(TimeSpan.Zero, TimeSpan.FromSeconds(2));
+        }
+        static void StopWatch()
+        {
+            watchedPaths = null;
+            if (watch != null) { watch.Dispose(); watch = null; }
+        }
+        static void CheckCatalog()
+        {
+            if (Interlocked.Exchange(ref repairing, 1) != 0) return;
+            try
+            {
+                var paths = watchedPaths;
+                if (paths == null || !Enabled) return;
+                var routes = ReadRoutes(); if (routes.Count == 0) return;
+                var catalog = CatalogPath(paths.CodexConfig);
+                if (catalog == null || !File.Exists(catalog)) return;
+                var text = TextFile.Read(catalog);
+                var document = JsonData.Parse(text);
+                var present = new HashSet<string>(JsonData.Array(JsonData.Value(document, "models"))
+                    .Select(JsonData.Object).Where(x => x != null).Select(x => JsonData.Text(x, "slug")), StringComparer.Ordinal);
+                if (!routes.Keys.All(present.Contains)) Repair(paths);
+            }
+            catch { }
+            finally { Interlocked.Exchange(ref repairing, 0); }
         }
         public static void Repair(PathSet paths)
         {

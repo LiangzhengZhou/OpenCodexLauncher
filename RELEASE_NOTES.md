@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.11
+# OpenCodexLauncher 3.1.12
+
+- Keep the aggregation catalog reconciled while aggregation is active. A 2-second watcher detects missing `launcher-agg-*` aliases after OpenCodex/Codex rewrites the catalog and re-applies them.
+- `Enable` while already active now performs a repair instead of returning without writing aliases.
+- Added an idempotent repair test for the active-enable path.
+- Includes 3.1.10 catalog reconciliation and 3.1.11 router header fixes.
+
+Local validation on 2026-11-11: 121 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.11
 
 - Fix the remaining aggregation 502 path: forward only allowlisted OpenAI/authorization request headers instead of every incoming header.
 - Guard `Content-Type` and per-header response copying; log failure stage/type/HRESULT plus target-site/parameter names without payloads.
