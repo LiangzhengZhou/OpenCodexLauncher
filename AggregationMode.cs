@@ -80,7 +80,14 @@ namespace OpenCodexLauncherV2
                     LogFailure("body-decode", new InvalidDataException("encoding=" + (context.Request.Headers["Content-Encoding"] ?? "") + " bytes=" + raw.Length));
                     context.Response.StatusCode = 400; context.Response.Close(); return;
                 }
-                var document = JsonData.Parse(body);
+                Dictionary<string, object> document;
+                try { document = JsonData.Parse(body); }
+                catch (Exception error)
+                {
+                    LogFailure("body-json", error, "encoding=" + (context.Request.Headers["Content-Encoding"] ?? "") +
+                        " raw=" + raw.Length + " decoded=" + body.Length + " head=" + Head(raw));
+                    throw;
+                }
                 var model = JsonData.Text(document, "model");
                 if (String.IsNullOrWhiteSpace(model)) { context.Response.StatusCode = 400; context.Response.Close(); return; }
 
@@ -147,14 +154,23 @@ namespace OpenCodexLauncherV2
         }
         static string DecodeBody(byte[] raw, string encoding)
         {
-            if (String.IsNullOrWhiteSpace(encoding) || String.Equals(encoding.Trim(), "identity", StringComparison.OrdinalIgnoreCase))
-                return Encoding.UTF8.GetString(raw);
+            var kind = (encoding ?? "").Trim();
+            if (!String.IsNullOrWhiteSpace(kind) && !String.Equals(kind, "identity", StringComparison.OrdinalIgnoreCase) &&
+                !String.Equals(kind, "gzip", StringComparison.OrdinalIgnoreCase) && !String.Equals(kind, "deflate", StringComparison.OrdinalIgnoreCase))
+                return null;
+            var gzip = raw.Length >= 2 && raw[0] == 0x1f && raw[1] == 0x8b;
+            var deflate = raw.Length >= 2 && (raw[0] & 0x0f) == 8;
+            if (String.IsNullOrWhiteSpace(kind) || String.Equals(kind, "identity", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!gzip && !deflate) return Encoding.UTF8.GetString(raw);
+                kind = gzip ? "gzip" : "deflate";
+            }
             try
             {
                 using (var input = new MemoryStream(raw))
-                using (Stream decoded = String.Equals(encoding.Trim(), "gzip", StringComparison.OrdinalIgnoreCase)
+                using (Stream decoded = String.Equals(kind, "gzip", StringComparison.OrdinalIgnoreCase)
                     ? (Stream)new GZipStream(input, CompressionMode.Decompress)
-                    : String.Equals(encoding.Trim(), "deflate", StringComparison.OrdinalIgnoreCase)
+                    : String.Equals(kind, "deflate", StringComparison.OrdinalIgnoreCase)
                         ? (Stream)new DeflateStream(input, CompressionMode.Decompress)
                         : null)
                 {
@@ -163,6 +179,11 @@ namespace OpenCodexLauncherV2
                 }
             }
             catch { return null; }
+        }
+        static string Head(byte[] raw)
+        {
+            if (raw == null || raw.Length == 0) return "empty";
+            return BitConverter.ToString(raw, 0, Math.Min(4, raw.Length)).Replace("-", "");
         }
         static void CopyRequestHeaders(HttpListenerRequest source, HttpRequestMessage target, bool packy)
         {
@@ -191,7 +212,7 @@ namespace OpenCodexLauncherV2
                 try { target.Headers[header.Key] = String.Join(",", header.Value); } catch (ArgumentException) { }
             }
         }
-        static void LogFailure(string stage, Exception error)
+        static void LogFailure(string stage, Exception error, string detail = null)
         {
             try
             {
@@ -200,7 +221,8 @@ namespace OpenCodexLauncherV2
                 var argument = error as ArgumentException;
                 File.AppendAllText(Path.Combine(directory, "aggregation.log"),
                     DateTime.UtcNow.ToString("o") + " stage=" + stage + " type=" + error.GetType().Name + " hresult=0x" + error.HResult.ToString("X8") +
-                    " site=" + (error.TargetSite == null ? "" : error.TargetSite.Name) + (argument == null ? "" : " param=" + (argument.ParamName ?? "")) + Environment.NewLine);
+                    " site=" + (error.TargetSite == null ? "" : error.TargetSite.Name) + (argument == null ? "" : " param=" + (argument.ParamName ?? "")) +
+                    (String.IsNullOrWhiteSpace(detail) ? "" : " " + detail) + Environment.NewLine);
             }
             catch { }
         }
