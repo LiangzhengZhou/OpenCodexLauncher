@@ -85,3 +85,4 @@ docs/aggregation-router-3.1.9-test-report.zh-CN.md
 docs/aggregation-repair-3.1.10-test-report.zh-CN.md
 docs/aggregation-router-3.1.11-test-report.zh-CN.md
 docs/aggregation-catalog-watcher-3.1.12-test-report.zh-CN.md
+docs/aggregation-missing-catalog-3.1.13-test-report.zh-CN.md

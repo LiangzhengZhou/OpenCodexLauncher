@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 3.1.13 — 2026-11-11
+
+- 修复根配置缺少 `model_catalog_json` 时聚合 Repair/CheckCatalog 静默返回的问题。
+- Repair 回退到 `paths.Catalog` 或 Codex 配置旁的 `opencodex-catalog.json`，恢复根 `model_catalog_json` 引用，并重新加入 `launcher-agg-*` Packy alias。
+- 增加缺少根 catalog 引用的回归测试；包含 3.1.10/3.1.11/3.1.12 修复。
+
 ## 3.1.12 — 2026-11-11
 
 - 聚合模式启用期间每 2 秒检查 catalog，发现 `launcher-agg-*` 被 OpenCodex/Codex 重写删除后自动补回。

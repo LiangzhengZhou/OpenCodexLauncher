@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.12
+# OpenCodexLauncher 3.1.13
+
+- Fix the missing root `model_catalog_json` dead-end. Aggregation Repair/CheckCatalog previously returned silently when the root catalog reference disappeared, so the watcher could never restore aliases.
+- Repair now falls back to `paths.Catalog` or the default `opencodex-catalog.json` beside the Codex config, restores the root `model_catalog_json` reference, and re-adds the `launcher-agg-*` aliases.
+- Added a regression test for a missing root catalog reference.
+- Includes 3.1.10/3.1.11/3.1.12 aggregation fixes.
+
+Local validation on 2026-11-11: 122 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.12
 
 - Keep the aggregation catalog reconciled while aggregation is active. A 2-second watcher detects missing `launcher-agg-*` aliases after OpenCodex/Codex rewrites the catalog and re-applies them.
 - `Enable` while already active now performs a repair instead of returning without writing aliases.
