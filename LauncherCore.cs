@@ -208,7 +208,8 @@ namespace OpenCodexLauncherV2
 
     public static class JsonData
     {
-        public static JavaScriptSerializer Serializer() { return new JavaScriptSerializer { MaxJsonLength = 8 * 1024 * 1024, RecursionLimit = 100 }; }
+        public static JavaScriptSerializer Serializer() { return Serializer(8 * 1024 * 1024); }
+        public static JavaScriptSerializer Serializer(int maxJsonLength) { return new JavaScriptSerializer { MaxJsonLength = maxJsonLength, RecursionLimit = 100 }; }
         public static Dictionary<string, object> Object(object value) { return value as Dictionary<string, object>; }
         public static List<object> Array(object value)
         {
@@ -223,9 +224,10 @@ namespace OpenCodexLauncherV2
             foreach (var key in keys) { var value = Value(obj, key) as string; if (!String.IsNullOrWhiteSpace(value)) return value; }
             return String.Empty;
         }
-        public static Dictionary<string, object> Parse(string text)
+        public static Dictionary<string, object> Parse(string text) { return Parse(text, 8 * 1024 * 1024); }
+        public static Dictionary<string, object> Parse(string text, int maxJsonLength)
         {
-            var value = Object(Serializer().DeserializeObject(text));
+            var value = Object(Serializer(maxJsonLength).DeserializeObject(text));
             if (value == null) throw new InvalidDataException(L.M("text.175"));
             return value;
         }

@@ -283,6 +283,8 @@ class NativeChecks
             "repair restores a missing model_catalog_json reference and aliases");
         AggregationMode.Disable(paths);
         Check(!AggregationMode.Enabled && File.ReadAllText(config).Contains("model_provider = 'openai'") && File.ReadAllText(config).Contains("model = \""), "aggregation disable restores direct Codex config");
+        var largeBody = "{\"model\":\"gpt-5.5\",\"input\":\"" + new string('a', 9 * 1024 * 1024) + "\"}";
+        Check(JsonData.Text(JsonData.Parse(largeBody, 64 * 1024 * 1024), "model") == "gpt-5.5", "aggregation body parser accepts payloads larger than the default 8 MB limit");
     }
     static void RouterChecks(string directory)
     {

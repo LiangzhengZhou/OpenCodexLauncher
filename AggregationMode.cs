@@ -32,6 +32,7 @@ namespace OpenCodexLauncherV2
     // are sent directly to their provider with their own DPAPI credential.
     public sealed class AggregationRouter : IDisposable
     {
+        const int AggregationMaxJsonLength = 64 * 1024 * 1024;
         readonly HttpListener listener;
         readonly string ocxConfig;
         readonly Dictionary<string, AggregationRoute> routes;
@@ -81,7 +82,7 @@ namespace OpenCodexLauncherV2
                     context.Response.StatusCode = 400; context.Response.Close(); return;
                 }
                 Dictionary<string, object> document;
-                try { document = JsonData.Parse(body); }
+                try { document = JsonData.Parse(body, AggregationMaxJsonLength); }
                 catch (Exception error)
                 {
                     LogFailure("body-json", error, "encoding=" + (context.Request.Headers["Content-Encoding"] ?? "") +
@@ -101,7 +102,7 @@ namespace OpenCodexLauncherV2
                 {
                     providerModel = route.Model;
                     document["model"] = providerModel;
-                    body = JsonData.Serializer().Serialize(document);
+                    body = JsonData.Serializer(AggregationMaxJsonLength).Serialize(document);
                     upstream = route.BaseUrl.TrimEnd('/') + "/responses";
                 }
                 else

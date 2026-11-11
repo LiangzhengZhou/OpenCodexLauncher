@@ -1,4 +1,12 @@
-# OpenCodexLauncher 3.1.15
+# OpenCodexLauncher 3.1.16
+
+- Fix aggregation 502 for large request bodies: the observed Codex request was 10,527,235 bytes of valid JSON (`head=7B226D6F`), exceeding the default 8 MB `JavaScriptSerializer` limit.
+- Parse and rewrite aggregation bodies with a 64 MB limit, matching the router's existing 64 MB body cap.
+- Added a regression check for a >8 MB JSON body.
+
+Local validation on 2026-11-11: 123 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.15
 
 - Detect gzip/deflate by magic bytes even when Codex omits `Content-Encoding`.
 - On JSON parse failure, log encoding, raw/decoded lengths and the first 4 bytes; never log prompt content.
