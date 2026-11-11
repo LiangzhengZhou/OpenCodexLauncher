@@ -724,7 +724,9 @@ namespace OpenCodexLauncherV2
                 // Preserve an explicitly selected Native provider; a proxy sync must
                 // not turn a Native chat back into an "openai" provider mismatch.
                 var providerLine = Regex.Match(root, @"(?m)^\s*model_provider\s*=\s*([^\r\n]+)");
-                if (!providerLine.Success || !providerLine.Groups[1].Value.Trim().Trim('\'', '"').StartsWith("launcher_native_", StringComparison.OrdinalIgnoreCase))
+                var currentProvider = providerLine.Success ? providerLine.Groups[1].Value.Trim().Trim('\'', '"') : "";
+                if (!currentProvider.StartsWith("launcher_native_", StringComparison.OrdinalIgnoreCase) &&
+                    !String.Equals(currentProvider, "launcher_aggregate", StringComparison.OrdinalIgnoreCase))
                     root = Regex.Replace(root, @"(?m)^\s*model_provider\s*=.*(?:\r?\n|$)", "");
                 var after = root + rest;
                 if (String.Equals(before, after, StringComparison.Ordinal)) return L.M("text.190");
