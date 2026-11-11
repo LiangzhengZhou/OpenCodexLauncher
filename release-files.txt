@@ -83,3 +83,4 @@ docs/launcher-aggregation-3.1.8.zh-CN.md
 docs/aggregation-3.1.8-test-report.zh-CN.md
 docs/aggregation-router-3.1.9-test-report.zh-CN.md
 docs/aggregation-repair-3.1.10-test-report.zh-CN.md
+docs/aggregation-router-3.1.11-test-report.zh-CN.md

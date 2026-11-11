@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.10
+# OpenCodex Launcher 3.1.11
 
-3.1.10 修复聚合 catalog 的自动修复。Launcher 启动时以及 Codex/OpenCodex 同步后会重新应用聚合 provider 和 `launcher-agg-*` 模型 alias，避免外部重写 catalog 后 Packy 模型从 Codex 模型选择器中消失。
+3.1.11 修复聚合路由因转发不受支持的请求头而返回 502 Bad Gateway。路由现在只转发允许列表中的 OpenAI/Authorization 头，并记录脱敏的失败详情。包含 3.1.10 的聚合 catalog 自动修复。
 
 已启用 Native 的用户升级 Launcher 后，首页会自动更新仅构建过期的 Helper。看到重启提示后完整退出并重新打开 Codex Desktop。更新不强制结束会话，也不重写供应商、凭据、模型目录或手动 Runtime 配置。旧 Helper 会保留，供尚未退出的进程和已有凭据命令使用；如果快捷方式宿主缓存旧环境，需要重开该宿主或注销 Windows。
 本正式版新增 Windows 系统托盘常驻。供应商采用概览、连接与 API、模型状态三张卡片；模型管理按供应商显示缓存模型与勾选。密钥默认隐藏，点击显示后可编辑；切换页面或窗口失焦会隐藏。默认模型 ID 已从供应商编辑器移除，旧字段保留。
@@ -142,7 +142,7 @@ SDK 编译（需要 .NET SDK 及 .NET Framework 4.8 引用程序集）：
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.10.0。
+也可使用 build-sdk.ps1。两个入口统一生成 OpenCodexLauncher.exe，文件版本 3.1.11.0。
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output

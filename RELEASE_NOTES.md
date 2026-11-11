@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.10
+# OpenCodexLauncher 3.1.11
+
+- Fix the remaining aggregation 502 path: forward only allowlisted OpenAI/authorization request headers instead of every incoming header.
+- Guard `Content-Type` and per-header response copying; log failure stage/type/HRESULT plus target-site/parameter names without payloads.
+- Live local probe with the 3.1.11 candidate returned the OpenCodex upstream 429 instead of the router's 502.
+- Includes the 3.1.10 aggregate-catalog reconciliation.
+
+Local validation on 2026-11-11: 120 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.10
 
 - Re-apply the aggregate provider and `launcher-agg-*` catalog aliases when aggregation resumes and after a Codex/OpenCodex sync.
 - Fix the case where an external catalog rewrite leaves Codex with official models only and no Packy entries.
