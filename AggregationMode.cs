@@ -238,7 +238,7 @@ namespace OpenCodexLauncherV2
                 Directory.CreateDirectory(backupDir);
                 var configBackup = Path.Combine(backupDir, "config.toml");
                 var catalogBackup = Path.Combine(backupDir, "catalog.json");
-                var catalog = CatalogPath(paths.CodexConfig);
+                var catalog = ResolveCatalog(paths);
                 WriteDirectBackup(paths.CodexConfig, catalog, configBackup, catalogBackup);
                 try
                 {
@@ -310,8 +310,8 @@ namespace OpenCodexLauncherV2
                 var paths = watchedPaths;
                 if (paths == null || !Enabled) return;
                 var routes = ReadRoutes(); if (routes.Count == 0) return;
-                var catalog = CatalogPath(paths.CodexConfig);
-                if (catalog == null || !File.Exists(catalog)) return;
+                var catalog = ResolveCatalog(paths);
+                if (catalog == null || !File.Exists(catalog)) { Repair(paths); return; }
                 var text = TextFile.Read(catalog);
                 var document = JsonData.Parse(text);
                 var present = new HashSet<string>(JsonData.Array(JsonData.Value(document, "models"))
@@ -325,7 +325,7 @@ namespace OpenCodexLauncherV2
         {
             var state = ReadState(); if (state == null) return;
             var routes = ReadRoutes(); if (routes.Count == 0) return;
-            var catalog = CatalogPath(paths.CodexConfig);
+            var catalog = ResolveCatalog(paths);
             if (catalog == null) return;
             ApplyConfig(paths.CodexConfig, state.Port, catalog, routes);
         }
@@ -337,6 +337,19 @@ namespace OpenCodexLauncherV2
         {
             try { bool supported; var keys = DesktopDiagnostics.RootKeys(TextFile.Read(config), out supported); string path; return supported && keys.TryGetValue("model_catalog_json", out path) && Path.IsPathRooted(path) ? path : null; }
             catch { return null; }
+        }
+        static string ResolveCatalog(PathSet paths)
+        {
+            var path = CatalogPath(paths.CodexConfig);
+            if (!String.IsNullOrWhiteSpace(path) && File.Exists(path)) return path;
+            if (!String.IsNullOrWhiteSpace(paths.Catalog) && File.Exists(paths.Catalog)) return paths.Catalog;
+            try
+            {
+                var fallback = Path.Combine(Path.GetDirectoryName(paths.CodexConfig), "opencodex-catalog.json");
+                if (File.Exists(fallback)) return fallback;
+            }
+            catch { }
+            return null;
         }
         static void WriteDirectBackup(string configPath, string catalogPath, string configBackup, string catalogBackup)
         {
@@ -378,6 +391,8 @@ namespace OpenCodexLauncherV2
             string currentModel; currentKeys.TryGetValue("model", out currentModel);
             root = System.Text.RegularExpressions.Regex.Replace(root, @"(?m)^\s*model_provider\s*=.*(?:\r?\n|$)", "");
             root = System.Text.RegularExpressions.Regex.Replace(root, @"(?m)^\s*model\s*=.*(?:\r?\n|$)", "");
+            if (!System.Text.RegularExpressions.Regex.IsMatch(root, @"(?m)^\s*model_catalog_json\s*="))
+                root = "model_catalog_json = " + JsonData.Serializer().Serialize(catalogPath) + Environment.NewLine + root;
             var official = !String.IsNullOrWhiteSpace(currentModel) && !currentModel.StartsWith("launcher-", StringComparison.Ordinal) && !currentModel.StartsWith("ccs-", StringComparison.Ordinal)
                 ? currentModel : OfficialModel(catalogPath);
             root = "model_provider = 'launcher_aggregate'" + Environment.NewLine + "model = \"" + (official ?? "gpt-5.5") + "\"" + Environment.NewLine + root;

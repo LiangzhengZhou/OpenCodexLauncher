@@ -275,6 +275,12 @@ class NativeChecks
         TextFile.AtomicWrite(catalog, JsonData.Serializer().Serialize(again), new UTF8Encoding(false));
         AggregationMode.Enable(paths);
         Check(File.ReadAllText(catalog).Contains("launcher-agg-"), "enable while active repairs a lost aggregate catalog");
+        var missingCatalogConfig = System.Text.RegularExpressions.Regex.Replace(
+            File.ReadAllText(config), @"(?m)^\s*model_catalog_json\s*=.*(?:\r?\n|$)", "");
+        File.WriteAllText(config, missingCatalogConfig);
+        AggregationMode.Repair(paths);
+        Check(File.ReadAllText(config).Contains("model_catalog_json") && File.ReadAllText(catalog).Contains("launcher-agg-"),
+            "repair restores a missing model_catalog_json reference and aliases");
         AggregationMode.Disable(paths);
         Check(!AggregationMode.Enabled && File.ReadAllText(config).Contains("model_provider = 'openai'") && File.ReadAllText(config).Contains("model = \""), "aggregation disable restores direct Codex config");
     }
