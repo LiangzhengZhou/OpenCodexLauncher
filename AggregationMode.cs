@@ -275,8 +275,20 @@ namespace OpenCodexLauncherV2
             lock (gate)
             {
                 if (router != null) return;
+                // A later Codex/OpenCodex sync may regenerate the catalog and drop
+                // launcher-agg-* models. Re-apply the owned aggregate config before
+                // advertising the router as active.
+                Repair(paths);
                 router = new AggregationRouter(state.Port, paths.OcxConfig, routes); router.Start();
             }
+        }
+        public static void Repair(PathSet paths)
+        {
+            var state = ReadState(); if (state == null) return;
+            var routes = ReadRoutes(); if (routes.Count == 0) return;
+            var catalog = CatalogPath(paths.CodexConfig);
+            if (catalog == null) return;
+            ApplyConfig(paths.CodexConfig, state.Port, catalog, routes);
         }
         public static void Stop()
         {
@@ -323,9 +335,12 @@ namespace OpenCodexLauncherV2
             var firstTable = System.Text.RegularExpressions.Regex.Match(withoutAggregate, @"(?m)^\s*\[");
             var rootEnd = firstTable.Success ? firstTable.Index : withoutAggregate.Length;
             var root = withoutAggregate.Substring(0, rootEnd); var rest = withoutAggregate.Substring(rootEnd);
+            bool supported; var currentKeys = DesktopDiagnostics.RootKeys(withoutAggregate, out supported);
+            string currentModel; currentKeys.TryGetValue("model", out currentModel);
             root = System.Text.RegularExpressions.Regex.Replace(root, @"(?m)^\s*model_provider\s*=.*(?:\r?\n|$)", "");
             root = System.Text.RegularExpressions.Regex.Replace(root, @"(?m)^\s*model\s*=.*(?:\r?\n|$)", "");
-            var official = OfficialModel(catalogPath);
+            var official = !String.IsNullOrWhiteSpace(currentModel) && !currentModel.StartsWith("launcher-", StringComparison.Ordinal) && !currentModel.StartsWith("ccs-", StringComparison.Ordinal)
+                ? currentModel : OfficialModel(catalogPath);
             root = "model_provider = 'launcher_aggregate'" + Environment.NewLine + "model = \"" + (official ?? "gpt-5.5") + "\"" + Environment.NewLine + root;
             var block = Begin + Environment.NewLine +
                 "[model_providers.'launcher_aggregate']\nname = 'OpenCodex Aggregate'\nbase_url = 'http://127.0.0.1:" + port + "/v1'\nwire_api = 'responses'\nrequires_openai_auth = true\nsupports_websockets = false\n" + End + Environment.NewLine;

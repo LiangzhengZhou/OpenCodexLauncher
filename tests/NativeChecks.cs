@@ -265,6 +265,11 @@ class NativeChecks
         var text = File.ReadAllText(config);
         Check(text.Contains("model_provider = 'launcher_aggregate'") && text.Contains("[model_providers.'launcher_aggregate']") && !text.Contains("launcher_native_PackyAPI"), "aggregation writes one aggregate provider and removes Native block");
         Check(File.ReadAllText(catalog).Contains("launcher-agg-") && !File.ReadAllText(catalog).Contains("launcher-native-"), "aggregation catalog contains aggregate aliases only");
+        var document = JsonData.Parse(File.ReadAllText(catalog));
+        document["models"] = JsonData.Array(JsonData.Value(document, "models")).Where(x => !JsonData.Text(JsonData.Object(x), "slug").StartsWith("launcher-agg-", StringComparison.Ordinal)).ToArray();
+        TextFile.AtomicWrite(catalog, JsonData.Serializer().Serialize(document), new UTF8Encoding(false));
+        AggregationMode.Repair(paths);
+        Check(File.ReadAllText(catalog).Contains("launcher-agg-"), "aggregation repair restores aliases after an external catalog sync");
         AggregationMode.Disable(paths);
         Check(!AggregationMode.Enabled && File.ReadAllText(config).Contains("model_provider = 'openai'") && File.ReadAllText(config).Contains("model = \""), "aggregation disable restores direct Codex config");
     }

@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.10 — 2026-11-11
+
+- 聚合模式恢复时以及 Codex/OpenCodex 同步后重新应用 aggregate provider 和 `launcher-agg-*` catalog alias，避免 Packy 模型从模型列表消失。
+- 保留当前选中的官方模型，不因修复 catalog 被重置。
+- `PrepareProxyRouteAsync` 同时保留 `launcher_aggregate` 和 `launcher_native_*` provider。
+- 增加“外部同步删除 alias 后自动修复”的测试；不调用真实模型。
+
 ## 3.1.9 — 2026-11-10
 
 - 修复聚合路由因复制受限 HTTP 响应头导致的 502 Bad Gateway：Content-Type 改用 `HttpListenerResponse.ContentType`，不允许的头单独忽略。

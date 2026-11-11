@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.1.9.0")]
-[assembly: AssemblyFileVersion("3.1.9.0")]
+[assembly: AssemblyVersion("3.1.10.0")]
+[assembly: AssemblyFileVersion("3.1.10.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -410,7 +410,7 @@ namespace OpenCodexLauncherV2
                 DesktopSync.Selected(DesktopDiagnosticInputs.ReadLocal(paths.OcxConfig));
                 await EnsureProxyRoute();
                 lastDesktopSync = await DesktopSync.RunAsync(paths, RunDesktopSyncCommand, life.Token);
-                if (lastDesktopSync.Succeeded && File.Exists(NativeProviders.BridgePath))
+                if (lastDesktopSync.Succeeded && File.Exists(NativeProviders.BridgePath) && !AggregationMode.Enabled)
                 {
                     var current = PathResolver.Resolve(settings);
                     await NativeProviders.Prepare(current, NativeActivation.ResolveHelper(System.Reflection.Assembly.GetExecutingAssembly().Location), settings.ReserveForceEnabled);
@@ -429,6 +429,7 @@ namespace OpenCodexLauncherV2
                 throw new DesktopSyncIncomplete();
             }
             LoadModels();
+            try { AggregationMode.Repair(paths); } catch { Log(L.M("aggregation.failed")); }
             SetText(providerStatus, L.M("text.152")); Log(L.M("text.153"));
         }
         async Task EnsureProxyRoute()

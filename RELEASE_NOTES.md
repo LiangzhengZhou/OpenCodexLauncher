@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.9
+# OpenCodexLauncher 3.1.10
+
+- Re-apply the aggregate provider and `launcher-agg-*` catalog aliases when aggregation resumes and after a Codex/OpenCodex sync.
+- Fix the case where an external catalog rewrite leaves Codex with official models only and no Packy entries.
+- Preserve the selected official model while repairing the aggregate catalog.
+- `PrepareProxyRouteAsync` now preserves the `launcher_aggregate` provider as well as `launcher_native_*`.
+
+Local validation on 2026-11-11: 120 Native checks, 280 regression checks and 147 UI checks passed. No real model request was made.
+
+## 3.1.9
 
 - Fix the aggregation router 502 Bad Gateway caused by copying restricted response headers. The router now uses `ContentType` for the upstream content type and ignores headers that `HttpListener` does not allow.
 - The aggregation router now writes a sanitized failure type/HRESULT to `logs/aggregation.log` instead of failing silently.
