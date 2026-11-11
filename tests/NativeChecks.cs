@@ -270,6 +270,11 @@ class NativeChecks
         TextFile.AtomicWrite(catalog, JsonData.Serializer().Serialize(document), new UTF8Encoding(false));
         AggregationMode.Repair(paths);
         Check(File.ReadAllText(catalog).Contains("launcher-agg-"), "aggregation repair restores aliases after an external catalog sync");
+        var again = JsonData.Parse(File.ReadAllText(catalog));
+        again["models"] = JsonData.Array(JsonData.Value(again, "models")).Where(x => !JsonData.Text(JsonData.Object(x), "slug").StartsWith("launcher-agg-", StringComparison.Ordinal)).ToArray();
+        TextFile.AtomicWrite(catalog, JsonData.Serializer().Serialize(again), new UTF8Encoding(false));
+        AggregationMode.Enable(paths);
+        Check(File.ReadAllText(catalog).Contains("launcher-agg-"), "enable while active repairs a lost aggregate catalog");
         AggregationMode.Disable(paths);
         Check(!AggregationMode.Enabled && File.ReadAllText(config).Contains("model_provider = 'openai'") && File.ReadAllText(config).Contains("model = \""), "aggregation disable restores direct Codex config");
     }
