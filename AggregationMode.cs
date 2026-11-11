@@ -142,17 +142,18 @@ namespace OpenCodexLauncherV2
         {
             foreach (var key in source.Headers.AllKeys)
             {
-                if (String.Equals(key, "Host", StringComparison.OrdinalIgnoreCase) || String.Equals(key, "Content-Length", StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(key, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase) || String.Equals(key, "Connection", StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(key, "Content-Type", StringComparison.OrdinalIgnoreCase) || String.Equals(key, "Authorization", StringComparison.OrdinalIgnoreCase) && packy)
-                    continue;
-                var value = source.Headers[key];
-                try { if (!target.Headers.TryAddWithoutValidation(key, value)) target.Content.Headers.TryAddWithoutValidation(key, value); } catch (ArgumentException) { }
+                if (String.IsNullOrWhiteSpace(key)) continue;
+                var lower = key.ToLowerInvariant();
+                var allowed = lower == "authorization" || lower == "accept" || lower == "accept-language" ||
+                    lower == "openai-organization" || lower == "openai-project" || lower == "openai-beta" ||
+                    lower.StartsWith("openai-", StringComparison.Ordinal) || lower.StartsWith("x-openai-", StringComparison.Ordinal);
+                if (!allowed || (packy && lower == "authorization")) continue;
+                try { target.Headers.TryAddWithoutValidation(key, source.Headers[key]); } catch (ArgumentException) { }
             }
         }
         static void CopyResponseHeaders(HttpResponseMessage source, HttpListenerResponse target)
         {
-            if (source.Content.Headers.ContentType != null) target.ContentType = source.Content.Headers.ContentType.ToString();
+            try { if (source.Content.Headers.ContentType != null) target.ContentType = source.Content.Headers.ContentType.ToString(); } catch (ArgumentException) { }
             foreach (var header in source.Headers)
             {
                 if (String.Equals(header.Key, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase) || String.Equals(header.Key, "Connection", StringComparison.OrdinalIgnoreCase)) continue;
@@ -170,8 +171,10 @@ namespace OpenCodexLauncherV2
             {
                 var directory = Path.Combine(LocalEnvironment.Current.DataDirectory, "logs");
                 Directory.CreateDirectory(directory);
+                var argument = error as ArgumentException;
                 File.AppendAllText(Path.Combine(directory, "aggregation.log"),
-                    DateTime.UtcNow.ToString("o") + " stage=" + stage + " type=" + error.GetType().Name + " hresult=0x" + error.HResult.ToString("X8") + Environment.NewLine);
+                    DateTime.UtcNow.ToString("o") + " stage=" + stage + " type=" + error.GetType().Name + " hresult=0x" + error.HResult.ToString("X8") +
+                    " site=" + (error.TargetSite == null ? "" : error.TargetSite.Name) + (argument == null ? "" : " param=" + (argument.ParamName ?? "")) + Environment.NewLine);
             }
             catch { }
         }

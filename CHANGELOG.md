@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.11 — 2026-11-11
+
+- 修复聚合路由剩余的 502 路径：只转发允许列表中的 OpenAI/Authorization 请求头，不再复制全部入站头。
+- Content-Type 与响应头逐项保护；失败日志记录阶段、类型、HRESULT、目标方法和参数名，不记录 payload。
+- 3.1.11 候选实测：聚合路由返回 OpenCodex 的 429，而不是自身 502。
+- 包含 3.1.10 的聚合 catalog 自动修复。
+
 ## 3.1.10 — 2026-11-11
 
 - 聚合模式恢复时以及 Codex/OpenCodex 同步后重新应用 aggregate provider 和 `launcher-agg-*` catalog alias，避免 Packy 模型从模型列表消失。

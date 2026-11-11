@@ -1,6 +1,6 @@
-# OpenCodex Launcher 3.1.10
+# OpenCodex Launcher 3.1.11
 
-3.1.10 fixes aggregation catalog reconciliation. Launcher now re-applies the aggregate provider and `launcher-agg-*` model aliases on startup and after a Codex/OpenCodex sync, so an external catalog rewrite does not silently remove the Packy models from Codex's model picker.
+3.1.11 fixes the aggregation router's remaining 502 Bad Gateway path caused by forwarding unsupported request headers. The router now forwards only the allowlisted OpenAI/authorization headers and logs sanitized failure details. Aggregation catalog reconciliation from 3.1.10 is included.
 
 After a GUI update, the home page automatically updates an enabled, build-outdated Native helper. Fully exit and reopen Codex Desktop after the restart notice. This does not interrupt sessions or rewrite providers, credentials, catalogs or manual runtime settings. Old helpers remain available for existing processes and credential commands. Restart the shortcut host or sign out of Windows if it caches the old environment.
 This stable release adds Windows notification area support. Providers use overview, connection/API and model-state cards. The model workspace keeps per-provider cached lists and selections. Stored keys are masked, can be revealed and edited, and are hidden when navigating or losing focus. The provider default-model editor is removed; legacy fields remain intact.
@@ -144,7 +144,7 @@ SDK build, requiring .NET SDK and .NET Framework 4.8 reference assemblies:
 
     dotnet build OpenCodexLauncher.csproj -c Release -o ./dist-sdk
 
-Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.10.0.
+Or use build-sdk.ps1. Both builds produce OpenCodexLauncher.exe, version 3.1.11.0.
 
     ./tests/run-tests.ps1 -OutputDirectory ./test-output
     ./tests/run-ui-tests.ps1 -OutputDirectory ./test-output
