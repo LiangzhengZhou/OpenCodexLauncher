@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 3.1.16 — 2026-11-11
+
+- 修复聚合请求体超过默认 8 MB `JavaScriptSerializer` 限制导致的 502；现场请求体为 10,527,235 字节合法 JSON。
+- 聚合解析/重写改用 64 MB 上限，与路由已有 64 MB 请求体上限一致。
+- 增加 >8 MB JSON body 的回归检查。
+
 ## 3.1.15 — 2026-11-11
 
 - 即使 Codex 不发送 Content-Encoding，也按 magic bytes 识别 gzip/deflate 请求体。
