@@ -1,4 +1,13 @@
-# OpenCodexLauncher 3.1.16
+# OpenCodexLauncher 3.1.17
+
+- Fix Restore native Codex leaving `openai_base_url = "http://127.0.0.1:10102/v1"` in the Codex config.
+- After `ocx restore`, remove `openai_base_url` and `model_catalog_json`, restore `model_provider = 'openai'`, and remove a launcher-owned selected model.
+- This restores official model discovery (including new model releases) and prevents `connect 10061` to a stopped local proxy.
+- Added a regression test for native restore normalization.
+
+Local validation on 2026-11-18: 124 Native checks and 280 regression checks passed. No real model request was made.
+
+## 3.1.16
 
 - Fix aggregation 502 for large request bodies: the observed Codex request was 10,527,235 bytes of valid JSON (`head=7B226D6F`), exceeding the default 8 MB `JavaScriptSerializer` limit.
 - Parse and rewrite aggregation bodies with a 64 MB limit, matching the router's existing 64 MB body cap.

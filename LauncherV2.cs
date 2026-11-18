@@ -18,8 +18,8 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 
 [assembly: AssemblyTitle("OpenCodex Launcher")]
-[assembly: AssemblyVersion("3.1.16.0")]
-[assembly: AssemblyFileVersion("3.1.16.0")]
+[assembly: AssemblyVersion("3.1.17.0")]
+[assembly: AssemblyFileVersion("3.1.17.0")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8")]
 
 namespace OpenCodexLauncherV2
@@ -374,6 +374,8 @@ namespace OpenCodexLauncherV2
             var command = Commands.Ocx(paths.Ocx, args);
             var result = await runner.RunAsync(command.File, command.Arguments, command.Directory, TimeSpan.FromMinutes(5), life.Token, log ? (Action<string>)Log : null, paths.OcxConfig, paths.CodexHome);
             if (!result.Succeeded) throw new InvalidOperationException(String.IsNullOrWhiteSpace(result.Error) ? L.M("text.148") + result.ExitCode : result.Error);
+            if (args.Length > 0 && String.Equals(args[0], "restore", StringComparison.OrdinalIgnoreCase) && !String.IsNullOrWhiteSpace(paths.CodexConfig))
+                ConfigStore.RestoreNativeCodex(paths.CodexConfig);
             return result;
         }
         async Task StartProxy()

@@ -713,6 +713,33 @@ namespace OpenCodexLauncherV2
                 root["clientIntegrations"] = integrations;
             });
         }
+        public static void RestoreNativeCodex(string path)
+        {
+            if (String.IsNullOrWhiteSpace(path) || !File.Exists(path)) return;
+            Locked(path, delegate {
+                var before = TextFile.Read(path);
+                var firstTable = Regex.Match(before, @"(?m)^\s*\[");
+                var rootEnd = firstTable.Success ? firstTable.Index : before.Length;
+                var root = before.Substring(0, rootEnd);
+                var rest = before.Substring(rootEnd);
+                root = Regex.Replace(root, @"(?m)^\s*openai_base_url\s*=.*(?:\r?\n|$)", "");
+                root = Regex.Replace(root, @"(?m)^\s*model_catalog_json\s*=.*(?:\r?\n|$)", "");
+                var provider = "model_provider = 'openai'";
+                root = Regex.IsMatch(root, @"(?m)^\s*model_provider\s*=")
+                    ? Regex.Replace(root, @"(?m)^\s*model_provider\s*=.*(?:\r?\n|$)", provider + Environment.NewLine)
+                    : provider + Environment.NewLine + root;
+                var model = Regex.Match(root, @"(?m)^\s*model\s*=\s*([^\r\n]+)");
+                if (model.Success)
+                {
+                    var value = model.Groups[1].Value.Trim().Trim('\'', '"');
+                    if (value.StartsWith("launcher-", StringComparison.OrdinalIgnoreCase) || value.StartsWith("ccs-", StringComparison.OrdinalIgnoreCase))
+                        root = Regex.Replace(root, @"(?m)^\s*model\s*=.*(?:\r?\n|$)", "");
+                }
+                var after = root + rest;
+                if (!String.Equals(before, after, StringComparison.Ordinal)) WriteChecked(path, before, after, TextFile.Detect(path, before));
+                return after;
+            });
+        }
         public Task<string> PrepareProxyRouteAsync(string path)
         {
             return Task.Run(() => Locked(path, delegate {
