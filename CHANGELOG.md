@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 3.1.17 — 2026-11-18
+
+- 修复“恢复原生 Codex”后仍保留 `openai_base_url = http://127.0.0.1:10102/v1` 的问题。
+- `ocx restore` 后删除 `openai_base_url` 和 `model_catalog_json`，恢复 `model_provider = 'openai'`，并清除 Launcher 所有的模型选择。
+- 修复本机代理已停止时官方请求报 `connect 10061`，并恢复官方新模型发现。
+- 增加原生恢复归一化回归测试。
+
 ## 3.1.16 — 2026-11-11
 
 - 修复聚合请求体超过默认 8 MB `JavaScriptSerializer` 限制导致的 502；现场请求体为 10,527,235 字节合法 JSON。

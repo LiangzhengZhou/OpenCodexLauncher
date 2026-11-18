@@ -285,6 +285,10 @@ class NativeChecks
         Check(!AggregationMode.Enabled && File.ReadAllText(config).Contains("model_provider = 'openai'") && File.ReadAllText(config).Contains("model = \""), "aggregation disable restores direct Codex config");
         var largeBody = "{\"model\":\"gpt-5.5\",\"input\":\"" + new string('a', 9 * 1024 * 1024) + "\"}";
         Check(JsonData.Text(JsonData.Parse(largeBody, 64 * 1024 * 1024), "model") == "gpt-5.5", "aggregation body parser accepts payloads larger than the default 8 MB limit");
+        var nativeRestore = Path.Combine(directory, "native-restore.toml");
+        File.WriteAllText(nativeRestore, "model_provider = 'openai'\nmodel = \"launcher-agg-test\"\nopenai_base_url = \"http://127.0.0.1:10102/v1\"\nmodel_catalog_json = \"C:\\\\temp\\\\catalog.json\"\n[model_providers.'launcher_aggregate']\nbase_url = 'http://127.0.0.1:10201/v1'\n");
+        ConfigStore.RestoreNativeCodex(nativeRestore);
+        Check(!File.ReadAllText(nativeRestore).Contains("openai_base_url") && !File.ReadAllText(nativeRestore).Contains("model_catalog_json") && !File.ReadAllText(nativeRestore).Contains("launcher-agg-test") && File.ReadAllText(nativeRestore).Contains("model_provider = 'openai'"), "native restore removes proxy route and launcher-owned model selection");
     }
     static void RouterChecks(string directory)
     {
